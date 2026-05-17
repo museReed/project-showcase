@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>muse-platform — HLD &amp; Interview Prep</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --bg2: #F7F8FA;
+    --bg3: #EDF2F7;
+    --gold: #2D3748;
+    --gold-dim: rgba(45,55,72,0.06);
+    --text: #2D3748;
+    --text-dim: #718096;
+    --white: #1A202C;
+    --border: rgba(45,55,72,0.12);
+    --accent: #3182CE;
+    --base-font: 22px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "DM Sans", "Helvetica Neue", "Noto Sans TC", sans-serif;
+    font-size: var(--base-font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* ── Tab Bar ── */
+  .tab-bar {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: var(--bg);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+  }
+  .tab-btn {
+    padding: 16px 40px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .tab-btn:hover {
+    color: var(--text);
+    background: var(--bg2);
+  }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── Tab Content ── */
+  .tab-pane {
+    display: none;
+  }
+  .tab-pane.active {
+    display: block;
+  }
+
+  .tab-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 56px 48px 140px;
+  }
+
+  /* Headings */
+  h1 {
+    font-size: 2em;
+    font-weight: 700;
+    color: var(--white);
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 14px;
+    margin-bottom: 10px;
+  }
+
+  h2 {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--gold);
+    margin-top: 64px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-size: 1.15em;
+    font-weight: 600;
+    color: var(--white);
+    margin-top: 42px;
+    margin-bottom: 14px;
+  }
+
+  p { margin-bottom: 16px; }
+  strong { color: var(--white); }
+
+  /* Lists */
+  ul, ol {
+    margin-bottom: 18px;
+    padding-left: 28px;
+  }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--gold); }
+
+  /* Blockquote */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 12px 20px;
+    margin: 18px 0;
+    background: var(--bg2);
+    border-radius: 0 8px 8px 0;
+    color: var(--text-dim);
+    font-size: 0.85em;
+  }
+
+  /* Code */
+  code {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 0.8em;
+    background: var(--bg2);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: var(--gold);
+  }
+
+  pre {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    overflow-x: auto;
+    margin: 20px 0;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.75em;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.85em;
+  }
+
+  th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--bg3);
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid var(--gold);
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tr:hover td { background: var(--bg2); }
+
+  /* HR */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* Links */
+  a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(49,130,206,0.3);
+  }
+  a:hover { border-bottom-color: var(--accent); }
+
+  /* SVG diagram containers */
+  .diagram-container {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    margin: 24px 0;
+    overflow-x: auto;
+    text-align: center;
+  }
+
+  .diagram-container img {
+    max-width: 100%;
+    height: auto;
+    display: inline-block;
+  }
+
+  /* Scroll to top */
+  .scroll-top {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #2D3748;
+    color: #FFFFFF;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 100;
+  }
+  .scroll-top.show { display: flex; }
+
+  /* TOC sidebar */
+  .toc {
+    position: fixed;
+    top: 100px;
+    left: 24px;
+    width: 220px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    font-size: 13px;
+    color: var(--text-dim);
+    z-index: 50;
+  }
+  .toc a {
+    display: block;
+    padding: 5px 0;
+    color: var(--text-dim);
+    border: none;
+    transition: color 0.2s;
+    line-height: 1.5;
+  }
+  .toc a:hover, .toc a.active { color: var(--accent); }
+  .toc .toc-h3 { padding-left: 14px; font-size: 12px; }
+
+  /* ── Slide Deck Mode ── */
+  #tab-deck h2 {
+    font-size: 1.8em;
+    margin-top: 80px;
+    padding-top: 40px;
+    border-top: 2px solid var(--border);
+    border-bottom: none;
+    color: var(--white);
+  }
+  #tab-deck h2:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+  #tab-deck h3 {
+    font-size: 1.2em;
+    color: var(--accent);
+    margin-top: 32px;
+  }
+  #tab-deck blockquote {
+    font-size: 1em;
+    font-style: italic;
+    border-left-width: 4px;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--bg2), rgba(49,130,206,0.05));
+  }
+  #tab-deck pre {
+    font-size: 0.9em;
+    background: #1a202c;
+    border: none;
+    border-radius: 12px;
+    padding: 28px;
+  }
+  #tab-deck pre code {
+    color: #e2e8f0;
+  }
+  #tab-deck table {
+    font-size: 0.9em;
+  }
+  #tab-deck th {
+    background: var(--accent);
+    color: #ffffff;
+    font-size: 0.75em;
+  }
+  #tab-deck hr {
+    display: none;
+  }
+
+  /* ── Language Toggle ── */
+  .lang-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 32px;
+    padding: 4px;
+    background: var(--bg2);
+    border-radius: 8px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .lang-btn {
+    padding: 8px 24px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .lang-btn:hover {
+    color: var(--text);
+  }
+  .lang-btn.active {
+    background: var(--bg);
+    color: var(--accent);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  @media (max-width: 1400px) {
+    .toc { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="hld">Architecture HLD</button>
+  <button class="tab-btn" data-tab="handbook">Interview Tech Handbook</button>
+  <button class="tab-btn" data-tab="flows">Interactive Flows</button>
+  <button class="tab-btn" data-tab="buildprod">Build Product</button>
+  <button class="tab-btn" data-tab="deck">Portfolio Deck</button>
+</div>
+
+<nav class="toc" id="toc"></nav>
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<div id="tab-hld" class="tab-pane active">
+  <div class="tab-content" id="content-hld"></div>
+</div>
+<div id="tab-handbook" class="tab-pane">
+  <div class="tab-content" id="content-handbook"></div>
+</div>
+<div id="tab-flows" class="tab-pane">
+  <div style="padding:12px 48px 0;max-width:1100px;margin:0 auto;">
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en" data-target="flows">English</button>
+      <button class="lang-btn" data-lang="zh" data-target="flows">中文</button>
+    </div>
+  </div>
+  <iframe id="flows-iframe" src="./interactive-sequences.html?lang=en" style="width:100%;height:calc(100vh - 120px);border:none;display:block;"></iframe>
+</div>
+<div id="tab-buildprod" class="tab-pane">
+  <div style="padding:12px 48px 0;max-width:1100px;margin:0 auto;">
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en" data-target="buildprod">English</button>
+      <button class="lang-btn" data-lang="zh" data-target="buildprod">中文</button>
+    </div>
+  </div>
+  <iframe id="buildprod-iframe" src="./interactive-build-product.html?lang=en" style="width:100%;height:calc(100vh - 120px);border:none;display:block;"></iframe>
+</div>
+<div id="tab-deck" class="tab-pane">
+  <div class="tab-content">
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en">English</button>
+      <button class="lang-btn" data-lang="zh">中文</button>
+    </div>
+    <div id="content-deck-en"></div>
+    <div id="content-deck-zh" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const TABS = {
+  hld: { url: './muse-platform-hld.md', el: null, loaded: false, hasMermaid: true },
+  handbook: { url: './interview-tech-handbook.md', el: null, loaded: false, hasMermaid: false },
+  deck: { url: './portfolio-deck.md', el: null, loaded: false, hasMermaid: false },
+};
+
+// Deck language variants
+const DECK_LANGS = {
+  en: { url: './portfolio-deck.md', el: null, loaded: false },
+  zh: { url: './portfolio-deck-zh.md', el: null, loaded: false },
+};
+let activeDeckLang = 'en';
+
+let activeTab = 'hld';
+
+// ── Marked renderer (mermaid → SVG img) ──
+function createRenderer(hasMermaid) {
+  const r = new marked.Renderer();
+  let idx = 0;
+  r.code = function({ text, lang }) {
+    if (lang === 'mermaid' && hasMermaid) {
+      const n = String(idx).padStart(2, '0');
+      idx++;
+      return `<div class="diagram-container"><img src="svg/diagram-${n}.svg" alt="Diagram ${n}" loading="lazy"></div>`;
+    }
+    const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<pre><code class="language-${lang || ''}">${escaped}</code></pre>`;
+  };
+  return r;
+}
+
+// ── Load & render a tab ──
+async function loadTab(key) {
+  if (key === 'deck') {
+    await loadDeckLang(activeDeckLang);
+    return;
+  }
+  const tab = TABS[key];
+  if (tab.loaded) return;
+
+  const res = await fetch(tab.url);
+  const md = await res.text();
+  const renderer = createRenderer(tab.hasMermaid);
+  marked.setOptions({ renderer, gfm: true, breaks: false });
+  tab.el.innerHTML = marked.parse(md);
+  tab.loaded = true;
+}
+
+// ── Load deck language variant ──
+async function loadDeckLang(lang) {
+  const variant = DECK_LANGS[lang];
+  if (variant.loaded) return;
+
+  const res = await fetch(variant.url);
+  const md = await res.text();
+  const renderer = createRenderer(false);
+  marked.setOptions({ renderer, gfm: true, breaks: false });
+  variant.el.innerHTML = marked.parse(md);
+  variant.loaded = true;
+}
+
+// ── Switch deck language ──
+async function switchDeckLang(lang) {
+  if (lang === activeDeckLang) return;
+
+  document.querySelector(`.lang-btn[data-lang="${activeDeckLang}"]`).classList.remove('active');
+  DECK_LANGS[activeDeckLang].el.style.display = 'none';
+
+  activeDeckLang = lang;
+  document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+  await loadDeckLang(lang);
+  DECK_LANGS[lang].el.style.display = 'block';
+
+  // Update TOC for deck
+  buildTOC();
+}
+
+// ── Switch flows language ──
+let activeFlowsLang = 'en';
+function switchFlowsLang(lang) {
+  if (lang === activeFlowsLang) return;
+  document.querySelector('.lang-btn[data-target="flows"].active').classList.remove('active');
+  activeFlowsLang = lang;
+  document.querySelector(`.lang-btn[data-target="flows"][data-lang="${lang}"]`).classList.add('active');
+  document.getElementById('flows-iframe').src = `./interactive-sequences.html?lang=${lang}`;
+}
+
+// ── Switch build-product language ──
+let activeBuildProdLang = 'en';
+function switchBuildProdLang(lang) {
+  if (lang === activeBuildProdLang) return;
+  document.querySelector('.lang-btn[data-target="buildprod"].active').classList.remove('active');
+  activeBuildProdLang = lang;
+  document.querySelector(`.lang-btn[data-target="buildprod"][data-lang="${lang}"]`).classList.add('active');
+  document.getElementById('buildprod-iframe').src = `./interactive-build-product.html?lang=${lang}`;
+}
+
+// ── Build TOC for active tab ──
+function buildTOC() {
+  let container;
+  if (activeTab === 'deck') {
+    container = DECK_LANGS[activeDeckLang].el;
+  } else {
+    container = TABS[activeTab].el;
+  }
+  if (!container) return;
+  const headings = container.querySelectorAll('h2, h3');
+  const toc = document.getElementById('toc');
+  let html = '';
+  headings.forEach((h, i) => {
+    const id = `${activeTab}-heading-${i}`;
+    h.id = id;
+    const cls = h.tagName === 'H3' ? ' toc-h3' : '';
+    html += `<a href="#${id}" class="${cls}">${h.textContent}</a>`;
+  });
+  toc.innerHTML = html;
+}
+
+// ── Switch tab ──
+async function switchTab(key) {
+  if (key === activeTab) return;
+
+  // Deactivate old
+  document.querySelector(`.tab-btn[data-tab="${activeTab}"]`).classList.remove('active');
+  document.getElementById(`tab-${activeTab}`).classList.remove('active');
+
+  // Activate new
+  activeTab = key;
+  document.querySelector(`.tab-btn[data-tab="${key}"]`).classList.add('active');
+  document.getElementById(`tab-${key}`).classList.add('active');
+
+  await loadTab(key);
+  buildTOC();
+  window.scrollTo({ top: 0 });
+}
+
+// ── Event listeners ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.target === 'flows') {
+      switchFlowsLang(btn.dataset.lang);
+    } else if (btn.dataset.target === 'buildprod') {
+      switchBuildProdLang(btn.dataset.lang);
+    } else {
+      switchDeckLang(btn.dataset.lang);
+    }
+  });
+});
+
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollTop').classList.toggle('show', window.scrollY > 400);
+});
+
+// ── Init ──
+(async () => {
+  TABS.hld.el = document.getElementById('content-hld');
+  TABS.handbook.el = document.getElementById('content-handbook');
+  DECK_LANGS.en.el = document.getElementById('content-deck-en');
+  DECK_LANGS.zh.el = document.getElementById('content-deck-zh');
+  await loadTab('hld');
+  buildTOC();
+})();
+</script>
+</body>
+</html>

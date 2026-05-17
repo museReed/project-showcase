@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  muse-platform — Build Product Pipeline
+  ============================================================
+  Visualizes the /build-product skill pipeline as an interactive
+  horizontal flowchart.
+  Source: .claude/skills/L2-development/build-product/SKILL.md
+  ============================================================
+-->
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>muse-platform — Build Product Pipeline</title>
+<style>
+  :root {
+    --role-a: #4A90E2;     /* Initiator */
+    --role-b: #E91E63;     /* Creative / External */
+    --role-c: #F57C00;     /* Validator / Judge */
+    --role-d: #9C27B0;     /* Database / Storage */
+    --role-e: #43A047;     /* Engine / Executor */
+    --role-f: #1B5E20;     /* Platform services */
+    --role-g: #546E7A;     /* AI / LLM Provider */
+    --mix:    #37474F;     /* Multi-role / neutral */
+
+    --success: #43A047;
+    --failure: #D32F2F;
+    --done:    #FFC107;
+    --kill:    #D32F2F;
+    --highlight: #FF6B00;
+
+    --bg:         #F4F6FA;
+    --card:       #FFFFFF;
+    --text:       #1A202C;
+    --text-light: #4A5568;
+    --border:     #E2E8F0;
+    --output-color: #F9A825;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    padding: 36px 16px 80px;
+  }
+  /* Hide header when embedded in iframe */
+  body.embedded header { display: none; }
+  body.embedded { padding-top: 16px; }
+  .container { max-width: 1280px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 32px; }
+  header h1 { font-size: 1.85rem; margin-bottom: 8px; }
+  header .subtitle { color: var(--text-light); font-size: 0.95rem; }
+
+  /* ===== Legend ===== */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+  .legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; padding: 5px 12px;
+    border-radius: 14px; background: var(--card);
+    border: 1px solid var(--border); color: var(--text-light);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-line { width: 28px; height: 3px; border-radius: 2px; background: var(--success); }
+  .legend-line.failure { height: 0; border-bottom: 2px dashed var(--failure); border-radius: 0; background: transparent; }
+
+  /* ===== Horizontal flow chart ===== */
+  .hflow-scroll {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .hflow-inner {
+    position: relative;
+    height: 520px;
+  }
+  .hflow-svg {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .hflow-svg .failure-arc { transition: opacity 0.18s, stroke-width 0.18s; }
+  .hflow-svg .failure-label { transition: opacity 0.18s; pointer-events: none; }
+
+  .hflow-nodes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .hflow-node {
+    position: absolute;
+    width: 140px; height: 80px;
+    border-radius: 9px;
+    padding: 10px 8px 8px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    color: white; font-weight: 600;
+    font-size: 0.85rem; line-height: 1.35;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    user-select: none;
+  }
+  .hflow-node:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+    z-index: 5;
+  }
+  .hflow-node.selected {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+    z-index: 6;
+  }
+  .hflow-node .num {
+    position: absolute; top: 5px; left: 9px;
+    font-size: 0.68rem; opacity: 0.85;
+    font-weight: 700; line-height: 1;
+  }
+  .hflow-node .fail-badge {
+    position: absolute; bottom: 4px; right: 6px;
+    font-size: 0.62rem;
+    background: rgba(0,0,0,0.25);
+    padding: 1px 7px; border-radius: 8px;
+    font-weight: 600;
+  }
+  .hflow-node .name { padding: 0 2px; }
+
+  .hflow-node.role-a { background: var(--role-a); }
+  .hflow-node.role-b { background: var(--role-b); }
+  .hflow-node.role-c { background: var(--role-c); }
+  .hflow-node.role-d { background: var(--role-d); }
+  .hflow-node.role-e { background: var(--role-e); }
+  .hflow-node.role-f { background: var(--role-f); }
+  .hflow-node.role-g { background: var(--role-g); }
+  .hflow-node.mix   { background: var(--mix); }
+  .hflow-node.done {
+    background: var(--done); color: var(--text);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 0 0 4px rgba(255,193,7,0.15);
+  }
+
+  /* ===== Phase separator ===== */
+  .phase-sep {
+    position: absolute;
+    border-left: 2px dashed #CBD5E0;
+    height: 120px;
+    top: 200px;
+  }
+  .phase-sep-label {
+    position: absolute;
+    font-size: 0.68rem;
+    color: var(--text-light);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  /* ===== Detail panel (below flow) ===== */
+  .detail-below {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .detail-empty {
+    padding: 60px 20px; text-align: center;
+    color: var(--text-light); font-size: 1rem;
+  }
+  .detail-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-num {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--text); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .detail-num.role-a { background: var(--role-a); }
+  .detail-num.role-b { background: var(--role-b); }
+  .detail-num.role-c { background: var(--role-c); }
+  .detail-num.role-d { background: var(--role-d); }
+  .detail-num.role-e { background: var(--role-e); }
+  .detail-num.role-f { background: var(--role-f); }
+  .detail-num.role-g { background: var(--role-g); }
+  .detail-num.mix   { background: var(--mix); }
+  .detail-num.done  { background: var(--done); color: var(--text); }
+  .detail-header h3 { font-size: 1.1rem; line-height: 1.4; }
+
+  .detail-3col {
+    display: grid;
+    grid-template-columns: 0.7fr 1.6fr 1.1fr;
+    gap: 0;
+  }
+  @media (max-width: 900px) { .detail-3col { grid-template-columns: 1fr; } }
+  .dcol {
+    padding: 18px 22px;
+    border-right: 1px solid var(--border);
+  }
+  .dcol:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .dcol { border-right: none; border-bottom: 1px solid var(--border); }
+    .dcol:last-child { border-bottom: none; }
+  }
+  .dcol h4 {
+    font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-light);
+    margin-bottom: 12px; font-weight: 700;
+  }
+  .dcol.what-col h4 { color: var(--role-e); }
+  .dcol.output-col h4 { color: #B45309; }
+
+  .role-tag {
+    display: inline-block;
+    font-size: 0.74rem; padding: 3px 10px;
+    border-radius: 10px; margin: 2px 4px 4px 0;
+    font-weight: 600;
+    background: #E2E8F0; color: var(--text);
+  }
+  .role-tag.role-a-t { background: var(--role-a); color: white; }
+  .role-tag.role-b-t { background: var(--role-b); color: white; }
+  .role-tag.role-c-t { background: var(--role-c); color: white; }
+  .role-tag.role-d-t { background: var(--role-d); color: white; }
+  .role-tag.role-e-t { background: var(--role-e); color: white; }
+  .role-tag.role-f-t { background: var(--role-f); color: white; }
+  .role-tag.role-g-t { background: var(--role-g); color: white; }
+
+  .subsection { margin-bottom: 14px; }
+  .subsection:last-child { margin-bottom: 0; }
+  .sublabel {
+    font-size: 0.85rem; font-weight: 700;
+    margin-bottom: 6px; padding-left: 10px;
+    border-left: 3px solid var(--text-light);
+  }
+  .sublabel.did { border-left-color: #3B82F6; color: #1D4ED8; }
+  .sublabel.pain { border-left-color: var(--failure); color: #991B1B; }
+  .sublabel.solution { border-left-color: #10B981; color: #065F46; }
+  .sublabel.happy { border-left-color: var(--success); color: #166534; }
+  .sublabel.failure-out { border-left-color: var(--failure); color: #991B1B; }
+
+  .subcontent {
+    font-size: 0.88rem; line-height: 1.65;
+    padding-left: 13px; color: var(--text);
+  }
+  .subcontent ul, ul.subcontent {
+    list-style: none; padding-left: 13px;
+  }
+  .subcontent li, ul.subcontent li {
+    padding: 4px 0 4px 14px;
+    position: relative;
+  }
+  .subcontent li::before, ul.subcontent li::before {
+    content: '\00B7'; position: absolute; left: 0;
+    color: var(--text-light); font-weight: 700;
+  }
+
+  .failure-list li {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 6px;
+    padding: 8px 12px !important;
+    margin: 6px 0;
+    list-style: none;
+  }
+  .failure-list li::before { display: none; }
+  .failure-list .goto {
+    background: #FEE2E2;
+    color: #991B1B;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600; font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .failure-list .goto:hover { background: #FCA5A5; color: white; }
+  .muted { color: var(--text-light); font-style: italic; }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.83rem;
+    line-height: 1.7;
+  }
+  footer code {
+    background: var(--card);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1 data-en="muse-platform &mdash; Build Product Pipeline" data-zh="muse-platform &mdash; &#x7522;&#x54C1;&#x958B;&#x767C;&#x7BA1;&#x7DDA;">muse-platform &mdash; Build Product Pipeline</h1>
+    <p class="subtitle" data-en="Concept &rarr; PRD &rarr; Design &rarr; Architecture &rarr; Implementation &rarr; Deploy" data-zh="&#x6982;&#x5FF5; &rarr; PRD &rarr; &#x8A2D;&#x8A08; &rarr; &#x67B6;&#x69CB; &rarr; &#x5BE6;&#x4F5C; &rarr; &#x90E8;&#x7F72;">Concept &rarr; PRD &rarr; Design &rarr; Architecture &rarr; Implementation &rarr; Deploy</p>
+  </header>
+
+  <!-- Legend -->
+  <div class="legend">
+    <span class="legend-item"><span class="legend-line"></span><span data-en="Happy Path" data-zh="&#x6B63;&#x5E38;&#x8DEF;&#x5F91;">Happy Path</span></span>
+    <span class="legend-item"><span class="legend-line failure"></span><span data-en="Failure Path" data-zh="&#x5931;&#x6557;&#x8DEF;&#x5F91;">Failure Path</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-a)"></span><span data-en="Initiator" data-zh="&#x767C;&#x8D77;&#x8005;">Initiator</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-b)"></span><span data-en="Creative" data-zh="&#x5275;&#x610F;">Creative</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-c)"></span><span data-en="Validator" data-zh="&#x9A57;&#x8B49;&#x5668;">Validator</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-e)"></span><span data-en="Engineer" data-zh="&#x5DE5;&#x7A0B;&#x5E2B;">Engineer</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-f)"></span><span data-en="Platform" data-zh="&#x5E73;&#x53F0;">Platform</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--done)"></span><span data-en="Done" data-zh="&#x5B8C;&#x6210;">Done</span></span>
+  </div>
+
+  <!-- Flow Chart Area -->
+  <div class="hflow-scroll">
+    <div class="hflow-inner" id="hflow-inner">
+      <svg class="hflow-svg" id="hflow-svg" preserveAspectRatio="xMinYMin meet"></svg>
+      <div class="hflow-nodes" id="hflow-nodes"></div>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="detail-below" id="detail-panel">
+    <div class="detail-empty" data-en="Click any node above to see details" data-zh="&#x9EDE;&#x64CA;&#x4E0A;&#x65B9;&#x4EFB;&#x610F;&#x7BC0;&#x9EDE;&#x67E5;&#x770B;&#x8A73;&#x60C5;">Click any node above to see details</div>
+  </div>
+
+  <footer>
+    <p>Source: <code>.claude/skills/L2-development/build-product/SKILL.md</code></p>
+    <p>Build Product Pipeline &mdash; Concept to Production</p>
+  </footer>
+
+</div>
+
+<script>
+  // ===== i18n =====
+  const LANG = new URLSearchParams(window.location.search).get('lang') || 'en';
+
+  const UI = {
+    en: { who: 'WHO', what: 'WHAT \u00B7 Activity \u00B7 Pains \u00B7 Solutions', output: 'OUTPUT',
+           activity: 'What happens', pain: 'Pain points', solution: 'Solutions',
+           happy: 'Happy Path', failure: 'Failure Path', noFailure: '(no failure path)',
+           backTo: 'Back to Step' },
+    zh: { who: '\u89D2\u8272', what: '\u884C\u70BA \u00B7 \u75DB\u9EDE \u00B7 \u89E3\u6CD5', output: '\u7522\u51FA',
+           activity: '\u57F7\u884C\u5167\u5BB9', pain: '\u53EF\u80FD\u554F\u984C', solution: '\u89E3\u6C7A\u65B9\u6848',
+           happy: '\u6B63\u5E38\u8DEF\u5F91', failure: '\u5931\u6557\u8DEF\u5F91', noFailure: '\uFF08\u7121\u5931\u6557\u8DEF\u5F91\uFF09',
+           backTo: '\u56DE\u5230\u6B65\u9A5F' }
+  };
+
+  function applyLang(lang) {
+    document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+      el.innerHTML = el.getAttribute('data-' + lang);
+    });
+  }
+
+  // ===== Flow chart constants =====
+  const NODE_WIDTH = 140;
+  const NODE_HEIGHT = 80;
+  const GAP = 45;
+  const START_X = 30;
+  const MAIN_Y = 280;
+
+  // ===== FLOW DATA =====
+  const FLOW_NODES = [
+    { id: 1, name: "Brainstorm", color: "role-a" },
+    { id: 2, name: "PRD Gate", color: "role-c" },
+    { id: 3, name: "UI Design", color: "role-b" },
+    { id: 4, name: "Architect", color: "role-e" },
+    { id: 5, name: "Init", color: "role-f" },
+    { id: 6, name: "Implement", color: "role-e" },
+    { id: 7, name: "Deploy", color: "role-f" },
+    { id: "done", name: "Done", color: "done" }
+  ];
+
+  const FAILURE_PATHS = [
+    { from: 2, to: 1, label: "Fails quality gate" },
+    { from: 6, to: 4, label: "SDD gap found" },
+    { from: 7, to: 6, label: "E2E fails" }
+  ];
+
+  const NODE_DATA_EN = {
+    "1": {
+      name: "Brainstorm",
+      colorClass: "role-a",
+      who: [["Product Owner (Reed)", "role-a-t"]],
+      what: {
+        did: "Starting from a concept/idea, generate comprehensive <strong>PRD</strong> including: problem definition, target users, core features, user stories, user flows, success metrics, tracking plan, edge cases.",
+        pains: ["Scope creep from unbounded ideation", "Missing edge cases discovered late", "Tracking plan overlooked until post-launch"],
+        solutions: ["Structured template with 14 quality dimensions", "Forced tracking plan section in template", "Edge case checklist derived from user flows"]
+      },
+      output: { happy: "PRD document with User Flows + Tracking Plan \u2192 PRD Gate", failure: [] }
+    },
+    "2": {
+      name: "PRD Gate",
+      colorClass: "role-c",
+      who: [["Quality Validator (automated)", "role-c-t"]],
+      what: {
+        did: "<strong>14-item quality gate</strong> checks: D1\u2013D6 (Design completeness) + R1\u2013R4 (Requirements clarity) + S1\u2013S4 (Specification depth). Must pass ALL to proceed.",
+        pains: ["PRD looks complete but missing subtle requirements", "User flows don't cover error states", "Ambiguous acceptance criteria"],
+        solutions: ["D1\u2013D6 checks design coverage (personas, flows, edge cases)", "R1\u2013R4 checks requirement precision (measurable, testable)", "S1\u2013S4 checks spec depth (API contracts, data models). Automated scoring pass/fail per item."]
+      },
+      output: {
+        happy: "PRD approved \u2192 UI Design + Architect (parallel)",
+        failure: [{ condition: "Fails quality gate", target: 1 }]
+      }
+    },
+    "3": {
+      name: "UI Design",
+      colorClass: "role-b",
+      who: [["Designer (AI-assisted)", "role-b-t"], ["Screen Decomposer skill", "role-e-t"]],
+      what: {
+        did: "Three-stage derivation: <strong>PRD User Flows \u2192 Screen List \u2192 JSON Layout Spec \u2192 Figma M3 frames</strong> (30 ComponentSets). Optional: Project-specific Design System generation.",
+        pains: ["Generic AI aesthetic (\"AI slop\")", "Missing responsive states", "Incomplete screen coverage from user flows"],
+        solutions: ["Design System Generator for unique visual identity", "Screen Completeness Check (9 items)", "M3 compliance validation against ComponentSet library"]
+      },
+      output: { happy: "Figma frames ready for implementation reference", failure: [] }
+    },
+    "4": {
+      name: "Architect",
+      colorClass: "role-e",
+      who: [["System Architect (AI + human review)", "role-e-t"]],
+      what: {
+        did: "Decompose app into <strong>reusable + business subsystems</strong>. Generate dependency graph. Write per-subsystem SDD (BE Tech Design + Client-Side Tech Design + Analytics Design).",
+        pains: ["Over-engineering subsystem boundaries", "Missing cross-cutting concerns (auth, logging)", "SDD too abstract to implement from"],
+        solutions: ["Pre-built reusable subsystems (auth, analytics, observability, storage, payment)", "Business subsystems derived from PRD features", "SDD template enforces concrete API contracts"]
+      },
+      output: { happy: "Subsystem list + SDD per subsystem + dependency graph \u2192 Implement", failure: [] }
+    },
+    "5": {
+      name: "Init",
+      colorClass: "role-f",
+      who: [["Platform Engineer (automated)", "role-f-t"]],
+      what: {
+        did: "Scaffold repo structure based on <strong>preset</strong> (default: FastAPI + Next.js + Supabase). Setup CI/CD (GitHub Actions). Configure Vercel/Railway/Supabase. DNS + CDN setup.",
+        pains: ["Wrong preset selection for project needs", "Infra drift between dev/staging/prod environments", "Missing env vars discovered at deploy time"],
+        solutions: ["Preset manifest.json validation before scaffold", "Dependency check before scaffold", "Environment separation from day 1 with .env templates"]
+      },
+      output: { happy: "Repo + infra ready for implementation \u2192 merges with Architect output at Implement", failure: [] }
+    },
+    "6": {
+      name: "Implement",
+      colorClass: "role-e",
+      who: [["Engineer (AI-assisted TDD)", "role-e-t"]],
+      what: {
+        did: "Per-subsystem implementation following SDD. Order: <strong>reusable first</strong> (auth \u2192 analytics \u2192 observability) then business subsystems. Each: BE \u2192 FE \u2192 Analytics hooks \u2192 Tests.",
+        pains: ["SDD doesn't match reality during implementation", "Cross-subsystem integration issues", "Test coverage gaps at subsystem boundaries"],
+        solutions: ["TDD Red\u2192Green\u2192Refactor per subsystem", "Integration tests between subsystems", "Figma MCP for pixel-perfect frontend matching design"]
+      },
+      output: {
+        happy: "All subsystems implemented + tested \u2192 Deploy",
+        failure: [{ condition: "SDD gap found", target: 4 }]
+      }
+    },
+    "7": {
+      name: "Deploy",
+      colorClass: "role-f",
+      who: [["Platform Engineer (automated)", "role-f-t"]],
+      what: {
+        did: "Deploy sequence: <strong>DB migrations</strong> (Supabase) \u2192 <strong>Backend</strong> (Railway) \u2192 <strong>Frontend</strong> (Vercel) \u2192 <strong>E2E verification</strong> (Playwright). Automated rollback on failure.",
+        pains: ["Migration breaking changes on existing data", "Env var misconfiguration between environments", "E2E flaky tests causing false rollbacks"],
+        solutions: ["Staged deploy (dev \u2192 staging \u2192 prod)", "E2E suite as deploy gate with retry logic", "Automated rollback on E2E failure"]
+      },
+      output: {
+        happy: "Production deployed + E2E green \u2192 Done",
+        failure: [{ condition: "E2E fails", target: 6 }]
+      }
+    },
+    "done": {
+      name: "Done",
+      colorClass: "done",
+      who: [["All", "role-e-t"]],
+      what: {
+        did: "Product live in production. <strong>Monitoring active</strong>. Observability dashboards operational.",
+        pains: [],
+        solutions: []
+      },
+      output: { happy: "Product launched", failure: [] }
+    }
+  };
+
+  const NODE_DATA_ZH = {
+    "1": {
+      name: "\u8166\u529B\u6FC0\u76EA",
+      colorClass: "role-a",
+      who: [["\u7522\u54C1\u8CA0\u8CAC\u4EBA (Reed)", "role-a-t"]],
+      what: {
+        did: "\u5F9E\u6982\u5FF5\u51FA\u767C\uFF0C\u7522\u751F\u5B8C\u6574 <strong>PRD</strong>\uFF1A\u554F\u984C\u5B9A\u7FA9\u3001\u76EE\u6A19\u7528\u6236\u3001\u6838\u5FC3\u529F\u80FD\u3001\u7528\u6236\u6545\u4E8B\u3001\u7528\u6236\u6D41\u7A0B\u3001\u6210\u529F\u6307\u6A19\u3001\u8FFD\u8E64\u8A08\u756B\u3001\u908A\u754C\u6848\u4F8B\u3002",
+        pains: ["\u7BC4\u570D\u81A8\u8139", "\u907A\u6F0F\u908A\u754C\u6848\u4F8B", "\u8FFD\u8E64\u8A08\u756B\u88AB\u5FFD\u7565"],
+        solutions: ["\u7D50\u69CB\u5316\u6A21\u677F\u6DB5\u84CB 14 \u54C1\u8CEA\u7DAD\u5EA6", "\u5F37\u5236\u8FFD\u8E64\u8A08\u756B\u5340\u6BB5", "\u5F9E\u7528\u6236\u6D41\u7A0B\u63A8\u5C0E\u908A\u754C\u6848\u4F8B"]
+      },
+      output: { happy: "PRD\uFF08\u542B User Flows + Tracking Plan\uFF09\u2192 \u54C1\u8CEA\u9598\u9580", failure: [] }
+    },
+    "2": {
+      name: "PRD \u9598\u9580",
+      colorClass: "role-c",
+      who: [["\u54C1\u8CEA\u9A57\u8B49\u5668\uFF08\u81EA\u52D5\uFF09", "role-c-t"]],
+      what: {
+        did: "<strong>14 \u9805\u54C1\u8CEA\u9598\u9580\u6AA2\u67E5</strong>\uFF1AD1-D6\uFF08\u8A2D\u8A08\u5B8C\u6574\u6027\uFF09+ R1-R4\uFF08\u9700\u6C42\u6E05\u6670\u5EA6\uFF09+ S1-S4\uFF08\u898F\u683C\u6DF1\u5EA6\uFF09\u3002\u5168\u6578\u901A\u904E\u624D\u80FD\u9032\u884C\u3002",
+        pains: ["PRD \u770B\u4F3C\u5B8C\u6574\u4F46\u7F3A\u5C11\u5FAE\u5999\u9700\u6C42", "\u7528\u6236\u6D41\u7A0B\u672A\u6DB5\u84CB\u932F\u8AA4\u72C0\u614B", "\u9A57\u6536\u6A19\u6E96\u6A21\u7CCA"],
+        solutions: ["D1-D6 \u6AA2\u67E5\u8A2D\u8A08\u8986\u84CB", "R1-R4 \u6AA2\u67E5\u9700\u6C42\u7CBE\u78BA\u5EA6", "S1-S4 \u6AA2\u67E5\u898F\u683C\u6DF1\u5EA6\u3002\u81EA\u52D5\u8A55\u5206 pass/fail\u3002"]
+      },
+      output: {
+        happy: "PRD \u901A\u904E \u2192 \u540C\u6642\u9032\u5165 UI \u8A2D\u8A08 + \u67B6\u69CB\u8A2D\u8A08",
+        failure: [{ condition: "\u672A\u901A\u904E\u54C1\u8CEA\u9598\u9580", target: 1 }]
+      }
+    },
+    "3": {
+      name: "UI \u8A2D\u8A08",
+      colorClass: "role-b",
+      who: [["\u8A2D\u8A08\u5E2B\uFF08AI \u8F14\u52A9\uFF09", "role-b-t"], ["Screen Decomposer skill", "role-e-t"]],
+      what: {
+        did: "\u4E09\u968E\u6BB5\u63A8\u5C0E\uFF1A<strong>PRD User Flows \u2192 Screen List \u2192 JSON Layout Spec \u2192 Figma M3 frames</strong>\uFF0830 ComponentSets\uFF09\u3002\u53EF\u9078\uFF1A\u7522\u751F\u5C08\u6848\u5C08\u5C6C Design System\u3002",
+        pains: ["\u6CDB\u7528 AI \u7F8E\u5B78\uFF08AI slop\uFF09", "\u7F3A\u5C11\u97FF\u61C9\u5F0F\u72C0\u614B", "\u756B\u9762\u8986\u84CB\u4E0D\u5168"],
+        solutions: ["Design System Generator \u5EFA\u7ACB\u7368\u7279\u8996\u89BA\u8A9E\u8A00", "Screen Completeness Check\uFF089 \u9805\uFF09", "M3 \u5408\u898F\u9A57\u8B49"]
+      },
+      output: { happy: "Figma frames \u6E96\u5099\u5C31\u7DD2\u4F9B\u5BE6\u4F5C\u53C3\u8003", failure: [] }
+    },
+    "4": {
+      name: "\u67B6\u69CB\u8A2D\u8A08",
+      colorClass: "role-e",
+      who: [["\u7CFB\u7D71\u67B6\u69CB\u5E2B\uFF08AI + \u4EBA\u5DE5\u5BE9\u67E5\uFF09", "role-e-t"]],
+      what: {
+        did: "\u62C6\u5206\u61C9\u7528\u70BA<strong>\u53EF\u8907\u7528 + \u696D\u52D9\u5B50\u7CFB\u7D71</strong>\u3002\u7522\u751F\u4F9D\u8CF4\u5716\u3002\u64B0\u5BEB per-subsystem SDD\uFF08BE \u6280\u8853\u8A2D\u8A08 + Client-Side \u6280\u8853\u8A2D\u8A08 + Analytics \u8A2D\u8A08\uFF09\u3002",
+        pains: ["\u904E\u5EA6\u5DE5\u7A0B\u5B50\u7CFB\u7D71\u908A\u754C", "\u907A\u6F0F\u6A6B\u5207\u95DC\u6CE8\u9EDE"],
+        solutions: ["\u9810\u5EFA\u53EF\u8907\u7528\u5B50\u7CFB\u7D71\uFF08auth\u3001analytics\u3001observability\u3001storage\u3001payment\uFF09", "\u696D\u52D9\u5B50\u7CFB\u7D71\u5F9E PRD \u529F\u80FD\u63A8\u5C0E"]
+      },
+      output: { happy: "\u5B50\u7CFB\u7D71\u6E05\u55AE + \u5404 SDD + \u4F9D\u8CF4\u5716 \u2192 \u9032\u5165\u5BE6\u4F5C", failure: [] }
+    },
+    "5": {
+      name: "\u521D\u59CB\u5316",
+      colorClass: "role-f",
+      who: [["\u5E73\u53F0\u5DE5\u7A0B\u5E2B\uFF08\u81EA\u52D5\uFF09", "role-f-t"]],
+      what: {
+        did: "\u4F9D\u64DA preset\uFF08\u9810\u8A2D\uFF1AFastAPI + Next.js + Supabase\uFF09\u642D\u5EFA repo \u7D50\u69CB\u3002\u8A2D\u5B9A CI/CD\uFF08GitHub Actions\uFF09\u3002\u914D\u7F6E Vercel/Railway/Supabase\u3002DNS + CDN \u8A2D\u5B9A\u3002",
+        pains: ["\u9078\u932F preset", "\u74B0\u5883\u9593 infra drift"],
+        solutions: ["Preset manifest.json \u9A57\u8B49", "scaffold \u524D\u4F9D\u8CF4\u6AA2\u67E5", "\u5F9E\u7B2C\u4E00\u5929\u8D77\u74B0\u5883\u5206\u96E2"]
+      },
+      output: { happy: "Repo + infra \u5C31\u7DD2 \u2192 \u8207\u67B6\u69CB\u8A2D\u8A08\u6703\u5408\u65BC\u5BE6\u4F5C\u968E\u6BB5", failure: [] }
+    },
+    "6": {
+      name: "\u5BE6\u4F5C",
+      colorClass: "role-e",
+      who: [["\u5DE5\u7A0B\u5E2B\uFF08AI \u8F14\u52A9 TDD\uFF09", "role-e-t"]],
+      what: {
+        did: "\u4F9D SDD \u9010\u5B50\u7CFB\u7D71\u5BE6\u4F5C\u3002\u9806\u5E8F\uFF1A\u5148\u53EF\u8907\u7528\uFF08auth \u2192 analytics \u2192 observability\uFF09\u518D\u696D\u52D9\u5B50\u7CFB\u7D71\u3002\u6BCF\u500B\uFF1ABE \u2192 FE \u2192 Analytics hooks \u2192 Tests\u3002",
+        pains: ["SDD \u8207\u73FE\u5BE6\u4E0D\u7B26", "\u8DE8\u5B50\u7CFB\u7D71\u6574\u5408\u554F\u984C", "\u6E2C\u8A66\u8986\u84CB\u4E0D\u8DB3"],
+        solutions: ["\u6BCF\u5B50\u7CFB\u7D71 TDD Red\u2192Green\u2192Refactor", "\u5B50\u7CFB\u7D71\u9593 integration tests", "Figma MCP \u50CF\u7D20\u7D1A\u524D\u7AEF\u5BE6\u4F5C"]
+      },
+      output: {
+        happy: "\u6240\u6709\u5B50\u7CFB\u7D71\u5BE6\u4F5C + \u6E2C\u8A66\u5B8C\u6210 \u2192 \u9032\u5165\u90E8\u7F72",
+        failure: [{ condition: "SDD \u7F3A\u53E3", target: 4 }]
+      }
+    },
+    "7": {
+      name: "\u90E8\u7F72",
+      colorClass: "role-f",
+      who: [["\u5E73\u53F0\u5DE5\u7A0B\u5E2B\uFF08\u81EA\u52D5\uFF09", "role-f-t"]],
+      what: {
+        did: "\u90E8\u7F72\u9806\u5E8F\uFF1A<strong>DB migrations</strong>\uFF08Supabase\uFF09\u2192 <strong>Backend</strong>\uFF08Railway\uFF09\u2192 <strong>Frontend</strong>\uFF08Vercel\uFF09\u2192 <strong>E2E \u9A57\u8B49</strong>\uFF08Playwright\uFF09\u3002\u5931\u6557\u81EA\u52D5\u56DE\u6EDA\u3002",
+        pains: ["Migration \u7834\u58DE\u6027\u8B8A\u66F4", "\u74B0\u5883\u8B8A\u6578\u8A2D\u5B9A\u932F\u8AA4", "E2E \u4E0D\u7A69\u5B9A\u6E2C\u8A66"],
+        solutions: ["\u5206\u968E\u6BB5\u90E8\u7F72\uFF08dev \u2192 staging \u2192 prod\uFF09", "E2E \u6E2C\u8A66\u4F5C\u70BA\u9598\u9580", "\u81EA\u52D5\u56DE\u6EDA"]
+      },
+      output: {
+        happy: "Production \u90E8\u7F72\u5B8C\u6210 + E2E \u7DA0\u71C8 \u2192 \u5B8C\u6210",
+        failure: [{ condition: "E2E \u5931\u6557", target: 6 }]
+      }
+    },
+    "done": {
+      name: "\u5B8C\u6210",
+      colorClass: "done",
+      who: [["\u5168\u9AD4", "role-e-t"]],
+      what: {
+        did: "\u7522\u54C1\u5728 production \u4E0A\u7DDA\u3002<strong>\u76E3\u63A7\u555F\u52D5</strong>\u3002",
+        pains: [],
+        solutions: []
+      },
+      output: { happy: "\u7522\u54C1\u4E0A\u7DDA", failure: [] }
+    }
+  };
+
+  // ===== Rendering =====
+  const nodesEl = document.getElementById('hflow-nodes');
+  const svgEl = document.getElementById('hflow-svg');
+  const innerEl = document.getElementById('hflow-inner');
+  const detailEl = document.getElementById('detail-panel');
+
+  let selectedId = null;
+
+  // Position nodes
+  const nodePositions = {};
+  function layoutNodes() {
+    // Main line: nodes 1-7 + done
+    // But nodes 3,4,5 have a special layout:
+    // After PRD Gate (2), there's a fork:
+    //   - Top branch: UI Design (3) — parallel, doesn't block
+    //   - Middle: Architect (4)
+    //   - Bottom: Init (5) — parallel with Architect
+    // Then they merge at Implement (6)
+
+    // Simple horizontal layout with fork/join visualization
+    // Row positions
+    const TOP_Y = 160;
+    const MID_Y = 280;
+    const BOT_Y = 400;
+
+    let x = START_X;
+
+    // Node 1: Brainstorm
+    nodePositions[1] = { x: x, y: MID_Y };
+    x += NODE_WIDTH + GAP;
+
+    // Node 2: PRD Gate
+    nodePositions[2] = { x: x, y: MID_Y };
+    x += NODE_WIDTH + GAP + 20; // extra gap for fork
+
+    // Fork: 3 (top), 4 (mid), 5 (bottom) — all at same x
+    const forkX = x;
+    nodePositions[3] = { x: forkX, y: TOP_Y };
+    nodePositions[4] = { x: forkX, y: MID_Y };
+    nodePositions[5] = { x: forkX, y: BOT_Y };
+    x = forkX + NODE_WIDTH + GAP + 20; // extra gap for join
+
+    // Node 6: Implement (merge point)
+    nodePositions[6] = { x: x, y: MID_Y };
+    x += NODE_WIDTH + GAP;
+
+    // Node 7: Deploy
+    nodePositions[7] = { x: x, y: MID_Y };
+    x += NODE_WIDTH + GAP;
+
+    // Done
+    nodePositions['done'] = { x: x, y: MID_Y };
+
+    // Set container width
+    const totalW = x + NODE_WIDTH + 40;
+    innerEl.style.width = totalW + 'px';
+    svgEl.setAttribute('viewBox', `0 0 ${totalW} 520`);
+    svgEl.style.width = totalW + 'px';
+  }
+
+  function renderNodes() {
+    const data = LANG === 'zh' ? NODE_DATA_ZH : NODE_DATA_EN;
+    nodesEl.innerHTML = '';
+
+    FLOW_NODES.forEach((node, idx) => {
+      const pos = nodePositions[node.id];
+      const div = document.createElement('div');
+      div.className = `hflow-node ${node.color}`;
+      div.style.left = pos.x + 'px';
+      div.style.top = pos.y + 'px';
+      div.dataset.id = node.id;
+
+      const numLabel = node.id === 'done' ? '\u2713' : node.id;
+      const nodeName = data[node.id] ? data[node.id].name : node.name;
+
+      // Check if this node has failure paths
+      const hasFailure = FAILURE_PATHS.some(f => f.from == node.id);
+
+      div.innerHTML = `<span class="num">${numLabel}</span><span class="name">${nodeName}</span>${hasFailure ? '<span class="fail-badge">\u26A0</span>' : ''}`;
+
+      div.addEventListener('click', () => selectNode(node.id));
+      div.addEventListener('mouseenter', () => highlightArcs(node.id, true));
+      div.addEventListener('mouseleave', () => highlightArcs(node.id, false));
+      nodesEl.appendChild(div);
+    });
+  }
+
+  function renderEdges() {
+    let svg = '';
+    // Arrowhead marker
+    svg += `<defs>
+      <marker id="arrowG" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1,1 L7,4 L1,7" fill="none" stroke="var(--success)" stroke-width="1.5"/></marker>
+      <marker id="arrowR" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1,1 L7,4 L1,7" fill="none" stroke="var(--failure)" stroke-width="1.5"/></marker>
+    </defs>`;
+
+    // Happy path edges
+    // 1 -> 2
+    svg += happyEdge(1, 2);
+    // 2 -> 3 (fork up)
+    svg += forkEdge(2, 3);
+    // 2 -> 4 (straight)
+    svg += happyEdge(2, 4);
+    // 2 -> 5 (fork down)
+    svg += forkEdge(2, 5);
+    // 3 -> 6 (join from top)
+    svg += joinEdge(3, 6);
+    // 4 -> 6 (straight)
+    svg += happyEdge(4, 6);
+    // 5 -> 6 (join from bottom)
+    svg += joinEdge(5, 6);
+    // 6 -> 7
+    svg += happyEdge(6, 7);
+    // 7 -> done
+    svg += happyEdge(7, 'done');
+
+    // Failure paths (arcs going backwards)
+    FAILURE_PATHS.forEach(fp => {
+      svg += failureArc(fp.from, fp.to, fp.label);
+    });
+
+    svgEl.innerHTML = svg;
+  }
+
+  function happyEdge(fromId, toId) {
+    const from = nodePositions[fromId];
+    const to = nodePositions[toId];
+    const x1 = from.x + NODE_WIDTH;
+    const y1 = from.y + NODE_HEIGHT / 2;
+    const x2 = to.x;
+    const y2 = to.y + NODE_HEIGHT / 2;
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--success)" stroke-width="2.5" marker-end="url(#arrowG)"/>`;
+  }
+
+  function forkEdge(fromId, toId) {
+    const from = nodePositions[fromId];
+    const to = nodePositions[toId];
+    const x1 = from.x + NODE_WIDTH;
+    const y1 = from.y + NODE_HEIGHT / 2;
+    const x2 = to.x;
+    const y2 = to.y + NODE_HEIGHT / 2;
+    const midX = (x1 + x2) / 2;
+    return `<path d="M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}" fill="none" stroke="var(--success)" stroke-width="2.5" marker-end="url(#arrowG)"/>`;
+  }
+
+  function joinEdge(fromId, toId) {
+    const from = nodePositions[fromId];
+    const to = nodePositions[toId];
+    const x1 = from.x + NODE_WIDTH;
+    const y1 = from.y + NODE_HEIGHT / 2;
+    const x2 = to.x;
+    const y2 = to.y + NODE_HEIGHT / 2;
+    const midX = (x1 + x2) / 2;
+    return `<path d="M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}" fill="none" stroke="var(--success)" stroke-width="2.5" marker-end="url(#arrowG)"/>`;
+  }
+
+  function failureArc(fromId, toId, label) {
+    const from = nodePositions[fromId];
+    const to = nodePositions[toId];
+    const x1 = from.x + NODE_WIDTH / 2;
+    const y1 = from.y; // top of from node
+    const x2 = to.x + NODE_WIDTH / 2;
+    const y2 = to.y; // top of to node
+
+    // Arc goes above the nodes
+    const arcY = Math.min(y1, y2) - 70;
+    const midX = (x1 + x2) / 2;
+
+    let path = `<path class="failure-arc" data-from="${fromId}" d="M${x1},${y1} C${x1},${arcY} ${x2},${arcY} ${x2},${y2}" fill="none" stroke="var(--failure)" stroke-width="2" stroke-dasharray="6,4" opacity="0.12" marker-end="url(#arrowR)"/>`;
+    // Label
+    path += `<text class="failure-label" data-from="${fromId}" x="${midX}" y="${arcY + 14}" text-anchor="middle" fill="var(--failure)" font-size="11" font-weight="600" opacity="0">${label}</text>`;
+    return path;
+  }
+
+  function highlightArcs(id, entering) {
+    const sid = String(id);
+    // Don't override if this node is already selected
+    if (selectedId === sid && !entering) return;
+    if (entering) {
+      svgEl.querySelectorAll('.failure-arc').forEach(a => {
+        a.style.opacity = a.dataset.from === sid ? '0.9' : '0.12';
+        a.style.strokeWidth = a.dataset.from === sid ? '3' : '';
+      });
+      svgEl.querySelectorAll('.failure-label').forEach(l => {
+        l.style.opacity = l.dataset.from === sid ? '1' : '0';
+      });
+    } else {
+      // Restore: show selected node's arcs, or reset all
+      if (selectedId) {
+        highlightArcsForId(String(selectedId));
+      } else {
+        resetArcs();
+      }
+    }
+  }
+
+  function highlightArcsForId(sid) {
+    svgEl.querySelectorAll('.failure-arc').forEach(a => {
+      a.style.opacity = a.dataset.from === sid ? '0.9' : '0.12';
+      a.style.strokeWidth = a.dataset.from === sid ? '3' : '';
+    });
+    svgEl.querySelectorAll('.failure-label').forEach(l => {
+      l.style.opacity = l.dataset.from === sid ? '1' : '0';
+    });
+  }
+
+  function resetArcs() {
+    svgEl.querySelectorAll('.failure-arc').forEach(a => { a.style.opacity = '0.12'; a.style.strokeWidth = ''; });
+    svgEl.querySelectorAll('.failure-label').forEach(l => { l.style.opacity = '0'; });
+  }
+
+  function selectNode(id) {
+    // Deselect previous
+    document.querySelectorAll('.hflow-node.selected').forEach(el => el.classList.remove('selected'));
+    selectedId = id;
+    // Select current
+    const el = document.querySelector(`.hflow-node[data-id="${id}"]`);
+    if (el) el.classList.add('selected');
+    highlightArcsForId(String(id));
+    renderDetail(id);
+  }
+
+  function renderDetail(id) {
+    const data = LANG === 'zh' ? NODE_DATA_ZH : NODE_DATA_EN;
+    const node = data[id];
+    if (!node) { detailEl.innerHTML = '<div class="detail-empty">No data</div>'; return; }
+
+    const ui = UI[LANG];
+    const numLabel = id === 'done' ? '\u2713' : id;
+
+    let whoHtml = node.who.map(([name, cls]) => `<span class="role-tag ${cls}">${name}</span>`).join('');
+
+    let whatHtml = `<div class="subsection"><div class="sublabel did">${ui.activity}</div><div class="subcontent">${node.what.did}</div></div>`;
+    if (node.what.pains.length) {
+      whatHtml += `<div class="subsection"><div class="sublabel pain">${ui.pain}</div><ul class="subcontent">${node.what.pains.map(p => `<li>${p}</li>`).join('')}</ul></div>`;
+    }
+    if (node.what.solutions.length) {
+      whatHtml += `<div class="subsection"><div class="sublabel solution">${ui.solution}</div><ul class="subcontent">${node.what.solutions.map(s => `<li>${s}</li>`).join('')}</ul></div>`;
+    }
+
+    let outputHtml = `<div class="subsection"><div class="sublabel happy">${ui.happy}</div><div class="subcontent">${node.output.happy}</div></div>`;
+    if (node.output.failure && node.output.failure.length) {
+      const fItems = node.output.failure.map(f => {
+        return `<li>${f.condition} <span class="goto" onclick="selectNode(${typeof f.target === 'string' ? "'" + f.target + "'" : f.target})">${ui.backTo} ${f.target}</span></li>`;
+      }).join('');
+      outputHtml += `<div class="subsection"><div class="sublabel failure-out">${ui.failure}</div><ul class="subcontent failure-list">${fItems}</ul></div>`;
+    } else {
+      outputHtml += `<div class="subsection"><span class="muted">${ui.noFailure}</span></div>`;
+    }
+
+    detailEl.innerHTML = `
+      <div class="detail-header">
+        <div class="detail-num ${node.colorClass}">${numLabel}</div>
+        <h3>${node.name}</h3>
+      </div>
+      <div class="detail-3col">
+        <div class="dcol""><h4>${ui.who}</h4>${whoHtml}</div>
+        <div class="dcol what-col"><h4>${ui.what}</h4>${whatHtml}</div>
+        <div class="dcol output-col"><h4>${ui.output}</h4>${outputHtml}</div>
+      </div>`;
+  }
+
+  // ===== Init =====
+  function init() {
+    // Detect embedded mode
+    if (window.self !== window.top) document.body.classList.add('embedded');
+
+    applyLang(LANG);
+    layoutNodes();
+    renderNodes();
+    renderEdges();
+  }
+
+  init();
+</script>
+</body>
+</html>

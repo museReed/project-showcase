@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reed Hsin — Project Showcase</title>
+<style>
+  :root {
+    --bg: #0F172A;
+    --surface: #1E293B;
+    --surface-hover: #334155;
+    --border: #334155;
+    --text: #F1F5F9;
+    --text-dim: #94A3B8;
+    --accent: #38BDF8;
+    --accent-dim: rgba(56,189,248,0.12);
+    --green: #34D399;
+    --amber: #FBBF24;
+    --pink: #F472B6;
+    --purple: #A78BFA;
+    --orange: #FB923C;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 80px 24px 48px;
+    background: linear-gradient(180deg, rgba(56,189,248,0.08) 0%, transparent 100%);
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero .subtitle {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto 32px;
+  }
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  /* Grid */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  .section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin: 48px 0 20px;
+    padding-left: 4px;
+  }
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 32px rgba(56,189,248,0.12);
+  }
+
+  .card-preview {
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-preview iframe {
+    width: 200%;
+    height: 200%;
+    transform: scale(0.5);
+    transform-origin: top left;
+    border: none;
+    pointer-events: none;
+  }
+  .card-preview-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
+  .card-preview-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
+  }
+
+  .card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .tag {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .tag-live { background: rgba(52,211,153,0.15); color: var(--green); }
+  .tag-local { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .tag-external { background: rgba(164,139,250,0.15); color: var(--purple); }
+  .tag-platform { background: rgba(56,189,248,0.15); color: var(--accent); }
+  .tag-product { background: rgba(244,114,182,0.15); color: var(--pink); }
+  .tag-data { background: rgba(251,146,60,0.15); color: var(--orange); }
+
+  .card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .card-desc {
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    flex: 1;
+  }
+  .card-meta {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .card-meta .tech {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tech-badge {
+    background: var(--bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+  .card-meta .arrow {
+    color: var(--accent);
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+  }
+  .card:hover .arrow { transform: translateX(4px); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 32px 24px;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 1.8rem; }
+    .hero-stats { gap: 28px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Reed Hsin — <span>Project Showcase</span></h1>
+  <p class="subtitle">
+    8+ years of engineering experience distilled into production systems,
+    AI pipelines, and developer tools.
+  </p>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">6</div>
+      <div class="stat-label">Live Projects</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">17</div>
+      <div class="stat-label">AI Modules</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">83%</div>
+      <div class="stat-label">LLM Cost Saved</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">4</div>
+      <div class="stat-label">LLM Providers</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Muse Platform -->
+  <div class="section-title">Muse Platform — Internal Developer Platform</div>
+  <div class="grid">
+
+    <!-- Ops UI -->
+    <a class="card" href="http://localhost:3000" target="_blank">
+      <div class="card-preview">
+        <img src="ops-ui-screenshot.png" alt="Ops UI — Features page" style="width:200%;height:200%;transform-origin:top left;transform:scale(0.5)">
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-platform">Platform</span>
+          <span class="tag tag-local">Local Dev</span>
+        </div>
+        <div class="card-title">Ops UI — Control Plane</div>
+        <div class="card-desc">
+          Next.js dashboard for operating 17 AI modules. Feature cards with action buttons, scheduled job monitoring, QA checklist gate, execution history.
+        </div>
+        <div class="card-meta">
+          <div class="tech">
+            <span class="tech-badge">Next.js</span>
+            <span class="tech-badge">Tailwind</span>
+            <span class="tech-badge">shadcn/ui</span>
+          </div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Content Viewer -->
+    <a class="card" href="https://musereed.github.io/content-viewer/" target="_blank" id="card-content-viewer">
+      <div class="card-preview">
+        <iframe src="https://musereed.github.io/content-viewer/" loading="lazy" sandbox></iframe>
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-data">Data</span>
+          <span class="tag tag-external">External</span>
+        </div>
+        <div class="card-title">AI News & XHS Content Viewer</div>
+        <div class="card-desc">
+          Unified SPA for inspecting collected content. AI News tab for classify/enrich pipeline output. XHS tab with image gallery, video player, and enrichment data.
+        </div>
+        <div class="card-meta">
+          <div class="tech">
+            <span class="tech-badge">Python</span>
+            <span class="tech-badge">SQLite</span>
+            <span class="tech-badge">SPA</span>
+          </div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- LLM A/B Test Viewer -->
+    <a class="card" href="https://musereed.github.io/llm-ab-test-viewer/" target="_blank">
+      <div class="card-preview">
+        <iframe src="https://musereed.github.io/llm-ab-test-viewer/" loading="lazy" sandbox></iframe>
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-data">Data</span>
+          <span class="tag tag-external">External</span>
+        </div>
+        <div class="card-title">LLM A/B Test Viewer</div>
+        <div class="card-desc">
+          3-tab dashboard: model leaderboard per pipeline node, side-by-side output comparison, and monthly cost calculator. Compares 4 LLM configs (Claude, DeepSeek, Groq, Mixed).
+        </div>
+        <div class="card-meta">
+          <div class="tech">
+            <span class="tech-badge">Python</span>
+            <span class="tech-badge">4 Models</span>
+            <span class="tech-badge">A/B Test</span>
+          </div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Architecture HLD + Portfolio Deck -->
+    <a class="card" href="muse-platform-hld-viewer.html" target="_blank">
+      <div class="card-preview">
+        <iframe src="muse-platform-hld-viewer.html" loading="lazy" sandbox></iframe>
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-platform">Architecture</span>
+          <span class="tag tag-local">Docs</span>
+        </div>
+        <div class="card-title">Architecture HLD & Portfolio Deck</div>
+        <div class="card-desc">
+          3-tab viewer: Architecture HLD with Mermaid diagrams, Interview Tech Handbook, and Portfolio Deck (EN/ZH toggle). Full system design documentation.
+        </div>
+        <div class="card-meta">
+          <div class="tech">
+            <span class="tech-badge">Mermaid</span>
+            <span class="tech-badge">Markdown</span>
+            <span class="tech-badge">EN/ZH</span>
+          </div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Build Product Pipeline -->
+    <a class="card" href="interactive-build-product.html" target="_blank">
+      <div class="card-preview">
+        <iframe src="interactive-build-product.html" loading="lazy" sandbox></iframe>
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-platform">Process</span>
+          <span class="tag tag-local">Interactive</span>
+        </div>
+        <div class="card-title">Build Product Pipeline</div>
+        <div class="card-desc">
+          Interactive flowchart of the /build-product skill pipeline. Click nodes to explore each phase: Brainstorm, PRD Gate, UI Design, Architecture, Implement, Deploy.
+        </div>
+        <div class="card-meta">
+          <div class="tech">
+            <span class="tech-badge">SVG</span>
+            <span class="tech-badge">Interactive</span>
+          </div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- External Products -->
+  <div class="section-title">Shipped Products — Separate Repos</div>
+  <div class="grid">
+
+    <!-- London Flats -->
+    <a class="card" href="https://museReed.github.io/london-flats/" target="_blank">
+      <div class="card-preview">
+        <iframe src="https://museReed.github.io/london-flats/" loading="lazy" sandbox></iframe>
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-product">Product</span>
+          <span class="tag tag-external">GitHub Pages</span>
+        </div>
+        <div class="card-title">London Flats</div>
+        <div class="card-desc">
+          Automated rental aggregator. Nightly scraper for Rightmove, Zoopla, OpenRent + 3 more platforms. Unified search with smart filters, match scoring, and bookmarking.
+        </div>
+        <div class="card-meta">
+          <div class="tech">
+            <span class="tech-badge">Scraper</span>
+            <span class="tech-badge">GitHub Pages</span>
+          </div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CCA Learning -->
+    <a class="card" href="https://musereed.github.io/CCA-Learning/" target="_blank">
+      <div class="card-preview">
+        <iframe src="https://musereed.github.io/CCA-Learning/" loading="lazy" sandbox></iframe>
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-product">Product</span>
+          <span class="tag tag-external">GitHub Pages</span>
+          <span class="tag tag-platform">AI/ML</span>
+        </div>
+        <div class="card-title">CCA Learning</div>
+        <div class="card-desc">
+          Trilingual Claude Certification study platform. LLM-generated job-customized learning paths, Whisper-powered bilingual subtitles, ffmpeg timeline screenshots.
+        </div>
+        <div class="card-meta">
+          <div class="tech">
+            <span class="tech-badge">LLM</span>
+            <span class="tech-badge">Whisper</span>
+            <span class="tech-badge">ffmpeg</span>
+          </div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- KCL Workshop -->
+    <a class="card" href="https://musereed.github.io/claude-code-workshop/" target="_blank">
+      <div class="card-preview">
+        <iframe src="https://musereed.github.io/claude-code-workshop/" loading="lazy" sandbox></iframe>
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-product">Workshop</span>
+          <span class="tag tag-external">GitHub Pages</span>
+        </div>
+        <div class="card-title">KCL Claude Code Workshop</div>
+        <div class="card-desc">
+          King's College London AI Workshop materials. Hands-on Claude Code tutorial for academic researchers and students. Interactive exercises and best practices guide.
+        </div>
+        <div class="card-meta">
+          <div class="tech">
+            <span class="tech-badge">Claude Code</span>
+            <span class="tech-badge">Workshop</span>
+          </div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Interview Prep -->
+  <div class="section-title">Interview Preparation</div>
+  <div class="grid">
+
+    <!-- CV -->
+    <a class="card" href="cv-phison-tpm-1page-compact-en.html" target="_blank">
+      <div class="card-preview">
+        <iframe src="cv-phison-tpm-1page-compact-en.html" loading="lazy" sandbox></iframe>
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-local">Docs</span>
+        </div>
+        <div class="card-title">Resume (EN)</div>
+        <div class="card-desc">One-page compact CV optimized for AI TPM positions.</div>
+        <div class="card-meta">
+          <div class="tech"><span class="tech-badge">1 page</span></div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CV ZH -->
+    <a class="card" href="cv-phison-tpm-1page-compact-zh.html" target="_blank">
+      <div class="card-preview">
+        <iframe src="cv-phison-tpm-1page-compact-zh.html" loading="lazy" sandbox></iframe>
+        <div class="card-preview-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-tags">
+          <span class="tag tag-local">Docs</span>
+        </div>
+        <div class="card-title">Resume (ZH)</div>
+        <div class="card-desc">One-page compact CV in Traditional Chinese.</div>
+        <div class="card-meta">
+          <div class="tech"><span class="tech-badge">1 page</span></div>
+          <span class="arrow">&rarr;</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+</div>
+
+<footer>
+  Reed Hsin &mdash; Project Showcase &mdash; Powered by Muse Platform
+</footer>
+
+</body>
+</html>
