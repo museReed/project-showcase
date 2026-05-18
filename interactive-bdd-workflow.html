@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  AI×BDD Spec-Driven Fully Automated Development — Interactive Flowchart
+  ============================================================
+  Visualizes the AI×BDD course methodology
+  "規格驅動全自動化開發術". Three-phase workflow:
+    Phase 1: Discovery → Formulation (BDD Analysis)
+    Phase 2: Automation (TDD + Auto Feedback Loop)
+
+  Supports ?lang=en|zh.
+  ============================================================
+-->
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI×BDD Spec-Driven Development Workflow</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --role-a: #4A90E2;     /* PM / Discovery */
+    --role-b: #E91E63;     /* BDD Analyst */
+    --role-c: #F57C00;     /* QA / Validator */
+    --role-d: #9C27B0;     /* (unused) */
+    --role-e: #43A047;     /* Developer */
+    --role-f: #1B5E20;     /* (unused) */
+    --role-g: #546E7A;     /* AI Assistant */
+    --mix:    #37474F;     /* Multi-role */
+
+    --success: #43A047;
+    --failure: #D32F2F;
+    --done:    #FFC107;
+    --kill:    #D32F2F;
+    --highlight: #FF6B00;
+
+    --bg:         #F4F6FA;
+    --card:       #FFFFFF;
+    --text:       #1A202C;
+    --text-light: #4A5568;
+    --border:     #E2E8F0;
+    --output-color: #F9A825;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    padding: 36px 16px 80px;
+  }
+  /* Embedded in iframe: tighter padding */
+  body.embedded { padding: 16px 12px 40px; }
+  body.embedded header { margin-bottom: 24px; }
+
+  .container { max-width: 1280px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 44px; }
+  header h1 { font-size: 1.85rem; margin-bottom: 8px; }
+  header .subtitle { color: var(--text-light); font-size: 0.95rem; }
+
+  h2 {
+    font-size: 1.35rem;
+    margin: 56px 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .icon { font-size: 1.4rem; }
+  .section-desc {
+    color: var(--text-light);
+    font-size: 0.92rem;
+    margin-bottom: 24px;
+    max-width: 1000px;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+  .legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; padding: 5px 12px;
+    border-radius: 14px; background: var(--card);
+    border: 1px solid var(--border); color: var(--text-light);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-line { width: 28px; height: 3px; border-radius: 2px; background: var(--success); }
+  .legend-line.failure { height: 0; border-bottom: 2px dashed var(--failure); border-radius: 0; background: transparent; }
+
+  /* Phase divider labels */
+  .phase-label {
+    position: absolute;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-light);
+    writing-mode: horizontal-tb;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid var(--border);
+    z-index: 2;
+  }
+
+  .hflow-scroll {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .hflow-inner {
+    position: relative;
+    width: 1730px;
+    height: 520px;
+  }
+  .hflow-svg {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .hflow-svg .failure-arc { transition: opacity 0.18s, stroke-width 0.18s; }
+  .hflow-svg .failure-label { transition: opacity 0.18s; pointer-events: none; }
+
+  .hflow-nodes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .hflow-node {
+    position: absolute;
+    width: 140px; height: 80px;
+    border-radius: 9px;
+    padding: 10px 8px 8px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    color: white; font-weight: 600;
+    font-size: 0.85rem; line-height: 1.35;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    user-select: none;
+  }
+  .hflow-node:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+    z-index: 5;
+  }
+  .hflow-node.selected {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+    z-index: 6;
+  }
+  .hflow-node .num {
+    position: absolute; top: 5px; left: 9px;
+    font-size: 0.68rem; opacity: 0.85;
+    font-weight: 700; line-height: 1;
+  }
+  .hflow-node .fail-badge {
+    position: absolute; bottom: 4px; right: 6px;
+    font-size: 0.62rem;
+    background: rgba(0,0,0,0.25);
+    padding: 1px 7px; border-radius: 8px;
+    font-weight: 600;
+  }
+  .hflow-node .name { padding: 0 2px; }
+
+  .hflow-node.role-a { background: var(--role-a); }
+  .hflow-node.role-b { background: var(--role-b); }
+  .hflow-node.role-c { background: var(--role-c); }
+  .hflow-node.role-d { background: var(--role-d); }
+  .hflow-node.role-e { background: var(--role-e); }
+  .hflow-node.role-f { background: var(--role-f); }
+  .hflow-node.role-g { background: var(--role-g); }
+  .hflow-node.mix   { background: var(--mix); }
+  .hflow-node.done {
+    background: var(--done); color: var(--text);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 0 0 4px rgba(255,193,7,0.15);
+  }
+  .hflow-node.kill {
+    background: var(--kill);
+    height: 46px; font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(211,47,47,0.3);
+  }
+
+  .detail-below {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .detail-empty {
+    padding: 60px 20px; text-align: center;
+    color: var(--text-light); font-size: 1rem;
+  }
+  .detail-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-num {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--text); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .detail-num.role-a { background: var(--role-a); }
+  .detail-num.role-b { background: var(--role-b); }
+  .detail-num.role-c { background: var(--role-c); }
+  .detail-num.role-d { background: var(--role-d); }
+  .detail-num.role-e { background: var(--role-e); }
+  .detail-num.role-f { background: var(--role-f); }
+  .detail-num.role-g { background: var(--role-g); }
+  .detail-num.mix   { background: var(--mix); }
+  .detail-header h3 { font-size: 1.1rem; line-height: 1.4; }
+
+  .detail-3col {
+    display: grid;
+    grid-template-columns: 0.7fr 1.6fr 1.1fr;
+    gap: 0;
+  }
+  @media (max-width: 900px) { .detail-3col { grid-template-columns: 1fr; } }
+  .dcol {
+    padding: 18px 22px;
+    border-right: 1px solid var(--border);
+  }
+  .dcol:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .dcol { border-right: none; border-bottom: 1px solid var(--border); }
+    .dcol:last-child { border-bottom: none; }
+  }
+  .dcol h4 {
+    font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-light);
+    margin-bottom: 12px; font-weight: 700;
+  }
+  .dcol.what-col h4 { color: var(--role-e); }
+  .dcol.output-col h4 { color: #B45309; }
+
+  .role-tag {
+    display: inline-block;
+    font-size: 0.74rem; padding: 3px 10px;
+    border-radius: 10px; margin: 2px 4px 4px 0;
+    font-weight: 600;
+    background: #E2E8F0; color: var(--text);
+  }
+  .role-tag.role-a-t { background: var(--role-a); color: white; }
+  .role-tag.role-b-t { background: var(--role-b); color: white; }
+  .role-tag.role-c-t { background: var(--role-c); color: white; }
+  .role-tag.role-d-t { background: var(--role-d); color: white; }
+  .role-tag.role-e-t { background: var(--role-e); color: white; }
+  .role-tag.role-f-t { background: var(--role-f); color: white; }
+  .role-tag.role-g-t { background: var(--role-g); color: white; }
+
+  .subsection { margin-bottom: 14px; }
+  .subsection:last-child { margin-bottom: 0; }
+  .sublabel {
+    font-size: 0.85rem; font-weight: 700;
+    margin-bottom: 6px; padding-left: 10px;
+    border-left: 3px solid var(--text-light);
+  }
+  .sublabel.did { border-left-color: #3B82F6; color: #1D4ED8; }
+  .sublabel.pain { border-left-color: var(--failure); color: #991B1B; }
+  .sublabel.solution { border-left-color: #10B981; color: #065F46; }
+  .sublabel.happy { border-left-color: var(--success); color: #166534; }
+  .sublabel.failure-out { border-left-color: var(--failure); color: #991B1B; }
+
+  .subcontent {
+    font-size: 0.88rem; line-height: 1.65;
+    padding-left: 13px; color: var(--text);
+  }
+  .subcontent ul, ul.subcontent {
+    list-style: none; padding-left: 13px;
+  }
+  .subcontent li, ul.subcontent li {
+    padding: 4px 0 4px 14px;
+    position: relative;
+  }
+  .subcontent li::before, ul.subcontent li::before {
+    content: '\00b7'; position: absolute; left: 0;
+    color: var(--text-light); font-weight: 700;
+  }
+
+  .failure-list li {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 6px;
+    padding: 8px 12px !important;
+    margin: 6px 0;
+    list-style: none;
+  }
+  .failure-list li::before { display: none; }
+  .failure-list .goto {
+    background: #FEE2E2;
+    color: #991B1B;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600; font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .failure-list .goto:hover { background: #FCA5A5; color: white; }
+  .failure-list .kill {
+    background: #1F2937;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600; font-size: 0.78rem;
+  }
+  .muted { color: var(--text-light); font-style: italic; }
+
+  .role-diagram {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 20px;
+    overflow-x: auto;
+  }
+  .role-diagram .mermaid { text-align: center; }
+
+  .insight {
+    background: #FFF8E1;
+    border-left: 4px solid var(--output-color);
+    padding: 16px 20px;
+    border-radius: 6px;
+    margin-top: 24px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+  .insight strong { color: #BF360C; }
+  .insight p + p, .insight p + ul { margin-top: 8px; }
+  .insight ul { margin: 6px 0 6px 20px; line-height: 1.7; }
+
+  .domain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .domain-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--text-light);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .domain-card.role-a-b { border-top-color: var(--role-a); }
+  .domain-card.role-b-b { border-top-color: var(--role-b); }
+  .domain-card.role-c-b { border-top-color: var(--role-c); }
+  .domain-card.role-d-b { border-top-color: var(--role-d); }
+  .domain-card.role-e-b { border-top-color: var(--role-e); }
+  .domain-card.role-g-b { border-top-color: var(--role-g); }
+  .domain-card h4 { font-size: 0.95rem; margin-bottom: 6px; }
+  .domain-card .domain-knowledge {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+  .domain-card .domain-output {
+    font-size: 0.82rem;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.83rem;
+    line-height: 1.7;
+  }
+  footer code {
+    background: var(--card);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1 data-en="AI&times;BDD &mdash; Spec-Driven Fully Automated Development" data-zh="AI&times;BDD 規格驅動全自動化開發術">AI&times;BDD 規格驅動全自動化開發術</h1>
+    <p class="subtitle" data-en="3-phase workflow: Discovery &rarr; Formulation (BDD Analysis) &rarr; Automation (TDD + Auto Feedback Loop)" data-zh="三階段工作流：Discovery 探索需求 &rarr; Formulation 詞入格組寫 &rarr; Automation 全自動 TDD + Auto Feedback Loop">三階段工作流：Discovery 探索需求 &rarr; Formulation 詞入格組寫 &rarr; Automation 全自動 TDD + Auto Feedback Loop</p>
+  </header>
+
+  <h2><span class="icon">🌳</span><span data-en="Development Process &mdash; Decision Tree" data-zh="開發流程 &mdash; 決策樹">開發流程 &mdash; 決策樹</span></h2>
+  <p class="section-desc" data-en='<strong style="color:var(--success)">Green solid line</strong> = happy path (left&rarr;right); <strong style="color:var(--failure)">Red dashed arc</strong> = failure/rework paths. <strong>Phase 1</strong> (nodes 1-5): Spec. <strong>Phase 2</strong> (nodes 6-9): Automation.<br/><strong>👉 Click any node</strong> to see Who / What / Output details.' data-zh='<strong style="color:var(--success)">綠色實線</strong> = 正常路徑（左&rarr;右）；<strong style="color:var(--failure)">紅色虛線弧</strong> = 失敗/返工路徑。<strong>Phase 1</strong>（節點 1-5）：規格。<strong>Phase 2</strong>（節點 6-9）：自動化。<br/><strong>👉 點擊節點</strong>查看 Who / What / Output 細節。'>
+    <strong style="color:var(--success)">綠色實線</strong> = 正常路徑（左&rarr;右）；<strong style="color:var(--failure)">紅色虛線弧</strong> = 失敗/返工路徑。<strong>Phase 1</strong>（節點 1-5）：規格。<strong>Phase 2</strong>（節點 6-9）：自動化。<br/><strong>👉 點擊節點</strong>查看 Who / What / Output 細節。
+  </p>
+
+  <div class="legend">
+    <span class="legend-item"><span class="legend-line"></span><span data-en="Happy Path" data-zh="正常路徑">正常路徑</span></span>
+    <span class="legend-item"><span class="legend-line failure"></span><span data-en="Failure/Rework" data-zh="失敗/返工">失敗/返工</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-a)"></span><span data-en="PM / Discovery" data-zh="PM / Discovery">PM / Discovery</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-b)"></span><span data-en="BDD Analyst" data-zh="BDD Analyst">BDD Analyst</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-c)"></span><span data-en="QA / Validator" data-zh="QA / Validator">QA / Validator</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-e)"></span><span data-en="Developer" data-zh="開發者">開發者</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-g)"></span><span data-en="AI Assistant" data-zh="AI 助手">AI 助手</span></span>
+  </div>
+
+  <div class="hflow-scroll">
+    <div class="hflow-inner" id="hflow-inner">
+      <svg class="hflow-svg" id="hflow-svg" viewBox="0 0 1730 520" preserveAspectRatio="xMinYMin meet"></svg>
+      <div class="hflow-nodes" id="hflow-nodes"></div>
+    </div>
+  </div>
+
+  <div class="detail-below" id="detail-panel">
+    <div class="detail-empty">👆 Click any node above to see details</div>
+  </div>
+
+  <!-- ====== Spec Triad Diagram ====== -->
+  <h2><span class="icon">🔗</span><span data-en="Backend Spec Triad &mdash; Iron Triangle" data-zh="後端規格三巨頭 &mdash; 鐵三角關係">後端規格三巨頭 &mdash; 鐵三角關係</span></h2>
+  <p class="section-desc" data-en="The Spec Triad (Feature File + API Spec + Data Spec) must be triangularly consistent. Any change to one must cascade to the other two." data-zh="規格鐵三角（Feature File + API Spec + Data Spec）必須三角一致。任何一份的改動都必須連鎖更新其他兩份。">規格鐵三角（Feature File + API Spec + Data Spec）必須三角一致。任何一份的改動都必須連鎖更新其他兩份。</p>
+  <div class="role-diagram">
+    <div class="mermaid">
+flowchart TD
+    FF(["📄 &lt;b&gt;Feature File&lt;/b&gt;&lt;br/&gt;Gherkin Given-When-Then"])
+    API["🔌 &lt;b&gt;API Spec&lt;/b&gt;&lt;br/&gt;OpenAPI 3.0"]
+    DBML["💾 &lt;b&gt;Data Spec&lt;/b&gt;&lt;br/&gt;DBML / ERD"]
+
+    FF ====>|"每個 Feature ↔ 一個 Endpoint"| API
+    API ====>|"每個參數 ↔ DBML 欄位"| DBML
+    DBML ====>|"約束 ↔ Gherkin Rule"| FF
+
+    classDef ffStyle fill:#E91E63,stroke:#9F1239,color:#fff,font-weight:bold;
+    classDef apiStyle fill:#4A90E2,stroke:#2C5282,color:#fff,font-weight:bold;
+    classDef dbStyle fill:#43A047,stroke:#1B5E20,color:#fff,font-weight:bold;
+
+    class FF ffStyle;
+    class API apiStyle;
+    class DBML dbStyle;
+    </div>
+  </div>
+
+  <div class="insight">
+    <p><strong data-en="Key Insight &mdash; Spec IS the Test" data-zh="核心洞察 &mdash; 規格即測試">核心洞察 &mdash; 規格即測試</strong></p>
+    <p data-en="BDD Analysis '5-Step Spec Writing' transforms vague requirements into precise executable specifications. The Spec Triad ensures behavioral model, communication contract, and data model are triangularly consistent. Auto Feedback Loop lets AI auto-fix until all green, eliminating human back-and-forth. The goal: zero interpretation gap at spec level, fully automated closed loop at implementation level." data-zh="BDD Analysis 的「詞入格組寫」將模糊需求轉換為精確的可執行規格。三巨頭規格確保行為模型、通訊契約、資料模型三角一致。Auto Feedback Loop 讓 AI 自動修復直到全綠，消除人工反覆。整套流程的目標：在規格層面做到零詮釋空間，在實作層面做到全自動閉環。">BDD Analysis 的「詞入格組寫」將模糊需求轉換為精確的可執行規格。三巨頭規格確保行為模型、通訊契約、資料模型三角一致。Auto Feedback Loop 讓 AI 自動修復直到全綠，消除人工反覆。整套流程的目標：在規格層面做到零詮釋空間，在實作層面做到全自動閉環。</p>
+  </div>
+
+  <!-- ====== Domain Knowledge Cards ====== -->
+  <h2><span class="icon">📚</span><span data-en="BDD Analysis 5 Steps + 6 QA Tactics" data-zh="BDD Analysis 五步驟 + QA 六大戰術">BDD Analysis 五步驟 + QA 六大戰術</span></h2>
+  <p class="section-desc" data-en="The 5-step BDD Analysis process systematically transforms requirements into executable Gherkin specs, backed by 6 QA testing tactics for comprehensive coverage." data-zh="五步驟 BDD Analysis 系統性地將需求轉換為可執行的 Gherkin 規格，搭配六大 QA 測試戰術確保全面覆蓋。">五步驟 BDD Analysis 系統性地將需求轉換為可執行的 Gherkin 規格，搭配六大 QA 測試戰術確保全面覆蓋。</p>
+  <div class="domain-grid">
+    <div class="domain-card role-a-b">
+      <h4 data-en="1. Define DSL" data-zh="1. 詞 (Define DSL)">1. 詞 (Define DSL)</h4>
+      <div class="domain-knowledge" data-en="📚 Define sentence patterns in dsl.yml" data-zh="📚 定義 DSL 句型表 dsl.yml">📚 定義 DSL 句型表 dsl.yml</div>
+      <div class="domain-output" data-en="Produces: Parameterized sentence patterns" data-zh="Produces: 參數化句型">Produces: 參數化句型</div>
+    </div>
+    <div class="domain-card role-b-b">
+      <h4 data-en="2. Apply QA Tactics" data-zh="2. 入 (Apply QA Tactics)">2. 入 (Apply QA Tactics)</h4>
+      <div class="domain-knowledge" data-en="📚 6 QA testing tactics: EP/BVA/DT/ST/CM/FP" data-zh="📚 EP/BVA/DT/ST/CM/FP 六大戰術">📚 EP/BVA/DT/ST/CM/FP 六大戰術</div>
+      <div class="domain-output" data-en="Produces: Test strategy tags" data-zh="Produces: 測試策略標籤">Produces: 測試策略標籤</div>
+    </div>
+    <div class="domain-card role-c-b">
+      <h4 data-en="3. Derive Matrix" data-zh="3. 格 (Derive Matrix)">3. 格 (Derive Matrix)</h4>
+      <div class="domain-knowledge" data-en="📚 Derive equivalence classes + test data" data-zh="📚 推導等價類矩陣 + 測試資料">📚 推導等價類矩陣 + 測試資料</div>
+      <div class="domain-output" data-en="Produces: Test data matrix" data-zh="Produces: 測試資料矩陣">Produces: 測試資料矩陣</div>
+    </div>
+    <div class="domain-card role-d-b">
+      <h4 data-en="4. Merge Examples" data-zh="4. 組 (Merge Examples)">4. 組 (Merge Examples)</h4>
+      <div class="domain-knowledge" data-en="📚 Determine merge conditions for Scenarios" data-zh="📚 判定 Scenario 合併條件">📚 判定 Scenario 合併條件</div>
+      <div class="domain-output" data-en="Produces: Scenario vs Outline" data-zh="Produces: Scenario vs Outline">Produces: Scenario vs Outline</div>
+    </div>
+    <div class="domain-card role-e-b">
+      <h4 data-en="5. Write Feature" data-zh="5. 寫 (Write Feature)">5. 寫 (Write Feature)</h4>
+      <div class="domain-knowledge" data-en="📚 Write final Feature File" data-zh="📚 產出最終 Feature File">📚 產出最終 Feature File</div>
+      <div class="domain-output" data-en="Produces: Gherkin spec" data-zh="Produces: Gherkin 規格">Produces: Gherkin 規格</div>
+    </div>
+    <div class="domain-card role-g-b">
+      <h4 data-en="6 QA Tactics" data-zh="QA 戰術 (6 Tactics)">QA 戰術 (6 Tactics)</h4>
+      <div class="domain-knowledge" data-en="📚 EP, BVA, DT, ST, CM, FP &mdash; 6 complementary testing tactics" data-zh="📚 EP 等價劃分、BVA 邊界值、DT 決策表、ST 狀態轉移、CM 組合、FP 故障注入">📚 EP 等價劃分、BVA 邊界值、DT 決策表、ST 狀態轉移、CM 組合、FP 故障注入</div>
+      <div class="domain-output" data-en="Produces: Comprehensive test coverage" data-zh="Produces: 全面測試覆蓋">Produces: 全面測試覆蓋</div>
+    </div>
+  </div>
+
+  <footer>
+    <p data-en='Source: <code>/Volumes/Muse_AI_Core/AI_BDD：規格驅動全自動化開發術/knowledge/</code>' data-zh='來源：<code>/Volumes/Muse_AI_Core/AI_BDD：規格驅動全自動化開發術/knowledge/</code>'>來源：<code>/Volumes/Muse_AI_Core/AI_BDD：規格驅動全自動化開發術/knowledge/</code></p>
+  </footer>
+
+</div>
+
+<script>
+  // ===== i18n =====
+  const LANG = new URLSearchParams(window.location.search).get('lang') || 'zh';
+
+  function applyLang(lang) {
+    document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+      const val = el.getAttribute(`data-${lang}`);
+      if (val) el.innerHTML = val;
+    });
+  }
+
+  // ===== Embedded detection =====
+  try { if (window.self !== window.top) document.body.classList.add('embedded'); }
+  catch(e) { document.body.classList.add('embedded'); }
+  if (new URLSearchParams(window.location.search).has('embedded'))
+    document.body.classList.add('embedded');
+
+  // ===== Flow chart constants =====
+  const NODE_WIDTH = 140;
+  const NODE_HEIGHT = 80;
+  const GAP = 30;
+  const START_X = 30;
+  const MAIN_Y = 280;
+
+  // ===== Flow nodes =====
+  const zh = LANG === 'zh';
+  const flowNodes = [
+    { id: 1, name: zh ? "需求探索<br/>Discovery" : "Discovery<br/>Requirements", color: "role-a" },
+    { id: 2, name: zh ? "澄清迴圈<br/>Clarify Loop" : "Clarify Loop<br/>CiC &rarr; Zero", color: "role-a" },
+    { id: 3, name: zh ? "BDD 分析<br/>詞入格組寫" : "BDD Analysis<br/>5-Step Spec", color: "role-b" },
+    { id: 4, name: zh ? "三巨頭規格<br/>Feature+DBML+API" : "Spec Triad<br/>Feature+DBML+API", color: "role-e" },
+    { id: 5, name: zh ? "一致性檢查<br/>Consistency" : "Consistency<br/>Check", color: "role-c" },
+    { id: 6, name: zh ? "TDD RED<br/>寫失敗測試" : "TDD RED<br/>Write Failing Tests", color: "role-c" },
+    { id: 7, name: zh ? "TDD GREEN<br/>最小實作" : "TDD GREEN<br/>Minimal Impl", color: "role-g" },
+    { id: 8, name: zh ? "Auto Feedback<br/>Loop" : "Auto Feedback<br/>Loop", color: "role-g" },
+    { id: 9, name: zh ? "Refactor<br/>+ ATDD" : "Refactor<br/>+ ATDD", color: "role-e" },
+    { id: "done", name: zh ? "🎉 功能<br/>完成" : "🎉 Feature<br/>Complete", color: "done" }
+  ];
+
+  // ===== Failure paths =====
+  const failurePaths = [
+    { from: 2, to: 1, label: zh ? "需要更多探索" : "Need more discovery" },
+    { from: 5, to: 3, label: zh ? "規格不一致" : "Spec inconsistent" },
+    { from: 5, to: 1, label: zh ? "發現規格缺口" : "Spec gap found" },
+    { from: 8, to: 7, label: zh ? "測試失敗 → 自動修復" : "Test fail → auto-fix" },
+    { from: 8, to: 3, label: zh ? "規格偏差 → Change Flow" : "Spec drift → Change Flow" },
+    { from: 9, to: 6, label: zh ? "品質不達標" : "Quality insufficient" }
+  ];
+
+  // ===== Helpers =====
+  function getNodeIndex(id) {
+    return flowNodes.findIndex(n => String(n.id) === String(id));
+  }
+  function getX(id) { return START_X + getNodeIndex(id) * (NODE_WIDTH + GAP); }
+  function getCenterX(id) { return getX(id) + NODE_WIDTH / 2; }
+
+  // ===== Render flow =====
+  function renderFlow() {
+    const svg = document.getElementById('hflow-svg');
+    const container = document.getElementById('hflow-nodes');
+
+    let svgHtml = `
+      <defs>
+        <marker id="arr-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#43A047"/>
+        </marker>
+        <marker id="arr-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#D32F2F"/>
+        </marker>
+      </defs>
+    `;
+
+    // Phase divider line between node 5 and 6
+    const dividerX = getX(flowNodes[5].id) - GAP / 2;
+    svgHtml += `<line x1="${dividerX}" y1="${MAIN_Y - 120}" x2="${dividerX}" y2="${MAIN_Y + 120}" stroke="${'var(--border)'}" stroke-width="2" stroke-dasharray="8 4" opacity="0.6"/>`;
+    svgHtml += `<text x="${dividerX - 8}" y="${MAIN_Y - 130}" text-anchor="end" font-size="11" fill="#4A5568" font-weight="700" opacity="0.7">PHASE 1 — SPEC</text>`;
+    svgHtml += `<text x="${dividerX + 8}" y="${MAIN_Y - 130}" text-anchor="start" font-size="11" fill="#4A5568" font-weight="700" opacity="0.7">PHASE 2 — AUTOMATION</text>`;
+
+    // Happy path arrows
+    for (let i = 0; i < flowNodes.length - 1; i++) {
+      const sx = getX(flowNodes[i].id) + NODE_WIDTH;
+      const tx = getX(flowNodes[i+1].id);
+      svgHtml += `<line x1="${sx}" y1="${MAIN_Y}" x2="${tx - 4}" y2="${MAIN_Y}" stroke="#43A047" stroke-width="3" marker-end="url(#arr-h)"/>`;
+    }
+
+    // Failure arcs
+    failurePaths.forEach((f, idx) => {
+      if (f.to === "kill") {
+        const cx = getCenterX(f.from);
+        const sy = MAIN_Y + NODE_HEIGHT / 2;
+        const ty = 415;
+        svgHtml += `<path d="M ${cx} ${sy} L ${cx} ${ty - 4}" stroke="#D32F2F" stroke-width="1.8" stroke-dasharray="5 4" opacity="0.4" fill="none" marker-end="url(#arr-f)" data-from="${f.from}" data-idx="${idx}" class="failure-arc"/>`;
+        svgHtml += `<text x="${cx + 10}" y="${(sy + ty) / 2}" text-anchor="start" font-size="11" fill="#7F1D1D" class="failure-label" data-from="${f.from}" data-idx="${idx}" font-weight="600" opacity="0">${f.label}</text>`;
+      } else {
+        const sx = getCenterX(f.from);
+        const tx = getCenterX(f.to);
+        const span = Math.abs(getNodeIndex(f.from) - getNodeIndex(f.to));
+        const arcHeight = 30 + span * 16;
+        const sy = MAIN_Y - NODE_HEIGHT / 2;
+        const peakY = sy - arcHeight;
+        svgHtml += `<path d="M ${sx} ${sy} C ${sx} ${peakY}, ${tx} ${peakY}, ${tx} ${sy - 4}" stroke="#D32F2F" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.28" fill="none" marker-end="url(#arr-f)" data-from="${f.from}" data-idx="${idx}" class="failure-arc"/>`;
+        const midX = (sx + tx) / 2;
+        svgHtml += `<text x="${midX}" y="${peakY - 5}" text-anchor="middle" font-size="11" fill="#7F1D1D" class="failure-label" data-from="${f.from}" data-idx="${idx}" font-weight="600" opacity="0">${f.label}</text>`;
+      }
+    });
+
+    svg.innerHTML = svgHtml;
+
+    // Render node cards
+    let html = '';
+    flowNodes.forEach(n => {
+      const x = getX(n.id);
+      const failures = failurePaths.filter(f => f.from === n.id).length;
+      const num = typeof n.id === 'number' ? n.id : '';
+      html += `
+        <div class="hflow-node ${n.color}" data-id="${n.id}" style="left:${x}px; top:${MAIN_Y - NODE_HEIGHT/2}px;"
+             onclick="onNodeClick('${n.id}')"
+             onmouseenter="onNodeHover('${n.id}', true)"
+             onmouseleave="onNodeHover('${n.id}', false)">
+          ${num ? `<div class="num">${num}</div>` : ''}
+          <div class="name">${n.name}</div>
+          ${failures > 0 ? `<div class="fail-badge">⚠ ${failures}</div>` : ''}
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ===== Node detail data =====
+  const nodeData_zh = {
+    "1": {
+      name: "Step 1 — 需求探索 Discovery",
+      colorClass: "role-a",
+      who: [["PM / 利益相關者", "role-a-t"], ["AI 助手", "role-g-t"]],
+      what: {
+        did: "使用 Checklist 系統性掃描需求中所有歧義與遺漏。標記四類問題：<strong>AMB</strong>（歧義）、<strong>ASM</strong>（假設）、<strong>GAP</strong>（缺口）、<strong>BDY</strong>（邊界）。執行 Strategic Discovery（Activity Diagram + Draft Feature File）和 Tactical Discovery（API Spec skeleton + DBML entity 初稿）。目標：將 3-4 個模糊問題擴展為 40-50 個精確問題。",
+        pains: [
+          "需求文件模糊，隱含大量假設",
+          "Stakeholder 不在線導致 Clarify Loop 中斷"
+        ],
+        solutions: [
+          "✅ Checklist 強制系統性掃描，不靠直覺",
+          "💡 AI 自動標記 CiC（Comment in Code）"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>CiC 清單 + Draft Feature File + API/DBML skeleton</strong> → 進入 Clarify Loop",
+        failure: []
+      }
+    },
+    "2": {
+      name: "Step 2 — 澄清迴圈 Clarify Loop",
+      colorClass: "role-a",
+      who: [["PM", "role-a-t"], ["AI（對話迴圈）", "role-g-t"]],
+      what: {
+        did: "AI 標記所有澄清問題（CiC），集中提問給人類。人類回答後更新規格。<strong>持續迴圈直到 CiC 清零</strong>。每輪結束產出 CiC 清零報告。這是消除所有詮釋空間的核心機制 — 確保進入 Formulation 前沒有任何模糊地帶。",
+        pains: [
+          "CiC 清零需要多輪才能完成",
+          "PM 回答不夠精確需要追問"
+        ],
+        solutions: [
+          "✅ 每輪產出 CiC 清零報告追蹤進度",
+          "💡 AI 自動偵測含糊回答並追問"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>CiC 全部清零</strong> → 進入 BDD Analysis",
+        failure: [
+          { condition: "需要更多 Domain 探索", target: 1 }
+        ]
+      }
+    },
+    "3": {
+      name: "Step 3 — BDD Analysis 詞入格組寫",
+      colorClass: "role-b",
+      who: [["AI 助手", "role-g-t"], ["開發者（審核）", "role-e-t"]],
+      what: {
+        did: "五步驟結構化規格寫作：<strong>(1) 詞</strong>：定義 DSL 句型表 dsl.yml — 每個參數判斷是否影響系統行為，Yes→參數化，No→設預設值。<strong>(2) 入</strong>：套用 QA 六大戰術 — EP 等價劃分、BVA 邊界值、DT 決策表、ST 狀態轉移、CM 組合測試、FP 故障注入。<strong>(3) 格</strong>：推導等價類矩陣與測試資料。<strong>(4) 組</strong>：判定 Example 合併 — 相同 When+Then → Scenario Outline。<strong>(5) 寫</strong>：產出最終 Feature File。核心原則：「無腦補，嚴格 1:1 翻譯」。",
+        pains: [
+          "等價類推導容易遺漏邊界值",
+          "QA 戰術選擇需要領域經驗"
+        ],
+        solutions: [
+          "✅ 六大 QA 戰術逐一強制套用",
+          "✅ AI 自動推導等價類矩陣"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>完整 Feature File（Gherkin）+ DSL 句型表</strong> → 進入三巨頭規格",
+        failure: []
+      }
+    },
+    "4": {
+      name: "Step 4 — 三巨頭規格",
+      colorClass: "role-e",
+      who: [["開發者", "role-e-t"], ["AI 助手", "role-g-t"]],
+      what: {
+        did: "產出後端規格鐵三角：<strong>(1) Feature File</strong>（行為模型，Gherkin Given-When-Then）— 每個 Feature ↔ 一個 API Endpoint，每個 Rule ↔ 一個業務邏輯，每個 Example ↔ 一個 Test Case。<strong>(2) API Spec</strong>（通訊契約，OpenAPI 3.0）。<strong>(3) Data Spec</strong>（資料模型，DBML/ERD）。三者必須完全一致，任何改動需連鎖更新。",
+        pains: [
+          "Feature File 和 DBML 欄位名不對稱",
+          "API Spec 遺漏 error response"
+        ],
+        solutions: [
+          "✅ Feature File ↔ API Endpoint 強制 1:1 對應",
+          "✅ DBML 資料型別自動約束 Example 資料"
+        ]
+      },
+      output: {
+        happy: "📐 <strong>三巨頭規格完整（Feature + API + DBML）</strong> → 進入一致性檢查",
+        failure: []
+      }
+    },
+    "5": {
+      name: "Step 5 — 一致性檢查",
+      colorClass: "role-c",
+      who: [["AI（Consistency Analyzer）", "role-g-t"]],
+      what: {
+        did: "驗證 Feature File ↔ DBML ↔ API Spec <strong>三角一致性</strong>。檢查項目：Example 欄位 ↔ DBML 定義、API 參數 ↔ Feature Step、DBML 約束 ↔ Gherkin Rule。自信度 ≥ 80% → 自動修復並 commit；< 80% → 人工審查。通過後進入 Phase 2 全自動開發。",
+        pains: [
+          "三份規格由不同時間產出容易 drift",
+          "連鎖更新容易遺漏"
+        ],
+        solutions: [
+          "✅ Consistency Analyzer Skill 自動掃描差異",
+          "✅ 改一份自動連鎖更新其他兩份"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>三角一致性通過</strong> → 進入 Phase 2 Automation",
+        failure: [
+          { condition: "規格不一致 → 重新分析", target: 3 },
+          { condition: "發現規格缺口 → 重新探索", target: 1 }
+        ]
+      }
+    },
+    "6": {
+      name: "Step 6 — TDD RED",
+      colorClass: "role-c",
+      who: [["AI 助手", "role-g-t"], ["開發者", "role-e-t"]],
+      what: {
+        did: "<strong>Step 00</strong>：掃描 Feature File 產出 Step Definition 樣板。<strong>Step 01 RED</strong>：AI 根據每個 Gherkin step 寫測試。翻譯 Event Storming 六大部位：Aggregate-Given → Command-When → Query-When → Aggregate-Then → Read Model Then → Success/Failure。<strong>UT 層級</strong>：直接呼叫 Service（Mock 外部依賴）。<strong>E2E 層級</strong>：透過 HTTP API（Docker + Test Container 無狀態環境）。",
+        pains: [
+          "Step Definition 與 Feature File 的 step 對不上",
+          "E2E 需要完整 Docker 環境"
+        ],
+        solutions: [
+          "✅ Step 00 自動掃描生成樣板確保對齊",
+          "✅ Docker Compose + Test Container 一鍵啟動"
+        ]
+      },
+      output: {
+        happy: "🔴 <strong>所有測試紅燈（正確的紅燈）</strong> → 進入 GREEN",
+        failure: []
+      }
+    },
+    "7": {
+      name: "Step 7 — TDD GREEN",
+      colorClass: "role-g",
+      who: [["AI（實作者）", "role-g-t"]],
+      what: {
+        did: "AI 寫<strong>最簡單的實作代碼</strong>讓所有紅燈測試通過。「最小實作原則」— 只做剛好讓測試通過的事，不多寫。UT 層級實作 Service layer；E2E 層級實作 API endpoint + DB 操作。通過即停止，不做額外優化。",
+        pains: [
+          "AI 容易「過度實作」超出測試要求",
+          "AI 產出不夠 minimal"
+        ],
+        solutions: [
+          "✅ Prompt 明確要求「最小實作」",
+          "✅ 測試通過即停止，不做預判"
+        ]
+      },
+      output: {
+        happy: "🟢 <strong>所有測試綠燈</strong> → 進入 Auto Feedback Loop",
+        failure: []
+      }
+    },
+    "8": {
+      name: "Step 8 — Auto Feedback Loop",
+      colorClass: "role-g",
+      who: [["AI（全自動）", "role-g-t"]],
+      what: {
+        did: "全自動閉環，不需人工干預：<strong>① 執行所有測試 ② 解析測試報告 ③ 修正失敗項目 ④ 回到 ①</strong>，直到 ALL GREEN。設定最大迭代次數（如 5 次）。如果無法自動修復 → 標記 CiC 走 Change Flow。這是達到「100% 功能正確」的核心機制。Change Flow = 增量迭代，前面已完成的部分保持不動。",
+        pains: [
+          "某些失敗是規格問題不是代碼問題",
+          "Loop 可能無限循環"
+        ],
+        solutions: [
+          "✅ 最大迭代次數限制",
+          "✅ 無法修復 → 提 CiC 走 Change Flow（不推倒重來）"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>ALL GREEN</strong> → 進入 Refactor",
+        failure: [
+          { condition: "測試失敗 → AI 自動修復", target: 7 },
+          { condition: "規格偏差 → Change Flow", target: 3 }
+        ]
+      }
+    },
+    "9": {
+      name: "Step 9 — Refactor + ATDD",
+      colorClass: "role-e",
+      who: [["開發者", "role-e-t"], ["AI 助手", "role-g-t"]],
+      what: {
+        did: "<strong>REFACTOR</strong>：改善代碼品質（命名、複雜度、設計模式）不改行為，測試仍全綠。<strong>ATDD 遞迴結構</strong>（大腸包小腸）：L1 TLB 寫驗收測試 → L2 Sub-Boundary 做 TDD → 回頭驗證 L1。按測試複雜度分析（Reason of Change + Change Flow + Pattern Language）決定拆分深度。邊界設計：耦合高 → 一起測；業務邏輯重 → 獨立 Aggregate + Sub-Boundary。",
+        pains: [
+          "Refactor 時不小心改了行為",
+          "ATDD 遞迴拆分過深"
+        ],
+        solutions: [
+          "✅ Refactor 後重跑全部測試",
+          "✅ 按測試複雜度三維度分析決定拆分深度"
+        ]
+      },
+      output: {
+        happy: "🎉 <strong>代碼品質達標 + 所有層級測試全綠</strong> → Done",
+        failure: [
+          { condition: "品質不達標 → 重做 TDD 循環", target: 6 }
+        ]
+      }
+    },
+    "done": {
+      name: "🎉 功能完成",
+      colorClass: "mix",
+      who: [["全團隊", "role-e-t"]],
+      what: {
+        did: "Feature 完成。所有 UT + E2E 測試全綠。Feature File ↔ DBML ↔ API Spec 完全一致。Auto Feedback Loop 驗證通過。代碼品質達標。",
+        pains: [],
+        solutions: []
+      },
+      output: {
+        happy: "🎉 <strong>100% 功能正確的可交付功能 + 完整規格文件</strong>",
+        failure: []
+      }
+    }
+  };
+
+  const nodeData_en = {
+    "1": {
+      name: "Step 1 — Discovery",
+      colorClass: "role-a",
+      who: [["PM / Stakeholders", "role-a-t"], ["AI Assistant", "role-g-t"]],
+      what: {
+        did: "Systematically scan requirements for all ambiguities and gaps using a Checklist. Tag four issue types: <strong>AMB</strong> (Ambiguity), <strong>ASM</strong> (Assumption), <strong>GAP</strong> (Gap), <strong>BDY</strong> (Boundary). Execute Strategic Discovery (Activity Diagram + Draft Feature File) and Tactical Discovery (API Spec skeleton + DBML entity draft). Goal: expand 3-4 vague issues into 40-50 precise questions.",
+        pains: [
+          "Requirements documents are vague with hidden assumptions",
+          "Stakeholder unavailability breaks the Clarify Loop"
+        ],
+        solutions: [
+          "✅ Checklist enforces systematic scanning, no guesswork",
+          "💡 AI auto-tags CiC (Comment in Code) items"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>CiC list + Draft Feature File + API/DBML skeleton</strong> → enter Clarify Loop",
+        failure: []
+      }
+    },
+    "2": {
+      name: "Step 2 — Clarify Loop",
+      colorClass: "role-a",
+      who: [["PM", "role-a-t"], ["AI (conversation loop)", "role-g-t"]],
+      what: {
+        did: "AI tags all clarification questions (CiC), batches them for human review. Humans answer, specs update. <strong>Loop continues until CiC reaches zero</strong>. Each round produces a CiC zero-out report. This is the core mechanism for eliminating all interpretation gaps — ensuring zero ambiguity before entering Formulation.",
+        pains: [
+          "CiC zero-out requires multiple rounds",
+          "PM answers are sometimes too vague, requiring follow-up"
+        ],
+        solutions: [
+          "✅ Each round produces CiC zero-out report to track progress",
+          "💡 AI auto-detects vague answers and follows up"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>All CiC cleared to zero</strong> → enter BDD Analysis",
+        failure: [
+          { condition: "Need more domain exploration", target: 1 }
+        ]
+      }
+    },
+    "3": {
+      name: "Step 3 — BDD Analysis (5-Step Spec)",
+      colorClass: "role-b",
+      who: [["AI Assistant", "role-g-t"], ["Developer (reviewer)", "role-e-t"]],
+      what: {
+        did: "Five-step structured spec writing: <strong>(1) Define</strong>: Create DSL sentence patterns in dsl.yml — for each parameter, decide if it affects system behavior: Yes→parameterize, No→set default. <strong>(2) Apply</strong>: Apply 6 QA tactics — EP equivalence partitioning, BVA boundary value, DT decision table, ST state transition, CM combinatorial, FP fault injection. <strong>(3) Derive</strong>: Generate equivalence class matrix and test data. <strong>(4) Merge</strong>: Determine Example merging — same When+Then → Scenario Outline. <strong>(5) Write</strong>: Produce final Feature File. Core principle: 'No guessing, strict 1:1 translation'.",
+        pains: [
+          "Equivalence class derivation easily misses boundary values",
+          "QA tactic selection requires domain experience"
+        ],
+        solutions: [
+          "✅ All 6 QA tactics applied one by one, mandatory",
+          "✅ AI auto-derives equivalence class matrix"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>Complete Feature File (Gherkin) + DSL sentence patterns</strong> → enter Spec Triad",
+        failure: []
+      }
+    },
+    "4": {
+      name: "Step 4 — Spec Triad",
+      colorClass: "role-e",
+      who: [["Developer", "role-e-t"], ["AI Assistant", "role-g-t"]],
+      what: {
+        did: "Produce the backend spec iron triangle: <strong>(1) Feature File</strong> (behavioral model, Gherkin Given-When-Then) — each Feature ↔ one API Endpoint, each Rule ↔ one business logic, each Example ↔ one Test Case. <strong>(2) API Spec</strong> (communication contract, OpenAPI 3.0). <strong>(3) Data Spec</strong> (data model, DBML/ERD). All three must be fully consistent; any change requires cascading updates.",
+        pains: [
+          "Feature File and DBML field names don't align",
+          "API Spec missing error responses"
+        ],
+        solutions: [
+          "✅ Feature File ↔ API Endpoint mandatory 1:1 mapping",
+          "✅ DBML data types auto-constrain Example data"
+        ]
+      },
+      output: {
+        happy: "📐 <strong>Complete Spec Triad (Feature + API + DBML)</strong> → enter Consistency Check",
+        failure: []
+      }
+    },
+    "5": {
+      name: "Step 5 — Consistency Check",
+      colorClass: "role-c",
+      who: [["AI (Consistency Analyzer)", "role-g-t"]],
+      what: {
+        did: "Verify Feature File ↔ DBML ↔ API Spec <strong>triangular consistency</strong>. Check items: Example fields ↔ DBML definitions, API parameters ↔ Feature Steps, DBML constraints ↔ Gherkin Rules. Confidence ≥ 80% → auto-fix and commit; < 80% → human review. Once passed, enter Phase 2 fully automated development.",
+        pains: [
+          "Three specs produced at different times easily drift",
+          "Cascading updates easily missed"
+        ],
+        solutions: [
+          "✅ Consistency Analyzer Skill auto-scans differences",
+          "✅ Change one spec → auto-cascade updates to other two"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>Triangular consistency passed</strong> → enter Phase 2 Automation",
+        failure: [
+          { condition: "Spec inconsistent → re-analyze", target: 3 },
+          { condition: "Spec gap found → re-discover", target: 1 }
+        ]
+      }
+    },
+    "6": {
+      name: "Step 6 — TDD RED",
+      colorClass: "role-c",
+      who: [["AI Assistant", "role-g-t"], ["Developer", "role-e-t"]],
+      what: {
+        did: "<strong>Step 00</strong>: Scan Feature File to generate Step Definition scaffolding. <strong>Step 01 RED</strong>: AI writes tests for each Gherkin step. Translating Event Storming 6 parts: Aggregate-Given → Command-When → Query-When → Aggregate-Then → Read Model Then → Success/Failure. <strong>UT level</strong>: Direct Service calls (Mock external deps). <strong>E2E level</strong>: Via HTTP API (Docker + Test Container stateless env).",
+        pains: [
+          "Step Definitions don't match Feature File steps",
+          "E2E requires full Docker environment"
+        ],
+        solutions: [
+          "✅ Step 00 auto-scan generates scaffolding for alignment",
+          "✅ Docker Compose + Test Container one-click startup"
+        ]
+      },
+      output: {
+        happy: "🔴 <strong>All tests RED (correct RED)</strong> → enter GREEN",
+        failure: []
+      }
+    },
+    "7": {
+      name: "Step 7 — TDD GREEN",
+      colorClass: "role-g",
+      who: [["AI (implementer)", "role-g-t"]],
+      what: {
+        did: "AI writes <strong>the simplest implementation code</strong> to make all RED tests pass. 'Minimal implementation principle' — only do exactly what makes tests pass, nothing more. UT level: implement Service layer; E2E level: implement API endpoint + DB operations. Stop as soon as tests pass, no extra optimization.",
+        pains: [
+          "AI tends to 'over-implement' beyond test requirements",
+          "AI output not minimal enough"
+        ],
+        solutions: [
+          "✅ Prompt explicitly requires 'minimal implementation'",
+          "✅ Stop as soon as tests pass, no preemptive work"
+        ]
+      },
+      output: {
+        happy: "🟢 <strong>All tests GREEN</strong> → enter Auto Feedback Loop",
+        failure: []
+      }
+    },
+    "8": {
+      name: "Step 8 — Auto Feedback Loop",
+      colorClass: "role-g",
+      who: [["AI (fully automated)", "role-g-t"]],
+      what: {
+        did: "Fully automated closed loop, no human intervention needed: <strong>① Run all tests ② Parse test report ③ Fix failed items ④ Back to ①</strong>, until ALL GREEN. Max iteration limit set (e.g. 5 rounds). If unable to auto-fix → tag CiC and enter Change Flow. This is the core mechanism for achieving '100% feature correctness'. Change Flow = incremental iteration, previously completed parts remain untouched.",
+        pains: [
+          "Some failures are spec issues, not code issues",
+          "Loop may run infinitely"
+        ],
+        solutions: [
+          "✅ Max iteration limit",
+          "✅ Can't fix → raise CiC for Change Flow (don't start over)"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>ALL GREEN</strong> → enter Refactor",
+        failure: [
+          { condition: "Test fail → AI auto-fix", target: 7 },
+          { condition: "Spec drift → Change Flow", target: 3 }
+        ]
+      }
+    },
+    "9": {
+      name: "Step 9 — Refactor + ATDD",
+      colorClass: "role-e",
+      who: [["Developer", "role-e-t"], ["AI Assistant", "role-g-t"]],
+      what: {
+        did: "<strong>REFACTOR</strong>: Improve code quality (naming, complexity, design patterns) without changing behavior, tests stay GREEN. <strong>ATDD recursive structure</strong> (nested boundaries): L1 TLB writes acceptance tests → L2 Sub-Boundary runs TDD → verify L1 again. Use test complexity analysis (Reason of Change + Change Flow + Pattern Language) to decide split depth. Boundary design: high coupling → test together; heavy business logic → independent Aggregate + Sub-Boundary.",
+        pains: [
+          "Refactoring accidentally changes behavior",
+          "ATDD recursive splitting goes too deep"
+        ],
+        solutions: [
+          "✅ Re-run all tests after refactoring",
+          "✅ Use 3-dimension test complexity analysis to decide split depth"
+        ]
+      },
+      output: {
+        happy: "🎉 <strong>Code quality meets bar + all levels of tests GREEN</strong> → Done",
+        failure: [
+          { condition: "Quality insufficient → redo TDD cycle", target: 6 }
+        ]
+      }
+    },
+    "done": {
+      name: "🎉 Feature Complete",
+      colorClass: "mix",
+      who: [["Full Team", "role-e-t"]],
+      what: {
+        did: "Feature complete. All UT + E2E tests GREEN. Feature File ↔ DBML ↔ API Spec fully consistent. Auto Feedback Loop verified. Code quality meets bar.",
+        pains: [],
+        solutions: []
+      },
+      output: {
+        happy: "🎉 <strong>100% correct deliverable feature + complete spec documentation</strong>",
+        failure: []
+      }
+    }
+  };
+
+  const nodeData = LANG === 'en' ? nodeData_en : nodeData_zh;
+
+  // ===== Interaction =====
+  let selectedId = null;
+
+  window.onNodeClick = function(id) {
+    selectedId = String(id);
+    showDetail(selectedId);
+    highlightSelection();
+  };
+
+  window.onNodeHover = function(id, entering) {
+    if (selectedId === String(id)) return;
+    if (entering) highlightFailures(String(id), 0.9, 1);
+    else highlightSelection();
+  };
+
+  function highlightSelection() {
+    if (selectedId) {
+      highlightFailures(selectedId, 0.9, 1);
+    } else {
+      document.querySelectorAll('.failure-arc').forEach(a => {
+        a.style.opacity = '0.28';
+        a.style.strokeWidth = '';
+      });
+      document.querySelectorAll('.failure-label').forEach(l => { l.style.opacity = '0'; });
+    }
+  }
+
+  function highlightFailures(id, arcOpacity, labelOpacity) {
+    document.querySelectorAll('.failure-arc').forEach(a => {
+      if (a.dataset.from === id) {
+        a.style.opacity = arcOpacity;
+        a.style.strokeWidth = '2.5';
+      } else {
+        a.style.opacity = '0.18';
+        a.style.strokeWidth = '';
+      }
+    });
+    document.querySelectorAll('.failure-label').forEach(l => {
+      l.style.opacity = l.dataset.from === id ? labelOpacity : '0';
+    });
+    document.querySelectorAll('.hflow-node').forEach(n => {
+      n.classList.toggle('selected', n.dataset.id === id);
+    });
+  }
+
+  function showDetail(id) {
+    const data = nodeData[id];
+    if (!data) return;
+
+    const who = data.who.map(([n, cls]) => `<span class="role-tag ${cls}">${n}</span>`).join(' ');
+    const pains = data.what.pains.length
+      ? data.what.pains.map(p => `<li>${p}</li>`).join('')
+      : '<li class="muted">—</li>';
+    const solutions = data.what.solutions.length
+      ? data.what.solutions.map(s => `<li>${s}</li>`).join('')
+      : '<li class="muted">—</li>';
+
+    let failureHtml;
+    if (data.output.failure.length === 0) {
+      failureHtml = `<div class="subcontent muted">(${LANG === 'en' ? 'no failure path' : '無失敗路徑'})</div>`;
+    } else {
+      failureHtml = `<ul class="failure-list">${
+        data.output.failure.map(f => {
+          if (f.target === null && f.action === 'kill') {
+            return `<li><strong>${f.condition}</strong> → <span class="kill">🚫 Reject</span></li>`;
+          }
+          const backLabel = LANG === 'en' ? `Back to Step ${f.target}` : `回到 Step ${f.target}`;
+          return `<li><strong>${f.condition}</strong> → <span class="goto" onclick="onNodeClick('${f.target}')">${backLabel}</span></li>`;
+        }).join('')
+      }</ul>`;
+    }
+
+    const numDisplay = id === 'done' ? '🎉' : id;
+    document.getElementById('detail-panel').innerHTML = `
+      <div class="detail-header">
+        <div class="detail-num ${data.colorClass}">${numDisplay}</div>
+        <h3>${data.name}</h3>
+      </div>
+      <div class="detail-3col">
+        <div class="dcol who-col">
+          <h4>WHO</h4>
+          <div>${who}</div>
+        </div>
+        <div class="dcol what-col">
+          <h4>WHAT · Activity · Pains · Solutions</h4>
+          <div class="subsection">
+            <div class="sublabel did">📋 ${LANG === 'en' ? 'What happens' : '執行內容'}</div>
+            <div class="subcontent">${data.what.did}</div>
+          </div>
+          <div class="subsection">
+            <div class="sublabel pain">⚠️ ${LANG === 'en' ? 'Pain points' : '痛點'}</div>
+            <ul class="subcontent">${pains}</ul>
+          </div>
+          <div class="subsection">
+            <div class="sublabel solution">💡 ${LANG === 'en' ? 'Solutions' : '解決方案'}</div>
+            <ul class="subcontent">${solutions}</ul>
+          </div>
+        </div>
+        <div class="dcol output-col">
+          <h4>OUTPUT</h4>
+          <div class="subsection">
+            <div class="sublabel happy">✅ ${LANG === 'en' ? 'Happy Path' : '正常路徑'}</div>
+            <div class="subcontent">${data.output.happy}</div>
+          </div>
+          <div class="subsection">
+            <div class="sublabel failure-out">🔁 ${LANG === 'en' ? 'Failure Path' : '失敗路徑'}</div>
+            ${failureHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ===== Init =====
+  applyLang(LANG);
+  renderFlow();
+  highlightSelection();
+  setTimeout(() => onNodeClick("1"), 100);
+
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    flowchart: { curve: 'basis', htmlLabels: true, padding: 14 },
+    securityLevel: 'loose',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif'
+  });
+</script>
+</body>
+</html>

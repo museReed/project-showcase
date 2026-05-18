@@ -354,6 +354,8 @@
   <button class="tab-btn" data-tab="flows">Interactive Flows</button>
   <button class="tab-btn" data-tab="buildprod">Build Product</button>
   <button class="tab-btn" data-tab="opennet">OpenNet Workflow</button>
+  <button class="tab-btn" data-tab="bdd">AI×BDD Workflow</button>
+  <button class="tab-btn" data-tab="hybrid">Hybrid Methodology</button>
   <button class="tab-btn" data-tab="deck">Portfolio Deck</button>
 </div>
 
@@ -392,6 +394,24 @@
     </div>
   </div>
   <iframe id="opennet-iframe" src="./interactive-opennet-workflow.html?lang=en" style="width:100%;height:calc(100vh - 120px);border:none;display:block;"></iframe>
+</div>
+<div id="tab-bdd" class="tab-pane">
+  <div style="padding:12px 48px 0;max-width:1100px;margin:0 auto;">
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en" data-target="bdd">English</button>
+      <button class="lang-btn" data-lang="zh" data-target="bdd">中文</button>
+    </div>
+  </div>
+  <iframe id="bdd-iframe" src="./interactive-bdd-workflow.html?lang=en" style="width:100%;height:calc(100vh - 120px);border:none;display:block;"></iframe>
+</div>
+<div id="tab-hybrid" class="tab-pane">
+  <div style="padding:12px 48px 0;max-width:1100px;margin:0 auto;">
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en" data-target="hybrid">English</button>
+      <button class="lang-btn" data-lang="zh" data-target="hybrid">中文</button>
+    </div>
+  </div>
+  <iframe id="hybrid-iframe" src="./interactive-hybrid-methodology.html?lang=en" style="width:100%;height:calc(100vh - 120px);border:none;display:block;"></iframe>
 </div>
 <div id="tab-deck" class="tab-pane">
   <div class="tab-content">
@@ -443,7 +463,7 @@ async function loadTab(key) {
     return;
   }
   // iframe-based tabs don't need loading
-  if (key === 'flows' || key === 'buildprod' || key === 'opennet') return;
+  if (key === 'flows' || key === 'buildprod' || key === 'opennet' || key === 'bdd' || key === 'hybrid') return;
   const tab = TABS[key];
   if (tab.loaded) return;
 
@@ -514,6 +534,26 @@ function switchOpennetLang(lang) {
   document.getElementById('opennet-iframe').src = `./interactive-opennet-workflow.html?lang=${lang}`;
 }
 
+// ── Switch bdd language ──
+let activeBddLang = 'en';
+function switchBddLang(lang) {
+  if (lang === activeBddLang) return;
+  document.querySelector('.lang-btn[data-target="bdd"].active').classList.remove('active');
+  activeBddLang = lang;
+  document.querySelector(`.lang-btn[data-target="bdd"][data-lang="${lang}"]`).classList.add('active');
+  document.getElementById('bdd-iframe').src = `./interactive-bdd-workflow.html?lang=${lang}`;
+}
+
+// ── Switch hybrid language ──
+let activeHybridLang = 'en';
+function switchHybridLang(lang) {
+  if (lang === activeHybridLang) return;
+  document.querySelector('.lang-btn[data-target="hybrid"].active').classList.remove('active');
+  activeHybridLang = lang;
+  document.querySelector(`.lang-btn[data-target="hybrid"][data-lang="${lang}"]`).classList.add('active');
+  document.getElementById('hybrid-iframe').src = `./interactive-hybrid-methodology.html?lang=${lang}`;
+}
+
 // ── Build TOC for active tab ──
 function buildTOC() {
   let container;
@@ -566,6 +606,10 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
       switchBuildProdLang(btn.dataset.lang);
     } else if (btn.dataset.target === 'opennet') {
       switchOpennetLang(btn.dataset.lang);
+    } else if (btn.dataset.target === 'bdd') {
+      switchBddLang(btn.dataset.lang);
+    } else if (btn.dataset.target === 'hybrid') {
+      switchHybridLang(btn.dataset.lang);
     } else {
       switchDeckLang(btn.dataset.lang);
     }
