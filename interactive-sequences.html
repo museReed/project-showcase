@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  muse-platform — Interactive Architecture Flows
+  ============================================================
+  Visualizes the 6 sequence diagrams from muse-platform HLD §4
+  as interactive horizontal flowcharts with tabbed navigation.
+  Source: docs/projects/phison-tpm-ai/muse-platform-hld.md
+  ============================================================
+-->
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>muse-platform — Interactive Architecture Flows</title>
+<style>
+  :root {
+    --role-a: #4A90E2;     /* Scheduler / Operator / User (initiator) */
+    --role-b: #E91E63;     /* External Source / Provider */
+    --role-c: #F57C00;     /* Validator / Judge */
+    --role-d: #9C27B0;     /* Database / Storage */
+    --role-e: #43A047;     /* Feature / Engine (executor) */
+    --role-f: #1B5E20;     /* Platform services (muse_llm, muse_catalog) */
+    --role-g: #546E7A;     /* AI / LLM Provider */
+    --mix:    #37474F;     /* Multi-role / neutral */
+
+    --success: #43A047;
+    --failure: #D32F2F;
+    --done:    #FFC107;
+    --kill:    #D32F2F;
+    --highlight: #FF6B00;
+
+    --bg:         #F4F6FA;
+    --card:       #FFFFFF;
+    --text:       #1A202C;
+    --text-light: #4A5568;
+    --border:     #E2E8F0;
+    --output-color: #F9A825;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    padding: 36px 16px 80px;
+  }
+  /* Hide header when embedded in iframe */
+  body.embedded header { display: none; }
+  body.embedded { padding-top: 16px; }
+  .container { max-width: 1280px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 32px; }
+  header h1 { font-size: 1.85rem; margin-bottom: 8px; }
+  header .subtitle { color: var(--text-light); font-size: 0.95rem; }
+
+  /* ===== Tab navigation ===== */
+  .tab-nav {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0;
+  }
+  .tab-btn {
+    padding: 10px 18px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background: var(--card);
+    color: var(--text-light);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    position: relative;
+    top: 2px;
+  }
+  .tab-btn:hover { background: #EDF2F7; color: var(--text); }
+  .tab-btn.active {
+    background: var(--bg);
+    color: var(--text);
+    border-color: var(--border);
+    border-bottom: 2px solid var(--bg);
+    font-weight: 700;
+  }
+
+  /* ===== Legend ===== */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+  .legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; padding: 5px 12px;
+    border-radius: 14px; background: var(--card);
+    border: 1px solid var(--border); color: var(--text-light);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-line { width: 28px; height: 3px; border-radius: 2px; background: var(--success); }
+  .legend-line.failure { height: 0; border-bottom: 2px dashed var(--failure); border-radius: 0; background: transparent; }
+
+  /* ===== Horizontal flow chart ===== */
+  .hflow-scroll {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .hflow-inner {
+    position: relative;
+    height: 520px;
+  }
+  .hflow-svg {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .hflow-svg .failure-arc { transition: opacity 0.18s, stroke-width 0.18s; }
+  .hflow-svg .failure-label { transition: opacity 0.18s; pointer-events: none; }
+
+  .hflow-nodes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .hflow-node {
+    position: absolute;
+    width: 140px; height: 80px;
+    border-radius: 9px;
+    padding: 10px 8px 8px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    color: white; font-weight: 600;
+    font-size: 0.85rem; line-height: 1.35;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    user-select: none;
+  }
+  .hflow-node:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+    z-index: 5;
+  }
+  .hflow-node.selected {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+    z-index: 6;
+  }
+  .hflow-node .num {
+    position: absolute; top: 5px; left: 9px;
+    font-size: 0.68rem; opacity: 0.85;
+    font-weight: 700; line-height: 1;
+  }
+  .hflow-node .fail-badge {
+    position: absolute; bottom: 4px; right: 6px;
+    font-size: 0.62rem;
+    background: rgba(0,0,0,0.25);
+    padding: 1px 7px; border-radius: 8px;
+    font-weight: 600;
+  }
+  .hflow-node .name { padding: 0 2px; }
+
+  .hflow-node.role-a { background: var(--role-a); }
+  .hflow-node.role-b { background: var(--role-b); }
+  .hflow-node.role-c { background: var(--role-c); }
+  .hflow-node.role-d { background: var(--role-d); }
+  .hflow-node.role-e { background: var(--role-e); }
+  .hflow-node.role-f { background: var(--role-f); }
+  .hflow-node.role-g { background: var(--role-g); }
+  .hflow-node.mix   { background: var(--mix); }
+  .hflow-node.done {
+    background: var(--done); color: var(--text);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 0 0 4px rgba(255,193,7,0.15);
+  }
+  .hflow-node.kill {
+    background: var(--kill);
+    height: 46px; font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(211,47,47,0.3);
+  }
+
+  /* ===== Phase separator ===== */
+  .phase-sep {
+    position: absolute;
+    border-left: 2px dashed #CBD5E0;
+    height: 120px;
+    top: 200px;
+  }
+  .phase-sep-label {
+    position: absolute;
+    font-size: 0.68rem;
+    color: var(--text-light);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  /* ===== Detail panel (below flow) ===== */
+  .detail-below {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .detail-empty {
+    padding: 60px 20px; text-align: center;
+    color: var(--text-light); font-size: 1rem;
+  }
+  .detail-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-num {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--text); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .detail-num.role-a { background: var(--role-a); }
+  .detail-num.role-b { background: var(--role-b); }
+  .detail-num.role-c { background: var(--role-c); }
+  .detail-num.role-d { background: var(--role-d); }
+  .detail-num.role-e { background: var(--role-e); }
+  .detail-num.role-f { background: var(--role-f); }
+  .detail-num.role-g { background: var(--role-g); }
+  .detail-num.mix   { background: var(--mix); }
+  .detail-num.done  { background: var(--done); color: var(--text); }
+  .detail-header h3 { font-size: 1.1rem; line-height: 1.4; }
+
+  .detail-3col {
+    display: grid;
+    grid-template-columns: 0.7fr 1.6fr 1.1fr;
+    gap: 0;
+  }
+  @media (max-width: 900px) { .detail-3col { grid-template-columns: 1fr; } }
+  .dcol {
+    padding: 18px 22px;
+    border-right: 1px solid var(--border);
+  }
+  .dcol:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .dcol { border-right: none; border-bottom: 1px solid var(--border); }
+    .dcol:last-child { border-bottom: none; }
+  }
+  .dcol h4 {
+    font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-light);
+    margin-bottom: 12px; font-weight: 700;
+  }
+  .dcol.what-col h4 { color: var(--role-e); }
+  .dcol.output-col h4 { color: #B45309; }
+
+  .role-tag {
+    display: inline-block;
+    font-size: 0.74rem; padding: 3px 10px;
+    border-radius: 10px; margin: 2px 4px 4px 0;
+    font-weight: 600;
+    background: #E2E8F0; color: var(--text);
+  }
+  .role-tag.role-a-t { background: var(--role-a); color: white; }
+  .role-tag.role-b-t { background: var(--role-b); color: white; }
+  .role-tag.role-c-t { background: var(--role-c); color: white; }
+  .role-tag.role-d-t { background: var(--role-d); color: white; }
+  .role-tag.role-e-t { background: var(--role-e); color: white; }
+  .role-tag.role-f-t { background: var(--role-f); color: white; }
+  .role-tag.role-g-t { background: var(--role-g); color: white; }
+
+  .subsection { margin-bottom: 14px; }
+  .subsection:last-child { margin-bottom: 0; }
+  .sublabel {
+    font-size: 0.85rem; font-weight: 700;
+    margin-bottom: 6px; padding-left: 10px;
+    border-left: 3px solid var(--text-light);
+  }
+  .sublabel.did { border-left-color: #3B82F6; color: #1D4ED8; }
+  .sublabel.pain { border-left-color: var(--failure); color: #991B1B; }
+  .sublabel.solution { border-left-color: #10B981; color: #065F46; }
+  .sublabel.happy { border-left-color: var(--success); color: #166534; }
+  .sublabel.failure-out { border-left-color: var(--failure); color: #991B1B; }
+
+  .subcontent {
+    font-size: 0.88rem; line-height: 1.65;
+    padding-left: 13px; color: var(--text);
+  }
+  .subcontent ul, ul.subcontent {
+    list-style: none; padding-left: 13px;
+  }
+  .subcontent li, ul.subcontent li {
+    padding: 4px 0 4px 14px;
+    position: relative;
+  }
+  .subcontent li::before, ul.subcontent li::before {
+    content: '\00B7'; position: absolute; left: 0;
+    color: var(--text-light); font-weight: 700;
+  }
+
+  .failure-list li {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 6px;
+    padding: 8px 12px !important;
+    margin: 6px 0;
+    list-style: none;
+  }
+  .failure-list li::before { display: none; }
+  .failure-list .goto {
+    background: #FEE2E2;
+    color: #991B1B;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600; font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .failure-list .goto:hover { background: #FCA5A5; color: white; }
+  .muted { color: var(--text-light); font-style: italic; }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.83rem;
+    line-height: 1.7;
+  }
+  footer code {
+    background: var(--card);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1 data-en="muse-platform — Interactive Architecture Flows" data-zh="muse-platform — 互動式架構流程圖">muse-platform &mdash; Interactive Architecture Flows</h1>
+    <p class="subtitle" data-en="6 Feature Sequence Diagrams from HLD §4 — click any node for details" data-zh="HLD §4 的 6 張功能循序圖 — 點擊任意節點查看詳情">6 Feature Sequence Diagrams from HLD &sect;4 &mdash; click any node for details</p>
+  </header>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav" id="tab-nav">
+    <button class="tab-btn active" data-tab="0">4.1 Collector Pipeline</button>
+    <button class="tab-btn" data-tab="1">4.2 LLM Routing</button>
+    <button class="tab-btn" data-tab="2">4.3 MCP Knowledge</button>
+    <button class="tab-btn" data-tab="3">4.4 Telegram Agent</button>
+    <button class="tab-btn" data-tab="4">4.5 Ops Server</button>
+    <button class="tab-btn" data-tab="5">4.6 A/B Test</button>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <span class="legend-item"><span class="legend-line"></span><span data-en="Happy Path" data-zh="正常路徑">Happy Path</span></span>
+    <span class="legend-item"><span class="legend-line failure"></span><span data-en="Failure Path" data-zh="失敗路徑">Failure Path</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-a)"></span><span data-en="Initiator" data-zh="發起者">Initiator</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-b)"></span><span data-en="External Source" data-zh="外部來源">External Source</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-c)"></span><span data-en="Judge / Validator" data-zh="評審 / 驗證者">Judge / Validator</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-d)"></span><span data-en="Database" data-zh="資料庫">Database</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-e)"></span><span data-en="Engine / Executor" data-zh="引擎 / 執行者">Engine / Executor</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-f)"></span><span data-en="Platform Service" data-zh="平台服務">Platform Service</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-g)"></span><span data-en="LLM Provider" data-zh="LLM 供應商">LLM Provider</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--done)"></span><span data-en="Done" data-zh="完成">Done</span></span>
+  </div>
+
+  <!-- Flow Chart Area -->
+  <div class="hflow-scroll">
+    <div class="hflow-inner" id="hflow-inner">
+      <svg class="hflow-svg" id="hflow-svg" preserveAspectRatio="xMinYMin meet"></svg>
+      <div class="hflow-nodes" id="hflow-nodes"></div>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="detail-below" id="detail-panel">
+    <div class="detail-empty" data-en="Click any node above to see details" data-zh="點擊上方任意節點查看詳情">Click any node above to see details</div>
+  </div>
+
+  <footer>
+    <p>Source: <code>docs/projects/phison-tpm-ai/muse-platform-hld.md</code> &sect;4 Feature Sequence Diagrams</p>
+    <p>Generated for Phison TPM AI project reference</p>
+  </footer>
+
+</div>
+
+<script>
+  // ===== i18n =====
+  const LANG = new URLSearchParams(window.location.search).get('lang') || 'en';
+
+  // Tab names in both languages
+  const TAB_NAMES = {
+    en: ['4.1 Collector Pipeline', '4.2 LLM Routing', '4.3 MCP Knowledge', '4.4 Telegram Agent', '4.5 Ops Server', '4.6 A/B Test'],
+    zh: ['4.1 收集管線', '4.2 LLM 路由', '4.3 MCP 知識搜尋', '4.4 Telegram 代理', '4.5 Ops 伺服器', '4.6 A/B 測試']
+  };
+
+  // Detail panel UI labels
+  const UI = {
+    en: { who: 'WHO', what: 'WHAT · Activity · Pains · Solutions', output: 'OUTPUT',
+           activity: 'What happens', pain: 'Pain points', solution: 'Solutions',
+           happy: 'Happy Path', failure: 'Failure Path', noFailure: '(no failure path)',
+           backTo: 'Back to Step' },
+    zh: { who: '角色', what: '行為 · 痛點 · 解法', output: '產出',
+           activity: '執行內容', pain: '可能問題', solution: '解決方案',
+           happy: '正常路徑', failure: '失敗路徑', noFailure: '（無失敗路徑）',
+           backTo: '回到步驟' }
+  };
+
+  // Chinese nodeData translations (keyed by tab index → node id)
+  const ZH_DATA = {
+    0: { // Collector Pipeline
+      "1": { name: "觸發", who: [["排程器 (cron)", "role-a-t"]], did: "cron 觸發 job，分配 correlation_id 用於全鏈路追蹤。", pains: ["cron 錯失（系統睡眠）"], solutions: ["launchd 排程 + pipeline log 偵測斷點"], happyOut: "排程信號 → 進入收集階段" },
+      "2": { name: "收集", who: [["Collector (Feature)", "role-e-t"], ["外部來源", "role-b-t"]], did: "分頁抓取外部原始數據（XHS/RSS/YouTube API）。", pains: ["Rate limit", "反爬偵測", "網路逾時"], solutions: ["CDP 持久瀏覽器", "指數退避重試", "VPN 輪替"], happyOut: "原始項目 → 進入正規化" },
+      "3": { name: "正規化", who: [["Collector", "role-e-t"]], did: "SHA256 content_hash 去重 + JSON 欄位解析（4 層 fallback）。", pains: ["格式不一致", "重複項目"], solutions: ["content_hash 去重", "JSON fallback 策略：先 parse → 修復 → regex → 原文"], happyOut: "正規化項目 → 進入儲存" },
+      "4": { name: "儲存", who: [["SQLite DB", "role-d-t"]], did: "INSERT 或 UPDATE posts 至 per-feature SQLite 資料庫。", pains: ["schema 遷移", "磁碟鎖"], solutions: ["WAL 模式", "單一寫入者設計"], happyOut: "儲存完成 → 進入評分" },
+      "5": { name: "評分", who: [["Collector", "role-e-t"]], did: "計算 5 維度分數：ai_value / muse_value / career / project / social。", pains: ["權重不平衡"], solutions: ["A/B 測試驗證", "定期校準"], happyOut: "分數更新至 post_metadata → 進入分類" },
+      "6": { name: "分類<br/>(LLM)", who: [["muse_llm (Platform)", "role-f-t"], ["LLM Provider", "role-g-t"]], did: "LLM 判斷 category、impact、time_sensitivity。寫入 raw scores。", pains: ["Rate limit (429)", "API 餘額不足", "回應格式錯誤"], solutions: ["task-based routing + fallback provider", "JSON 4 層 parse fallback"], happyOut: "分類結果 → 進入豐富化", failureOut: [{ condition: "Rate limit", target: 5 }] },
+      "7": { name: "豐富化<br/>(LLM)", who: [["muse_llm", "role-f-t"], ["LLM Provider", "role-g-t"]], did: "LLM 產生 summary、personal_insights。INSERT post_enrichment。", pains: ["Rate limit", "輸出過長", "幻覺"], solutions: ["fallback 至 DeepSeek", "max_tokens 限制", "credibility_check"], happyOut: "豐富化完成 → 進入專家評審", failureOut: [{ condition: "Rate limit", target: 5 }] },
+      "8": { name: "專家<br/>評審", who: [["LLM Provider (並行)", "role-g-t"]], did: "4 並行 LLM 呼叫：TECH_LANDSCAPE(>0.7) / SYSTEM_INTEGRATION(>0.5) / CAREER_GROWTH(>0.3) / CREDIBILITY_CHECK(全部)。", pains: ["分數低於閾值", "成本過高"], solutions: ["閾值過濾：低分不送 LLM", "per-task 模型選擇（Opus 只用於高分）"], happyOut: "專家評審結果 → 進入通知", failureOut: [{ condition: "低於閾值", target: 7 }] },
+      "9": { name: "通知", who: [["muse_notify (Platform)", "role-f-t"]], did: "透過 Telegram 發送每日摘要 digest。", pains: ["Telegram API 錯誤", "訊息過長"], solutions: ["chunk if > 4096 chars", "HTML escape"], happyOut: "通知發送 → 完成" },
+      "done": { name: "完成", who: [["系統", "role-e-t"]], did: "寫入 pipeline log (JSONL) + 更新 _latest.jsonl symlink（atomic replace）。", pains: [], solutions: [], happyOut: "Pipeline 執行完成" }
+    },
+    1: { // LLM Routing
+      "1": { name: "功能呼叫", who: [["Feature (Caller)", "role-e-t"]], did: "Feature 以 prompt + task 名稱呼叫 LLMClient。", pains: ["task 名稱不在 config"], solutions: ["fallback 至 [defaults] 設定"], happyOut: "呼叫傳至 LLMClient → 解析路由" },
+      "2": { name: "解析路由", who: [["Routing Config", "role-f-t"]], did: "查詢 routing_config.toml，找到 task 對應的 provider/model/fallback。", pains: ["config 缺項", "typo"], solutions: ["CI validate config", "fail-loud on missing task"], happyOut: "TaskRoute → 建立 Adapter" },
+      "3": { name: "建立<br/>Adapter", who: [["Adapter Factory", "role-f-t"]], did: "根據 provider 建立對應 Adapter（CliLLMAdapter / SyncLLMAdapter / DeepSeekAdapter）。", pains: ["CLI 不可用"], solutions: ["自動降級至 SDK adapter"], happyOut: "Adapter 就緒 → 呼叫主 Provider" },
+      "4": { name: "主 Provider<br/>呼叫", who: [["Primary Provider", "role-g-t"]], did: "向主要 provider（如 Claude）發送 prompt。", pains: ["429 Rate Limit", "500 Server Error", "Timeout"], solutions: ["觸發 fallback 路徑"], happyOut: "LLMResult(text, tokens, cost) → 回傳結果", failureOut: [{ condition: "Rate Limit / Error", target: "fallback" }] },
+      "fallback": { name: "Fallback<br/>Provider", who: [["Fallback (DeepSeek)", "role-g-t"]], did: "建立 fallback adapter → 呼叫次要 provider（如 DeepSeek）。", pains: ["Fallback 也失敗"], solutions: ["raise RuntimeError，讓呼叫端處理"], happyOut: "LLMResult → 回傳結果（標記 via fallback）" },
+      "done": { name: "完成", who: [["Feature", "role-e-t"]], did: "收到 LLMResult，包含 text、token 用量、成本。", pains: [], solutions: [], happyOut: "結果回傳至 Feature" }
+    },
+    2: { // MCP Knowledge
+      "1": { name: "搜尋請求", who: [["Claude Desktop / Code", "role-a-t"]], did: "使用者發送 search_articles(query, min_score, days)。", pains: ["query 太短/太模糊"], solutions: ["FTS5 rank 排序 + 最低分過濾"], happyOut: "請求 → MCP Server" },
+      "2": { name: "解析查詢", who: [["MCP Server", "role-f-t"]], did: "解析 query、sources 清單、filters（min_score/days）。", pains: ["無效 source 名稱"], solutions: ["graceful skip unknown sources"], happyOut: "查詢參數 → Knowledge Engine" },
+      "3": { name: "並行<br/>DB 查詢", who: [["KnowledgeSearch", "role-e-t"], ["多個 SQLite DB", "role-d-t"]], did: "對每個 source DB 執行 FTS5 MATCH 查詢，CJK 文字 fallback 至 LIKE。", pains: ["CJK 分詞問題", "DB 鎖"], solutions: ["LIKE fallback for CJK", "唯讀連線 + WAL"], happyOut: "各 DB 結果 → 合併" },
+      "4": { name: "合併結果", who: [["KnowledgeSearch", "role-e-t"]], did: "合併所有來源 DB 的搜尋結果。", pains: ["重複項目跨 DB"], solutions: ["content_hash 去重"], happyOut: "合併清單 → 排序" },
+      "5": { name: "排序<br/>& 限制", who: [["KnowledgeSearch", "role-e-t"]], did: "依 ai_value_score DESC 排序，套用 limit。", pains: ["結果全低分"], solutions: ["min_score 過濾已在查詢層處理"], happyOut: "排序結果 → 回傳" },
+      "done": { name: "回傳", who: [["MCP Server", "role-f-t"]], did: "回傳合併 articles（含 enrichment）給 Claude。", pains: [], solutions: [], happyOut: "JSON 結果傳回 Claude Desktop/Code" }
+    },
+    3: { // Telegram Agent
+      "1": { name: "用戶訊息", who: [["User (Telegram)", "role-a-t"]], did: "用戶在 Telegram 發送訊息。", pains: ["訊息太長", "非文字"], solutions: ["chunk 處理", "限文字"], happyOut: "訊息 → Telegram Bridge" },
+      "2": { name: "取得 Session", who: [["Session Manager", "role-f-t"]], did: "get_or_create_session(user_id)，最多 3 並行，30 分鐘 TTL。", pains: ["超過並行上限"], solutions: ["排隊等待 or 拒絕"], happyOut: "Session → 路由訊息" },
+      "3": { name: "路由", who: [["Telegram Bridge", "role-e-t"]], did: "將訊息路由至 Agent Session。", pains: ["session 過期"], solutions: ["auto-recreate expired session"], happyOut: "訊息到達 Agent → LLM 呼叫" },
+      "4": { name: "LLM 呼叫", who: [["muse_llm", "role-g-t"]], did: "以 task='telegram_interactive', temperature=0.7 呼叫 LLM。", pains: ["LLM timeout", "rate limit"], solutions: ["fallback provider", "retry with exponential backoff"], happyOut: "回應 → 檢查 tool_use" },
+      "5": { name: "工具偵測", who: [["Agent Session", "role-e-t"]], did: "檢查 LLM 回應是否包含 tool_use。無工具 → 直接回應。", pains: ["誤觸發工具"], solutions: ["ToolGate 人工核准"], happyOut: "有工具 → 請求核准", failureOut: [{ condition: "無 tool_use", target: "done" }] },
+      "6": { name: "核准", who: [["User", "role-a-t"]], did: "發送 inline keyboard [✅ 核准] [❌ 拒絕]，等待用戶回應。", pains: ["用戶無回應（timeout）"], solutions: ["30 秒 timeout → auto-deny"], happyOut: "核准 → 執行工具", failureOut: [{ condition: "拒絕", target: "done" }] },
+      "7": { name: "執行工具", who: [["Agent Session", "role-e-t"]], did: "執行核准的工具，將結果回傳 LLM 繼續對話。", pains: ["工具執行失敗"], solutions: ["error message 回傳 LLM 處理"], happyOut: "最終回應 → 完成" },
+      "done": { name: "回應", who: [["Telegram Bridge", "role-e-t"]], did: "發送回應至用戶（> 4096 字元自動 chunk）。", pains: ["Telegram API 限制"], solutions: ["smart chunking at paragraph boundary"], happyOut: "訊息送達用戶" }
+    },
+    4: { // Ops Server
+      "1": { name: "載入 Catalog", who: [["muse_catalog", "role-f-t"]], did: "伺服器啟動時呼叫 load_catalog()。", pains: ["muse.toml 語法錯誤"], solutions: ["fail-loud + 詳細錯誤訊息"], happyOut: "Catalog 載入 → 掃描模組" },
+      "2": { name: "掃描模組", who: [["muse_catalog", "role-f-t"]], did: "掃描所有 muse.toml 檔案，建立 ModuleManifest[]。", pains: ["遺漏模組", "schema 不合法"], solutions: ["CI `muse catalog validate`"], happyOut: "Manifest 清單 → 掛載路由" },
+      "3": { name: "掛載路由", who: [["Ops Server (FastAPI)", "role-e-t"]], did: "對每個有 [router] 的模組執行 importlib.import_module → app.mount()。", pains: ["import 失敗"], solutions: ["skip + log warning，不影響其他模組"], happyOut: "路由掛載 → 註冊 Actions" },
+      "4": { name: "註冊 Actions", who: [["Ops Server", "role-e-t"]], did: "對每個有 [ops_ui] 的模組，註冊 actions + card 定義。", pains: ["action handler 不存在"], solutions: ["啟動時驗證所有 handler path"], happyOut: "啟動完成 → 等待 Runtime 請求" },
+      "5": { name: "GET Features", who: [["Ops UI (Next.js)", "role-a-t"]], did: "UI 請求 GET /api/features → 回傳 feature cards（title, actions, status）。", pains: ["UI 看不到 job-only features"], solutions: ["Issue #91: 新增 /api/features endpoint"], happyOut: "Feature cards → UI 顯示" },
+      "6": { name: "POST Action", who: [["Ops UI", "role-a-t"]], did: "UI 發送 POST /api/actions/{feature}/{action}。", pains: ["handler not found"], solutions: ["404 with clear error message"], happyOut: "Action 請求 → 執行 Handler" },
+      "7": { name: "執行 Handler", who: [["Feature Module", "role-e-t"]], did: "importlib → import handler → handler() → 回傳結果。", pains: ["handler 拋出例外"], solutions: ["try/except → 500 + structured error"], happyOut: "結果回傳 UI" },
+      "done": { name: "完成", who: [["Ops Server", "role-e-t"]], did: "執行結果回傳至 Ops UI。", pains: [], solutions: [], happyOut: "操作完成" }
+    },
+    5: { // A/B Test
+      "1": { name: "載入文章", who: [["Experiment DB", "role-d-t"]], did: "從 SQLite 載入 N 篇文章作為測試樣本。", pains: ["樣本不具代表性"], solutions: ["隨機抽樣 + 分層取樣"], happyOut: "文章載入 → 執行 Provider A" },
+      "2": { name: "執行<br/>Provider A", who: [["Provider A (Claude)", "role-g-t"]], did: "以 Claude Sonnet 對每篇文章執行分類，記錄結果 + 成本。", pains: ["API 延遲高", "結果不穩定"], solutions: ["temperature=0 確保穩定", "記錄 latency"], happyOut: "結果 A → 執行 Provider B" },
+      "3": { name: "執行<br/>Provider B", who: [["Provider B (DeepSeek)", "role-g-t"]], did: "以 DeepSeek Chat 執行相同分類，記錄結果 + 成本。", pains: ["格式不一致"], solutions: ["統一 prompt template", "JSON parse fallback"], happyOut: "結果 B → 品質評審" },
+      "4": { name: "品質評審", who: [["LLM Judge (Opus)", "role-c-t"]], did: "Opus 逐一比較 A/B 結果品質，產出 quality scores。", pains: ["Judge bias", "成本高"], solutions: ["blind comparison（不標明 provider）", "只 sample 部分"], happyOut: "品質分數 → 彙總" },
+      "5": { name: "彙總", who: [["A/B Test Script", "role-e-t"]], did: "計算各 group 的 latency、cost、quality 統計。", pains: ["樣本量不足"], solutions: ["顯示 confidence interval"], happyOut: "報告產出 → 套用" },
+      "done": { name: "套用", who: [["Operator (Reed)", "role-a-t"]], did: "根據報告更新 routing_config.toml（如：DeepSeek 便宜 83%，品質相當 → 切換）。", pains: ["regression risk"], solutions: ["漸進式切換 + 監控"], happyOut: "routing_config.toml 已更新，成本節省生效" }
+    }
+  };
+
+  // Apply i18n to static HTML elements
+  function applyLang(lang) {
+    document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+      el.textContent = el.getAttribute('data-' + lang);
+    });
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn[data-tab]').forEach((btn, i) => {
+      btn.textContent = TAB_NAMES[lang][i];
+    });
+  }
+
+  // ===== Flow chart constants =====
+  const NODE_WIDTH = 140;
+  const NODE_HEIGHT = 80;
+  const GAP = 30;
+  const START_X = 30;
+  const MAIN_Y = 280;
+
+  // ===== TAB DATA =====
+  const TABS = [
+    // Tab 0: Collector Pipeline
+    {
+      flowNodes: [
+        { id: 1, name: "Trigger", color: "role-a" },
+        { id: 2, name: "Collect", color: "role-e" },
+        { id: 3, name: "Normalize", color: "role-e" },
+        { id: 4, name: "Store", color: "role-d" },
+        { id: 5, name: "Score", color: "role-e" },
+        { id: 6, name: "Classify<br/>(LLM)", color: "role-g" },
+        { id: 7, name: "Enrich<br/>(LLM)", color: "role-g" },
+        { id: 8, name: "Expert<br/>Review", color: "role-g" },
+        { id: 9, name: "Notify", color: "role-f" },
+        { id: "done", name: "Done", color: "done" }
+      ],
+      failurePaths: [
+        { from: 6, to: 5, label: "Rate limit" },
+        { from: 7, to: 5, label: "Rate limit" },
+        { from: 8, to: 7, label: "Below threshold" }
+      ],
+      nodeData: {
+        "1": {
+          name: "Trigger",
+          colorClass: "role-a",
+          who: [["Scheduler (cron)", "role-a-t"]],
+          what: {
+            did: "Scheduler triggers collector job via cron. Allocates a unique <strong>correlation_id</strong> for tracing the entire pipeline run.",
+            pains: ["Cron misconfiguration leads to missed runs", "Overlapping runs if previous job is still executing"],
+            solutions: ["File lock to prevent overlap", "Heartbeat monitoring for missed runs"]
+          },
+          output: { happy: "correlation_id allocated, job starts", failure: [] }
+        },
+        "2": {
+          name: "Collect",
+          colorClass: "role-e",
+          who: [["Collector (Feature)", "role-e-t"], ["External Source", "role-b-t"]],
+          what: {
+            did: "Fetch raw data from external source with <strong>pagination</strong>. Handles API rate limits and retries.",
+            pains: ["External API downtime", "Rate limiting from source", "Pagination cursor drift"],
+            solutions: ["Exponential backoff retry", "Pagination state stored for resume", "Source health check before full fetch"]
+          },
+          output: { happy: "Raw items array passed to Normalize", failure: [] }
+        },
+        "3": {
+          name: "Normalize",
+          colorClass: "role-e",
+          who: [["Collector (Feature)", "role-e-t"]],
+          what: {
+            did: "Deduplicate items via <strong>SHA256 content_hash</strong>. Parse JSON fields, normalize timestamps and text encoding.",
+            pains: ["Duplicate content with minor formatting differences", "Malformed JSON from source"],
+            solutions: ["Content-based hashing ignores whitespace", "Graceful JSON parse with fallback to raw text"]
+          },
+          output: { happy: "Deduplicated, normalized items ready for storage", failure: [] }
+        },
+        "4": {
+          name: "Store",
+          colorClass: "role-d",
+          who: [["SQLite DB", "role-d-t"]],
+          what: {
+            did: "<strong>INSERT or UPDATE</strong> posts to SQLite database. Uses UPSERT pattern with content_hash as conflict key.",
+            pains: ["DB lock contention on concurrent writes", "Disk space on large batches"],
+            solutions: ["WAL mode for concurrent reads", "Batch INSERT with transaction"]
+          },
+          output: { happy: "Posts persisted with post_id, ready for scoring", failure: [] }
+        },
+        "5": {
+          name: "Score",
+          colorClass: "role-e",
+          who: [["Collector (Feature)", "role-e-t"]],
+          what: {
+            did: "Compute <strong>5 dimension scores</strong>: ai_value, muse_value, career, project, social. Rule-based scoring using keyword matching and metadata signals.",
+            pains: ["Score drift as content evolves", "Subjective dimension boundaries"],
+            solutions: ["Periodic score recalibration", "A/B test score thresholds against user feedback"]
+          },
+          output: { happy: "post_metadata updated with scores, high-score items proceed to LLM", failure: [] }
+        },
+        "6": {
+          name: "Classify (LLM)",
+          colorClass: "role-g",
+          who: [["muse_llm (Platform)", "role-f-t"], ["LLM Provider", "role-g-t"]],
+          what: {
+            did: "LLM call with task=<code>classify_*</code>. Returns <strong>category, impact, time_sensitivity</strong>.",
+            pains: ["Rate limit (429) from primary provider", "LLM hallucinating invalid categories", "Cost spikes on large batches"],
+            solutions: ["Task-based routing with fallback provider", "Structured output validation against enum", "Batch throttling with configurable concurrency"]
+          },
+          output: {
+            happy: "Classification stored in post_metadata, proceed to Enrich",
+            failure: [{ condition: "Rate limit (429)", target: 5 }]
+          }
+        },
+        "7": {
+          name: "Enrich (LLM)",
+          colorClass: "role-g",
+          who: [["muse_llm (Platform)", "role-f-t"], ["LLM Provider", "role-g-t"]],
+          what: {
+            did: "LLM call with task=<code>enrich_*</code>. Generates <strong>llm_summary</strong> and <strong>personal_insights</strong>.",
+            pains: ["Rate limit from provider", "Low-quality summaries for short content", "Token waste on already-enriched items"],
+            solutions: ["Fallback provider via routing config", "Skip enrichment for items below score threshold", "Check existing enrichment before re-running"]
+          },
+          output: {
+            happy: "post_enrichment inserted, proceed to Expert Review",
+            failure: [{ condition: "Rate limit (429)", target: 5 }]
+          }
+        },
+        "8": {
+          name: "Expert Review",
+          colorClass: "role-g",
+          who: [["muse_llm (Platform)", "role-f-t"], ["LLM Provider", "role-g-t"]],
+          what: {
+            did: "<strong>Parallel LLM calls</strong> for 4 expert perspectives: TECH_LANDSCAPE (score>0.7), SYSTEM_INTEGRATION (>0.5), CAREER_GROWTH (>0.3), CREDIBILITY_CHECK (all). Each expert provides structured review.",
+            pains: ["High cost with 4 parallel calls per item", "Some perspectives not relevant for all content"],
+            solutions: ["Score threshold gating per perspective", "Skip perspectives below threshold (not error, just skip)", "Use cheaper models for low-impact perspectives"]
+          },
+          output: {
+            happy: "expert_review JSON stored in post_enrichment",
+            failure: [{ condition: "Below threshold for perspective", target: 7 }]
+          }
+        },
+        "9": {
+          name: "Notify",
+          colorClass: "role-f",
+          who: [["muse_notify (Platform)", "role-f-t"]],
+          what: {
+            did: "Send <strong>Telegram digest</strong> via muse_notify. Aggregates top items by score into a formatted message.",
+            pains: ["Telegram API rate limit", "Message too long (>4096 chars)"],
+            solutions: ["Chunk messages if exceeding limit", "Retry with exponential backoff for Telegram API"]
+          },
+          output: { happy: "Digest delivered to Telegram", failure: [] }
+        },
+        "done": {
+          name: "Done",
+          colorClass: "done",
+          who: [["Collector (Feature)", "role-e-t"]],
+          what: {
+            did: "Write pipeline log as <strong>JSONL</strong> (correlation_id, counts, duration, errors). Update <code>_latest.jsonl</code> symlink for quick access.",
+            pains: [],
+            solutions: []
+          },
+          output: { happy: "Pipeline complete. Log written, symlink updated.", failure: [] }
+        }
+      }
+    },
+
+    // Tab 1: LLM Task-Based Routing
+    {
+      flowNodes: [
+        { id: 1, name: "Feature<br/>Call", color: "role-e" },
+        { id: 2, name: "Resolve<br/>Route", color: "role-f" },
+        { id: 3, name: "Create<br/>Adapter", color: "role-f" },
+        { id: 4, name: "Primary<br/>Call", color: "role-g" },
+        { id: 5, name: "Fallback", color: "role-g" },
+        { id: "done", name: "Done", color: "done" }
+      ],
+      failurePaths: [
+        { from: 4, to: 5, label: "429 Rate Limit" }
+      ],
+      nodeData: {
+        "1": {
+          name: "Feature Call",
+          colorClass: "role-e",
+          who: [["Feature (Caller)", "role-e-t"]],
+          what: {
+            did: "Feature calls <code>LLMClient.call(prompt, task=\"enrich_ai_news\")</code>. The task name determines routing.",
+            pains: ["Feature doesn't know which provider to use", "Hard-coding provider = no flexibility"],
+            solutions: ["Task-based routing abstracts provider choice", "Features only specify task name, not provider"]
+          },
+          output: { happy: "Request with task name passed to LLMClient", failure: [] }
+        },
+        "2": {
+          name: "Resolve Route",
+          colorClass: "role-f",
+          who: [["LLMClient", "role-f-t"], ["routing_config.toml", "role-f-t"]],
+          what: {
+            did: "Look up <strong>routing_config.toml</strong> for the task. Returns TaskRoute with provider, model, fallback_provider, fallback_model, max_tokens, temperature.",
+            pains: ["Missing task in config (no route defined)", "Stale config after provider changes"],
+            solutions: ["Fallback to [defaults] section if task not found", "Config reload on file change (watchdog)"]
+          },
+          output: { happy: "TaskRoute(provider, model, fallback) resolved", failure: [] }
+        },
+        "3": {
+          name: "Create Adapter",
+          colorClass: "role-f",
+          who: [["AdapterFactory", "role-f-t"]],
+          what: {
+            did: "<strong>AdapterFactory</strong> creates the appropriate adapter: CliLLMAdapter (subprocess) or SyncLLMAdapter (SDK direct). Selection based on provider type in route.",
+            pains: ["Adapter initialization failure (missing CLI tool)", "Wrong adapter type for provider"],
+            solutions: ["Factory pattern with provider registry", "Validation at startup that CLI tools exist"]
+          },
+          output: { happy: "Adapter instance ready to make LLM call", failure: [] }
+        },
+        "4": {
+          name: "Primary Call",
+          colorClass: "role-g",
+          who: [["Primary Provider (e.g. Claude)", "role-g-t"]],
+          what: {
+            did: "Send prompt to primary provider via adapter. Wait for <strong>LLMResult(text, tokens, cost)</strong>.",
+            pains: ["429 Rate Limit from provider", "Timeout on large prompts", "Unexpected response format"],
+            solutions: ["Automatic fallback to secondary provider on 429", "Configurable timeout per task", "Response validation before returning"]
+          },
+          output: {
+            happy: "LLMResult returned to caller",
+            failure: [{ condition: "429 Rate Limit", target: 5 }]
+          }
+        },
+        "5": {
+          name: "Fallback",
+          colorClass: "role-g",
+          who: [["AdapterFactory", "role-f-t"], ["Fallback Provider (e.g. DeepSeek)", "role-g-t"]],
+          what: {
+            did: "On primary failure: create <strong>fallback adapter</strong> from route config, call secondary provider. Same prompt, different model.",
+            pains: ["Fallback also rate limited", "Quality difference between providers", "Double latency on fallback path"],
+            solutions: ["A/B testing validates quality parity", "Circuit breaker if fallback also fails", "Log fallback usage for cost analysis"]
+          },
+          output: { happy: "LLMResult from fallback returned to caller", failure: [] }
+        },
+        "done": {
+          name: "Done",
+          colorClass: "done",
+          who: [["Feature (Caller)", "role-e-t"]],
+          what: {
+            did: "Return <strong>LLMResult(text, tokens, cost)</strong> to the calling feature. Includes metadata about which provider was used.",
+            pains: [],
+            solutions: []
+          },
+          output: { happy: "Feature receives LLMResult with text, token count, and cost", failure: [] }
+        }
+      }
+    },
+
+    // Tab 2: MCP Knowledge Server
+    {
+      flowNodes: [
+        { id: 1, name: "Search<br/>Request", color: "role-a" },
+        { id: 2, name: "Parse<br/>Query", color: "role-f" },
+        { id: 3, name: "Parallel<br/>DB Query", color: "role-d" },
+        { id: 4, name: "Merge<br/>Results", color: "role-e" },
+        { id: 5, name: "Sort &<br/>Limit", color: "role-e" },
+        { id: "done", name: "Return", color: "done" }
+      ],
+      failurePaths: [
+        { from: 3, to: 2, label: "FTS5 fail, LIKE fallback" }
+      ],
+      nodeData: {
+        "1": {
+          name: "Search Request",
+          colorClass: "role-a",
+          who: [["Claude Desktop / Claude Code", "role-a-t"]],
+          what: {
+            did: "User (via Claude) calls <code>search_articles(query=\"RAG\", min_score=0.5, days=30)</code> through MCP stdio transport.",
+            pains: ["Vague queries returning too many results", "CJK tokenization issues with FTS5"],
+            solutions: ["min_score filter reduces noise", "LIKE fallback for CJK when FTS5 fails"]
+          },
+          output: { happy: "MCP request received by server", failure: [] }
+        },
+        "2": {
+          name: "Parse Query",
+          colorClass: "role-f",
+          who: [["MCP Server", "role-f-t"]],
+          what: {
+            did: "Extract query string, sources list, and filters (min_score, days, limit). Determine which source DBs to query.",
+            pains: ["Invalid source names", "Conflicting filters"],
+            solutions: ["Validate sources against known DB list", "Sensible defaults for missing parameters"]
+          },
+          output: { happy: "Parsed query + source list + filters ready", failure: [] }
+        },
+        "3": {
+          name: "Parallel DB Query",
+          colorClass: "role-d",
+          who: [["ai-news.db", "role-d-t"], ["xhs.db", "role-d-t"], ["videos.db", "role-d-t"], ["tweets.db", "role-d-t"]],
+          what: {
+            did: "Query each source DB in <strong>parallel</strong> using FTS5 MATCH. JOIN articles with enrichment tables. For CJK content, fallback to <strong>LIKE</strong> query if FTS5 returns empty.",
+            pains: ["FTS5 tokenizer doesn't handle CJK well", "One slow DB blocks all results", "DB file missing or corrupted"],
+            solutions: ["Automatic LIKE fallback for CJK queries", "Timeout per DB query (don't block others)", "Graceful skip if DB unavailable"]
+          },
+          output: {
+            happy: "Results from each DB collected",
+            failure: [{ condition: "FTS5 empty for CJK", target: 2 }]
+          }
+        },
+        "4": {
+          name: "Merge Results",
+          colorClass: "role-e",
+          who: [["KnowledgeSearch Engine", "role-e-t"]],
+          what: {
+            did: "<strong>Merge all results</strong> from parallel queries into a single list. Deduplicate by content_hash across sources.",
+            pains: ["Duplicate content across different sources", "Inconsistent schema between DBs"],
+            solutions: ["content_hash dedup", "Normalized output schema regardless of source"]
+          },
+          output: { happy: "Unified result list ready for sorting", failure: [] }
+        },
+        "5": {
+          name: "Sort & Limit",
+          colorClass: "role-e",
+          who: [["KnowledgeSearch Engine", "role-e-t"]],
+          what: {
+            did: "Sort merged results by <strong>ai_value_score DESC</strong>. Apply limit parameter (default 20).",
+            pains: ["All results same score (no meaningful ranking)", "Limit too small misses relevant results"],
+            solutions: ["Secondary sort by recency", "Configurable limit per caller"]
+          },
+          output: { happy: "Top-N results sorted and limited", failure: [] }
+        },
+        "done": {
+          name: "Return",
+          colorClass: "done",
+          who: [["MCP Server", "role-f-t"], ["Claude Desktop/Code", "role-a-t"]],
+          what: {
+            did: "Return merged articles with enrichment data (llm_summary, scores, expert_review) as JSON via MCP stdio.",
+            pains: [],
+            solutions: []
+          },
+          output: { happy: "Articles with enrichment returned to Claude", failure: [] }
+        }
+      }
+    },
+
+    // Tab 3: Telegram AI Agent
+    {
+      flowNodes: [
+        { id: 1, name: "User<br/>Message", color: "role-a" },
+        { id: 2, name: "Get<br/>Session", color: "role-f" },
+        { id: 3, name: "Route", color: "role-e" },
+        { id: 4, name: "LLM<br/>Call", color: "role-g" },
+        { id: 5, name: "Tool<br/>Detection", color: "role-e" },
+        { id: 6, name: "Approval", color: "role-a" },
+        { id: 7, name: "Execute<br/>Tool", color: "role-e" },
+        { id: "done", name: "Response", color: "done" }
+      ],
+      failurePaths: [
+        { from: 5, to: "done", label: "No tool use" },
+        { from: 6, to: "done", label: "Denied" }
+      ],
+      nodeData: {
+        "1": {
+          name: "User Message",
+          colorClass: "role-a",
+          who: [["User (Telegram)", "role-a-t"]],
+          what: {
+            did: "User sends a message in Telegram chat to the AI agent bot.",
+            pains: ["Spam or abuse", "Messages during bot maintenance"],
+            solutions: ["Rate limiting per user", "Graceful offline message when bot unavailable"]
+          },
+          output: { happy: "Message received by Telegram Bridge", failure: [] }
+        },
+        "2": {
+          name: "Get Session",
+          colorClass: "role-f",
+          who: [["SessionManager", "role-f-t"]],
+          what: {
+            did: "<strong>get_or_create_session(user_id)</strong>. Manages concurrent sessions with max <strong>3 concurrent</strong> per user, <strong>30min TTL</strong>.",
+            pains: ["Session leak if not properly cleaned", "Concurrent message race condition"],
+            solutions: ["TTL-based auto-cleanup", "Async lock per session to serialize messages"]
+          },
+          output: { happy: "Active session object returned", failure: [] }
+        },
+        "3": {
+          name: "Route",
+          colorClass: "role-e",
+          who: [["Telegram Bridge", "role-e-t"]],
+          what: {
+            did: "Bridge routes message to the <strong>AgentSession</strong>. Determines context (new conversation vs. continuation).",
+            pains: ["Context window overflow on long conversations", "Wrong session matched"],
+            solutions: ["Context truncation strategy", "Session ID in message metadata"]
+          },
+          output: { happy: "Message routed to correct AgentSession", failure: [] }
+        },
+        "4": {
+          name: "LLM Call",
+          colorClass: "role-g",
+          who: [["muse_llm", "role-f-t"], ["LLM Provider", "role-g-t"]],
+          what: {
+            did: "Call muse_llm with task=<code>telegram_interactive</code>, temperature=<strong>0.7</strong>. Includes conversation history as context.",
+            pains: ["High latency for complex queries", "Token cost on long conversation history"],
+            solutions: ["Streaming response for perceived speed", "History summarization beyond N messages"]
+          },
+          output: { happy: "LLM response (may contain tool_use blocks)", failure: [] }
+        },
+        "5": {
+          name: "Tool Detection",
+          colorClass: "role-e",
+          who: [["AgentSession", "role-e-t"]],
+          what: {
+            did: "Check if LLM response contains <strong>tool_use</strong> blocks. If no tools detected, skip directly to Response.",
+            pains: ["LLM generates invalid tool calls", "Tool not registered in ToolGate"],
+            solutions: ["Validate tool name against ToolGate registry", "Return error message to user for invalid tools"]
+          },
+          output: {
+            happy: "Tool use detected, proceed to Approval",
+            failure: [{ condition: "No tool_use in response", target: "done" }]
+          }
+        },
+        "6": {
+          name: "Approval",
+          colorClass: "role-a",
+          who: [["User (Telegram)", "role-a-t"], ["ToolGate Registry", "role-e-t"]],
+          what: {
+            did: "Send inline keyboard to user: <strong>[Approve] [Deny]</strong>. Wait for button callback. User sees what tool will be executed.",
+            pains: ["User doesn't respond (timeout)", "User doesn't understand what tool does"],
+            solutions: ["Auto-deny after 5min timeout", "Show tool description + parameters in approval message"]
+          },
+          output: {
+            happy: "User approves, tool execution proceeds",
+            failure: [{ condition: "User denies tool execution", target: "done" }]
+          }
+        },
+        "7": {
+          name: "Execute Tool",
+          colorClass: "role-e",
+          who: [["AgentSession", "role-e-t"]],
+          what: {
+            did: "Execute approved tool, then <strong>continue LLM call</strong> with tool result injected into context. LLM generates final response incorporating tool output.",
+            pains: ["Tool execution failure", "Tool returns too much data"],
+            solutions: ["Error handling with user-friendly message", "Truncate tool output before LLM continuation"]
+          },
+          output: { happy: "Final response generated with tool result", failure: [] }
+        },
+        "done": {
+          name: "Response",
+          colorClass: "done",
+          who: [["Telegram Bridge", "role-e-t"], ["User (Telegram)", "role-a-t"]],
+          what: {
+            did: "Send response to user. <strong>Chunk if > 4096 chars</strong> (Telegram message limit). Apply Markdown formatting.",
+            pains: [],
+            solutions: []
+          },
+          output: { happy: "User receives formatted response in Telegram", failure: [] }
+        }
+      }
+    },
+
+    // Tab 4: Ops Server
+    {
+      flowNodes: [
+        { id: 1, name: "Load<br/>Catalog", color: "role-f" },
+        { id: 2, name: "Scan<br/>Modules", color: "role-f" },
+        { id: 3, name: "Mount<br/>Routers", color: "role-e" },
+        { id: 4, name: "Register<br/>Actions", color: "role-e" },
+        { id: 5, name: "GET<br/>Features", color: "role-a" },
+        { id: 6, name: "POST<br/>Action", color: "role-a" },
+        { id: "done", name: "Execute<br/>Handler", color: "done" }
+      ],
+      failurePaths: [
+        { from: 3, to: 2, label: "Import error" },
+        { from: 6, to: 5, label: "Handler not found" }
+      ],
+      nodeData: {
+        "1": {
+          name: "Load Catalog",
+          colorClass: "role-f",
+          who: [["muse_catalog", "role-f-t"]],
+          what: {
+            did: "<strong>muse_catalog.load_catalog()</strong> on server startup. Reads the module registry to discover all available modules.",
+            pains: ["Catalog file corrupted", "Slow startup on many modules"],
+            solutions: ["Fail loud on catalog errors (boundary module)", "Cached catalog with invalidation"]
+          },
+          output: { happy: "Catalog loaded, module discovery begins", failure: [] }
+        },
+        "2": {
+          name: "Scan Modules",
+          colorClass: "role-f",
+          who: [["muse_catalog", "role-f-t"]],
+          what: {
+            did: "Scan all <code>muse.toml</code> files across the monorepo. Build <strong>ModuleManifest[]</strong> with metadata, router paths, and ops_ui definitions.",
+            pains: ["Invalid muse.toml syntax", "Missing required fields"],
+            solutions: ["Schema validation on each muse.toml", "Skip invalid modules with warning (don't crash startup)"]
+          },
+          output: { happy: "ModuleManifest[] built for all valid modules", failure: [] }
+        },
+        "3": {
+          name: "Mount Routers",
+          colorClass: "role-e",
+          who: [["Ops Server (FastAPI)", "role-e-t"], ["Feature Modules", "role-e-t"]],
+          what: {
+            did: "For each module with <code>[router]</code> section: <strong>importlib.import_module(router_path)</strong>, get FastAPI Router, <code>app.mount(mount_path, router)</code>.",
+            pains: ["Import error in module code", "Circular imports", "Router conflicts on same path"],
+            solutions: ["Try/except per module (don't block others)", "Path uniqueness validation", "Log which modules failed to mount"]
+          },
+          output: {
+            happy: "All routers mounted on FastAPI app",
+            failure: [{ condition: "Import error in module", target: 2 }]
+          }
+        },
+        "4": {
+          name: "Register Actions",
+          colorClass: "role-e",
+          who: [["Ops Server (FastAPI)", "role-e-t"]],
+          what: {
+            did: "For each module with <code>[ops_ui]</code> section: register <strong>action definitions</strong> and <strong>card definitions</strong> for the Ops UI dashboard.",
+            pains: ["Duplicate action names", "Missing handler reference"],
+            solutions: ["Namespace actions by module name", "Validate handler exists at registration time"]
+          },
+          output: { happy: "Actions + cards registered. Server ready. (Startup complete)", failure: [] }
+        },
+        "5": {
+          name: "GET Features",
+          colorClass: "role-a",
+          who: [["Ops UI (Next.js)", "role-a-t"]],
+          what: {
+            did: "Ops UI requests <code>GET /api/features</code>. Server returns feature cards with title, available actions, and current status.",
+            pains: ["Stale data if module state changed", "UI timeout on slow response"],
+            solutions: ["Real-time status from module health checks", "Response caching with short TTL"]
+          },
+          output: { happy: "Feature cards rendered in Ops UI dashboard", failure: [] }
+        },
+        "6": {
+          name: "POST Action",
+          colorClass: "role-a",
+          who: [["Ops UI (Next.js)", "role-a-t"], ["Ops Server", "role-e-t"]],
+          what: {
+            did: "UI sends <code>POST /api/actions/{feature}/{action}</code>. Server looks up handler from registered actions.",
+            pains: ["Handler module not importable at runtime", "Long-running action blocks response"],
+            solutions: ["Lazy import with error handling", "Background task for long operations, return job ID"]
+          },
+          output: {
+            happy: "Handler found, proceed to execute",
+            failure: [{ condition: "Handler not found or import error", target: 5 }]
+          }
+        },
+        "done": {
+          name: "Execute Handler",
+          colorClass: "done",
+          who: [["Feature Modules", "role-e-t"], ["Ops Server", "role-e-t"]],
+          what: {
+            did: "<strong>importlib -> import handler -> handler()</strong>. Execute the action handler and return result to UI.",
+            pains: [],
+            solutions: []
+          },
+          output: { happy: "Execution result returned to Ops UI", failure: [] }
+        }
+      }
+    },
+
+    // Tab 5: A/B Test Pipeline
+    {
+      flowNodes: [
+        { id: 1, name: "Load<br/>Articles", color: "role-d" },
+        { id: 2, name: "Run<br/>Provider A", color: "role-g" },
+        { id: 3, name: "Run<br/>Provider B", color: "role-g" },
+        { id: 4, name: "Judge", color: "role-c" },
+        { id: 5, name: "Aggregate", color: "role-e" },
+        { id: "done", name: "Apply", color: "done" }
+      ],
+      failurePaths: [
+        { from: 2, to: 1, label: "Provider error" },
+        { from: 3, to: 1, label: "Provider error" }
+      ],
+      nodeData: {
+        "1": {
+          name: "Load Articles",
+          colorClass: "role-d",
+          who: [["Operator (Reed)", "role-a-t"], ["Experiment DB", "role-d-t"]],
+          what: {
+            did: "Load <strong>N articles</strong> from experiment SQLite DB. Operator specifies <code>--group baseline --limit 60</code>.",
+            pains: ["Sample too small for statistical significance", "Biased sample selection"],
+            solutions: ["Minimum sample size validation", "Random sampling from full corpus"]
+          },
+          output: { happy: "60 articles loaded for experiment", failure: [] }
+        },
+        "2": {
+          name: "Run Provider A",
+          colorClass: "role-g",
+          who: [["Provider A (Claude Sonnet)", "role-g-t"]],
+          what: {
+            did: "Classify each article with <strong>Provider A</strong> (e.g., Claude Sonnet). Store result + cost per item.",
+            pains: ["Provider rate limit", "Inconsistent results across runs"],
+            solutions: ["Retry with backoff", "Fixed temperature=0 for reproducibility"]
+          },
+          output: {
+            happy: "All result_A + cost_A stored",
+            failure: [{ condition: "Provider error/timeout", target: 1 }]
+          }
+        },
+        "3": {
+          name: "Run Provider B",
+          colorClass: "role-g",
+          who: [["Provider B (DeepSeek Chat)", "role-g-t"]],
+          what: {
+            did: "Classify same articles with <strong>Provider B</strong> (e.g., DeepSeek Chat). Store result + cost per item.",
+            pains: ["Different output format from Provider B", "Much faster/slower than A"],
+            solutions: ["Normalize output schema", "Track latency as comparison metric"]
+          },
+          output: {
+            happy: "All result_B + cost_B stored",
+            failure: [{ condition: "Provider error/timeout", target: 1 }]
+          }
+        },
+        "4": {
+          name: "Judge",
+          colorClass: "role-c",
+          who: [["LLM Judge (Opus)", "role-c-t"]],
+          what: {
+            did: "For each result pair, <strong>Claude Opus</strong> compares quality. Produces structured quality scores and reasoning.",
+            pains: ["Judge bias toward its own provider", "High cost of Opus judging"],
+            solutions: ["Blind evaluation (provider names hidden)", "Sample subset for judging if budget constrained"]
+          },
+          output: { happy: "Quality judgments stored for all pairs", failure: [] }
+        },
+        "5": {
+          name: "Aggregate",
+          colorClass: "role-e",
+          who: [["AB Test Script", "role-e-t"]],
+          what: {
+            did: "Compute statistics: <strong>latency, cost, quality</strong> per group. Generate comparison report.",
+            pains: ["Outliers skewing averages", "Small sample high variance"],
+            solutions: ["Median + percentiles alongside mean", "Confidence intervals in report"]
+          },
+          output: { happy: "Report generated: e.g. 'DeepSeek 83% cheaper, same quality for classify'", failure: [] }
+        },
+        "done": {
+          name: "Apply",
+          colorClass: "done",
+          who: [["Operator (Reed)", "role-a-t"]],
+          what: {
+            did: "Based on report, operator <strong>updates routing_config.toml</strong> to change task-to-provider mapping. E.g., switch classify from Claude to DeepSeek.",
+            pains: [],
+            solutions: []
+          },
+          output: { happy: "routing_config.toml updated. Cost savings applied to production.", failure: [] }
+        }
+      }
+    }
+  ];
+
+  // ===== State =====
+  let currentTab = 0;
+  let selectedId = null;
+
+  // ===== Helpers =====
+  function getNodeIndex(nodes, id) {
+    return nodes.findIndex(n => String(n.id) === String(id));
+  }
+  function getX(nodes, id) { return START_X + getNodeIndex(nodes, id) * (NODE_WIDTH + GAP); }
+  function getCenterX(nodes, id) { return getX(nodes, id) + NODE_WIDTH / 2; }
+
+  // ===== Render =====
+  function renderTab(tabIdx) {
+    currentTab = tabIdx;
+    selectedId = null;
+    const tab = TABS[tabIdx];
+    const nodeCount = tab.flowNodes.length;
+    const totalWidth = nodeCount * (NODE_WIDTH + GAP) - GAP + 60;
+
+    const inner = document.getElementById('hflow-inner');
+    inner.style.width = totalWidth + 'px';
+
+    const svg = document.getElementById('hflow-svg');
+    svg.setAttribute('viewBox', `0 0 ${totalWidth} 520`);
+
+    const container = document.getElementById('hflow-nodes');
+
+    let svgHtml = `
+      <defs>
+        <marker id="arr-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#43A047"/>
+        </marker>
+        <marker id="arr-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#D32F2F"/>
+        </marker>
+      </defs>
+    `;
+
+    // Happy path arrows
+    for (let i = 0; i < tab.flowNodes.length - 1; i++) {
+      const sx = getX(tab.flowNodes, tab.flowNodes[i].id) + NODE_WIDTH;
+      const tx = getX(tab.flowNodes, tab.flowNodes[i+1].id);
+      svgHtml += `<line x1="${sx}" y1="${MAIN_Y}" x2="${tx - 4}" y2="${MAIN_Y}" stroke="#43A047" stroke-width="3" marker-end="url(#arr-h)"/>`;
+    }
+
+    // Failure arcs
+    tab.failurePaths.forEach((f, idx) => {
+      const fromIdx = getNodeIndex(tab.flowNodes, f.from);
+      const toIdx = getNodeIndex(tab.flowNodes, f.to);
+
+      if (f.to === "kill") {
+        const cx = getCenterX(tab.flowNodes, f.from);
+        const sy = MAIN_Y + NODE_HEIGHT / 2;
+        const ty = 415;
+        svgHtml += `<path d="M ${cx} ${sy} L ${cx} ${ty - 4}" stroke="#D32F2F" stroke-width="1.8" stroke-dasharray="5 4" opacity="0.4" fill="none" marker-end="url(#arr-f)" data-from="${f.from}" data-idx="${idx}" class="failure-arc"/>`;
+        svgHtml += `<text x="${cx + 10}" y="${(sy + ty) / 2}" text-anchor="start" font-size="11" fill="#7F1D1D" class="failure-label" data-from="${f.from}" data-idx="${idx}" font-weight="600" opacity="0">${f.label}</text>`;
+      } else if (toIdx > fromIdx) {
+        // Forward failure (skip ahead, e.g., to "done")
+        const sx = getCenterX(tab.flowNodes, f.from);
+        const tx = getCenterX(tab.flowNodes, f.to);
+        const span = Math.abs(fromIdx - toIdx);
+        const arcHeight = 30 + span * 16;
+        const sy = MAIN_Y + NODE_HEIGHT / 2;
+        const peakY = sy + arcHeight;
+        svgHtml += `<path d="M ${sx} ${sy} C ${sx} ${peakY}, ${tx} ${peakY}, ${tx} ${sy + 4}" stroke="#D32F2F" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.28" fill="none" marker-end="url(#arr-f)" data-from="${f.from}" data-idx="${idx}" class="failure-arc"/>`;
+        const midX = (sx + tx) / 2;
+        svgHtml += `<text x="${midX}" y="${peakY + 14}" text-anchor="middle" font-size="11" fill="#7F1D1D" class="failure-label" data-from="${f.from}" data-idx="${idx}" font-weight="600" opacity="0">${f.label}</text>`;
+      } else {
+        // Backward failure (go back)
+        const sx = getCenterX(tab.flowNodes, f.from);
+        const tx = getCenterX(tab.flowNodes, f.to);
+        const span = Math.abs(fromIdx - toIdx);
+        const arcHeight = 30 + span * 16;
+        const sy = MAIN_Y - NODE_HEIGHT / 2;
+        const peakY = sy - arcHeight;
+        svgHtml += `<path d="M ${sx} ${sy} C ${sx} ${peakY}, ${tx} ${peakY}, ${tx} ${sy - 4}" stroke="#D32F2F" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.28" fill="none" marker-end="url(#arr-f)" data-from="${f.from}" data-idx="${idx}" class="failure-arc"/>`;
+        const midX = (sx + tx) / 2;
+        svgHtml += `<text x="${midX}" y="${peakY - 5}" text-anchor="middle" font-size="11" fill="#7F1D1D" class="failure-label" data-from="${f.from}" data-idx="${idx}" font-weight="600" opacity="0">${f.label}</text>`;
+      }
+    });
+
+    svg.innerHTML = svgHtml;
+
+    // Render node cards
+    let html = '';
+    tab.flowNodes.forEach((n, i) => {
+      const x = getX(tab.flowNodes, n.id);
+      const failures = tab.failurePaths.filter(f => String(f.from) === String(n.id)).length;
+      const num = typeof n.id === 'number' ? n.id : '';
+      html += `
+        <div class="hflow-node ${n.color}" data-id="${n.id}" style="left:${x}px; top:${MAIN_Y - NODE_HEIGHT/2}px;"
+             onclick="onNodeClick('${n.id}')"
+             onmouseenter="onNodeHover('${n.id}', true)"
+             onmouseleave="onNodeHover('${n.id}', false)">
+          ${num ? `<div class="num">${num}</div>` : ''}
+          <div class="name">${n.name}</div>
+          ${failures > 0 ? `<div class="fail-badge">${failures}</div>` : ''}
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+
+    // Reset detail panel and select first node
+    document.getElementById('detail-panel').innerHTML = '<div class="detail-empty">Click any node above to see details</div>';
+    setTimeout(() => onNodeClick(String(tab.flowNodes[0].id)), 50);
+  }
+
+  // ===== Interaction =====
+  window.onNodeClick = function(id) {
+    selectedId = String(id);
+    showDetail(selectedId);
+    highlightSelection();
+  };
+
+  window.onNodeHover = function(id, entering) {
+    if (selectedId === String(id)) return;
+    if (entering) highlightFailures(String(id), 0.9, 1);
+    else highlightSelection();
+  };
+
+  function highlightSelection() {
+    if (selectedId) {
+      highlightFailures(selectedId, 0.9, 1);
+    } else {
+      document.querySelectorAll('.failure-arc').forEach(a => {
+        a.style.opacity = '0.28';
+        a.style.strokeWidth = '';
+      });
+      document.querySelectorAll('.failure-label').forEach(l => { l.style.opacity = '0'; });
+    }
+  }
+
+  function highlightFailures(id, arcOpacity, labelOpacity) {
+    document.querySelectorAll('.failure-arc').forEach(a => {
+      if (a.dataset.from === id) {
+        a.style.opacity = arcOpacity;
+        a.style.strokeWidth = '2.5';
+      } else {
+        a.style.opacity = '0.18';
+        a.style.strokeWidth = '';
+      }
+    });
+    document.querySelectorAll('.failure-label').forEach(l => {
+      l.style.opacity = l.dataset.from === id ? labelOpacity : '0';
+    });
+    document.querySelectorAll('.hflow-node').forEach(n => {
+      n.classList.toggle('selected', n.dataset.id === id);
+    });
+  }
+
+  function showDetail(id) {
+    const tab = TABS[currentTab];
+    const data = tab.nodeData[id];
+    if (!data) return;
+
+    const who = data.who.map(([n, cls]) => `<span class="role-tag ${cls}">${n}</span>`).join(' ');
+    let pains = data.what.pains.length
+      ? data.what.pains.map(p => `<li>${p}</li>`).join('')
+      : '<li class="muted">--</li>';
+    let solutions = data.what.solutions.length
+      ? data.what.solutions.map(s => `<li>${s}</li>`).join('')
+      : '<li class="muted">--</li>';
+
+    let failureHtml;
+    if (!data.output.failure || data.output.failure.length === 0) {
+      failureHtml = `<div class="subcontent muted">${UI[LANG].noFailure}</div>`;
+    } else {
+      failureHtml = `<ul class="failure-list">${
+        data.output.failure.map(f => {
+          if (f.target === null && f.action === 'kill') {
+            return `<li><strong>${f.condition}</strong> &rarr; <span class="kill">Reject</span></li>`;
+          }
+          const targetNode = tab.flowNodes.find(n => String(n.id) === String(f.target));
+          const targetName = targetNode ? targetNode.name.replace(/<br\/>/g, ' ') : f.target;
+          return `<li><strong>${f.condition}</strong> &rarr; <span class="goto" onclick="onNodeClick('${f.target}')">${UI[LANG].backTo} ${targetName}</span></li>`;
+        }).join('')
+      }</ul>`;
+    }
+
+    // i18n: override with ZH data if available
+    const L = UI[LANG];
+    let displayName = data.name;
+    let displayWho = who;
+    let displayDid = data.what.did;
+    let displayHappy = data.output.happy;
+
+    const zhTab = ZH_DATA[currentTab];
+    if (LANG === 'zh' && zhTab && zhTab[id]) {
+      const zh = zhTab[id];
+      if (zh.name) displayName = zh.name;
+      if (zh.who) displayWho = zh.who.map(([n, cls]) => `<span class="role-tag ${cls}">${n}</span>`).join(' ');
+      if (zh.did) displayDid = zh.did;
+      if (zh.happyOut) displayHappy = zh.happyOut;
+      if (zh.pains) pains = zh.pains.map(p => `<li>${p}</li>`).join('');
+      if (zh.solutions) solutions = zh.solutions.map(s => `<li>${s}</li>`).join('');
+      if (zh.failureOut) {
+        failureHtml = `<ul class="failure-list">${zh.failureOut.map(f => {
+          const targetNode = tab.flowNodes.find(n => String(n.id) === String(f.target));
+          const targetName = targetNode ? targetNode.name.replace(/<br\/>/g, ' ') : f.target;
+          return `<li><strong>${f.condition}</strong> &rarr; <span class="goto" onclick="onNodeClick('${f.target}')">${L.backTo} ${targetName}</span></li>`;
+        }).join('')}</ul>`;
+      }
+    }
+
+    const numDisplay = id === 'done' ? '&check;' : id;
+    document.getElementById('detail-panel').innerHTML = `
+      <div class="detail-header">
+        <div class="detail-num ${data.colorClass}">${numDisplay}</div>
+        <h3>${displayName}</h3>
+      </div>
+      <div class="detail-3col">
+        <div class="dcol who-col">
+          <h4>${L.who}</h4>
+          <div>${displayWho}</div>
+        </div>
+        <div class="dcol what-col">
+          <h4>${L.what}</h4>
+          <div class="subsection">
+            <div class="sublabel did">${L.activity}</div>
+            <div class="subcontent">${displayDid}</div>
+          </div>
+          <div class="subsection">
+            <div class="sublabel pain">${L.pain}</div>
+            <ul class="subcontent">${pains}</ul>
+          </div>
+          <div class="subsection">
+            <div class="sublabel solution">${L.solution}</div>
+            <ul class="subcontent">${solutions}</ul>
+          </div>
+        </div>
+        <div class="dcol output-col">
+          <h4>${L.output}</h4>
+          <div class="subsection">
+            <div class="sublabel happy">${L.happy}</div>
+            <div class="subcontent">${displayHappy}</div>
+          </div>
+          <div class="subsection">
+            <div class="sublabel failure-out">${L.failure}</div>
+            ${failureHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ===== Tab switching =====
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTab(parseInt(btn.dataset.tab));
+    });
+  });
+
+  // ===== Detect iframe embed =====
+  if (window.self !== window.top) {
+    document.body.classList.add('embedded');
+  }
+
+  // ===== Init =====
+  applyLang(LANG);
+  renderTab(0);
+</script>
+</body>
+</html>
