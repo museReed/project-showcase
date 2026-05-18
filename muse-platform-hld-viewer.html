@@ -353,7 +353,6 @@
   <button class="tab-btn" data-tab="handbook">Interview Tech Handbook</button>
   <button class="tab-btn" data-tab="flows">Interactive Flows</button>
   <button class="tab-btn" data-tab="buildprod">Build Product</button>
-  <button class="tab-btn" data-tab="methodology">AI Dev Methodology</button>
   <button class="tab-btn" data-tab="deck">Portfolio Deck</button>
 </div>
 
@@ -383,15 +382,6 @@
     </div>
   </div>
   <iframe id="buildprod-iframe" src="./interactive-build-product.html?lang=en" style="width:100%;height:calc(100vh - 120px);border:none;display:block;"></iframe>
-</div>
-<div id="tab-methodology" class="tab-pane">
-  <div style="padding:12px 48px 0;max-width:1100px;margin:0 auto;">
-    <div class="lang-toggle">
-      <button class="lang-btn active" data-lang="en" data-target="methodology">English</button>
-      <button class="lang-btn" data-lang="zh" data-target="methodology">中文</button>
-    </div>
-  </div>
-  <iframe id="methodology-iframe" src="./interactive-hybrid-methodology.html?lang=en" style="width:100%;height:calc(100vh - 120px);border:none;display:block;"></iframe>
 </div>
 <div id="tab-deck" class="tab-pane">
   <div class="tab-content">
@@ -442,8 +432,6 @@ async function loadTab(key) {
     await loadDeckLang(activeDeckLang);
     return;
   }
-  // iframe-based tabs don't need loading
-  if (key === 'flows' || key === 'buildprod' || key === 'methodology') return;
   const tab = TABS[key];
   if (tab.loaded) return;
 
@@ -504,16 +492,6 @@ function switchBuildProdLang(lang) {
   document.getElementById('buildprod-iframe').src = `./interactive-build-product.html?lang=${lang}`;
 }
 
-// ── Switch methodology language ──
-let activeMethodologyLang = 'en';
-function switchMethodologyLang(lang) {
-  if (lang === activeMethodologyLang) return;
-  document.querySelector('.lang-btn[data-target="methodology"].active').classList.remove('active');
-  activeMethodologyLang = lang;
-  document.querySelector(`.lang-btn[data-target="methodology"][data-lang="${lang}"]`).classList.add('active');
-  document.getElementById('methodology-iframe').src = `./interactive-hybrid-methodology.html?lang=${lang}`;
-}
-
 // ── Build TOC for active tab ──
 function buildTOC() {
   let container;
@@ -564,8 +542,6 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
       switchFlowsLang(btn.dataset.lang);
     } else if (btn.dataset.target === 'buildprod') {
       switchBuildProdLang(btn.dataset.lang);
-    } else if (btn.dataset.target === 'methodology') {
-      switchMethodologyLang(btn.dataset.lang);
     } else {
       switchDeckLang(btn.dataset.lang);
     }
