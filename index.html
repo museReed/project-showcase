@@ -332,6 +332,39 @@
   }
   .exp-grid .exp-item { margin-bottom: 0; }
 
+  /* Deliverable card inside timeline */
+  .exp-deliverable {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .exp-deliverable:hover {
+    border-color: var(--accent);
+    box-shadow: 0 2px 12px rgba(56,189,248,0.15);
+    transform: translateY(-1px);
+  }
+  .exp-deliverable .dlv-icon {
+    font-size: 1rem;
+  }
+  .exp-deliverable .dlv-arrow {
+    color: var(--text-dim);
+    transition: transform 0.2s;
+  }
+  .exp-deliverable:hover .dlv-arrow {
+    transform: translateX(3px);
+    color: var(--accent);
+  }
+
   @media (max-width: 600px) {
     .hero h1 { font-size: 1.8rem; }
     .hero-stats { gap: 28px; }
@@ -384,6 +417,11 @@
         <li>Diagnosed workflow pain points for 20+ person team; established end-to-end development process, reducing rework by <span class="metric">41%</span></li>
         <li>Introduced Claude Code for AI-assisted development, producing 9 development skills, reducing delivery time by <span class="metric">33%</span></li>
       </ul>
+      <a class="exp-deliverable" href="hybrid-dev-methodology.html" target="_blank">
+        <span class="dlv-icon">📋</span>
+        Deliverable — Hybrid AI Development Methodology (Interactive Flowchart)
+        <span class="dlv-arrow">&rarr;</span>
+      </a>
     </div>
 
     <div class="exp-item">

@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  Hybrid AI Development Methodology — Interactive Flowchart
+  ============================================================
+  Visualizes a hybrid development methodology combining:
+  Discovery-Driven BDD Analysis for exploration & boundary coverage;
+  Contract-First TDD (12 chapters) + tracking for implementation management & traceability.
+
+  Standalone page. Supports ?lang=en|zh.
+  ============================================================
+-->
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hybrid AI Development Methodology</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --role-a: #4A90E2;     /* PM / Discovery */
+    --role-b: #E91E63;     /* BDD Analyst */
+    --role-c: #F57C00;     /* QA / Validator */
+    --role-d: #9C27B0;     /* Tracking */
+    --role-e: #43A047;     /* Developer */
+    --role-f: #1B5E20;     /* Tech Lead */
+    --role-g: #546E7A;     /* AI Assistant */
+    --mix:    #37474F;     /* Multi-role */
+
+    --success: #43A047;
+    --failure: #D32F2F;
+    --done:    #FFC107;
+    --kill:    #D32F2F;
+    --highlight: #FF6B00;
+
+    --bg:         #F4F6FA;
+    --card:       #FFFFFF;
+    --text:       #1A202C;
+    --text-light: #4A5568;
+    --border:     #E2E8F0;
+    --output-color: #F9A825;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    padding: 36px 16px 80px;
+  }
+  /* Embedded in iframe: tighter padding */
+  body.embedded { padding: 16px 12px 40px; }
+  body.embedded header { margin-bottom: 24px; }
+
+  .container { max-width: 1280px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 44px; }
+  header h1 { font-size: 1.85rem; margin-bottom: 8px; }
+  header .subtitle { color: var(--text-light); font-size: 0.95rem; }
+
+  h2 {
+    font-size: 1.35rem;
+    margin: 56px 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .icon { font-size: 1.4rem; }
+  .section-desc {
+    color: var(--text-light);
+    font-size: 0.92rem;
+    margin-bottom: 24px;
+    max-width: 1000px;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+  .legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; padding: 5px 12px;
+    border-radius: 14px; background: var(--card);
+    border: 1px solid var(--border); color: var(--text-light);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-line { width: 28px; height: 3px; border-radius: 2px; background: var(--success); }
+  .legend-line.failure { height: 0; border-bottom: 2px dashed var(--failure); border-radius: 0; background: transparent; }
+
+  /* Phase divider labels */
+  .phase-label {
+    position: absolute;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-light);
+    writing-mode: horizontal-tb;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid var(--border);
+    z-index: 2;
+  }
+
+  .hflow-scroll {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .hflow-inner {
+    position: relative;
+    width: 1730px;
+    height: 520px;
+  }
+  .hflow-svg {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .hflow-svg .failure-arc { transition: opacity 0.18s, stroke-width 0.18s; }
+  .hflow-svg .failure-label { transition: opacity 0.18s; pointer-events: none; }
+
+  .hflow-nodes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .hflow-node {
+    position: absolute;
+    width: 140px; height: 80px;
+    border-radius: 9px;
+    padding: 10px 8px 8px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    color: white; font-weight: 600;
+    font-size: 0.85rem; line-height: 1.35;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    user-select: none;
+  }
+  .hflow-node:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+    z-index: 5;
+  }
+  .hflow-node.selected {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+    z-index: 6;
+  }
+  .hflow-node .num {
+    position: absolute; top: 5px; left: 9px;
+    font-size: 0.68rem; opacity: 0.85;
+    font-weight: 700; line-height: 1;
+  }
+  .hflow-node .fail-badge {
+    position: absolute; bottom: 4px; right: 6px;
+    font-size: 0.62rem;
+    background: rgba(0,0,0,0.25);
+    padding: 1px 7px; border-radius: 8px;
+    font-weight: 600;
+  }
+  .hflow-node .name { padding: 0 2px; }
+
+  .hflow-node.role-a { background: var(--role-a); }
+  .hflow-node.role-b { background: var(--role-b); }
+  .hflow-node.role-c { background: var(--role-c); }
+  .hflow-node.role-d { background: var(--role-d); }
+  .hflow-node.role-e { background: var(--role-e); }
+  .hflow-node.role-f { background: var(--role-f); }
+  .hflow-node.role-g { background: var(--role-g); }
+  .hflow-node.mix   { background: var(--mix); }
+  .hflow-node.done {
+    background: var(--done); color: var(--text);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 0 0 4px rgba(255,193,7,0.15);
+  }
+  .hflow-node.kill {
+    background: var(--kill);
+    height: 46px; font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(211,47,47,0.3);
+  }
+
+  .detail-below {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .detail-empty {
+    padding: 60px 20px; text-align: center;
+    color: var(--text-light); font-size: 1rem;
+  }
+  .detail-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-num {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--text); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .detail-num.role-a { background: var(--role-a); }
+  .detail-num.role-b { background: var(--role-b); }
+  .detail-num.role-c { background: var(--role-c); }
+  .detail-num.role-d { background: var(--role-d); }
+  .detail-num.role-e { background: var(--role-e); }
+  .detail-num.role-f { background: var(--role-f); }
+  .detail-num.role-g { background: var(--role-g); }
+  .detail-num.mix   { background: var(--mix); }
+  .detail-header h3 { font-size: 1.1rem; line-height: 1.4; }
+
+  .detail-3col {
+    display: grid;
+    grid-template-columns: 0.7fr 1.6fr 1.1fr;
+    gap: 0;
+  }
+  @media (max-width: 900px) { .detail-3col { grid-template-columns: 1fr; } }
+  .dcol {
+    padding: 18px 22px;
+    border-right: 1px solid var(--border);
+  }
+  .dcol:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .dcol { border-right: none; border-bottom: 1px solid var(--border); }
+    .dcol:last-child { border-bottom: none; }
+  }
+  .dcol h4 {
+    font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-light);
+    margin-bottom: 12px; font-weight: 700;
+  }
+  .dcol.what-col h4 { color: var(--role-e); }
+  .dcol.output-col h4 { color: #B45309; }
+
+  .role-tag {
+    display: inline-block;
+    font-size: 0.74rem; padding: 3px 10px;
+    border-radius: 10px; margin: 2px 4px 4px 0;
+    font-weight: 600;
+    background: #E2E8F0; color: var(--text);
+  }
+  .role-tag.role-a-t { background: var(--role-a); color: white; }
+  .role-tag.role-b-t { background: var(--role-b); color: white; }
+  .role-tag.role-c-t { background: var(--role-c); color: white; }
+  .role-tag.role-d-t { background: var(--role-d); color: white; }
+  .role-tag.role-e-t { background: var(--role-e); color: white; }
+  .role-tag.role-f-t { background: var(--role-f); color: white; }
+  .role-tag.role-g-t { background: var(--role-g); color: white; }
+
+  .subsection { margin-bottom: 14px; }
+  .subsection:last-child { margin-bottom: 0; }
+  .sublabel {
+    font-size: 0.85rem; font-weight: 700;
+    margin-bottom: 6px; padding-left: 10px;
+    border-left: 3px solid var(--text-light);
+  }
+  .sublabel.did { border-left-color: #3B82F6; color: #1D4ED8; }
+  .sublabel.pain { border-left-color: var(--failure); color: #991B1B; }
+  .sublabel.solution { border-left-color: #10B981; color: #065F46; }
+  .sublabel.happy { border-left-color: var(--success); color: #166534; }
+  .sublabel.failure-out { border-left-color: var(--failure); color: #991B1B; }
+
+  .subcontent {
+    font-size: 0.88rem; line-height: 1.65;
+    padding-left: 13px; color: var(--text);
+  }
+  .subcontent ul, ul.subcontent {
+    list-style: none; padding-left: 13px;
+  }
+  .subcontent li, ul.subcontent li {
+    padding: 4px 0 4px 14px;
+    position: relative;
+  }
+  .subcontent li::before, ul.subcontent li::before {
+    content: '\00B7'; position: absolute; left: 0;
+    color: var(--text-light); font-weight: 700;
+  }
+
+  .failure-list li {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 6px;
+    padding: 8px 12px !important;
+    margin: 6px 0;
+    list-style: none;
+  }
+  .failure-list li::before { display: none; }
+  .failure-list .goto {
+    background: #FEE2E2;
+    color: #991B1B;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600; font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .failure-list .goto:hover { background: #FCA5A5; color: white; }
+  .failure-list .kill {
+    background: #1F2937;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600; font-size: 0.78rem;
+  }
+  .muted { color: var(--text-light); font-style: italic; }
+
+  .role-diagram {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 20px;
+    overflow-x: auto;
+  }
+  .role-diagram .mermaid { text-align: center; }
+
+  .insight {
+    background: #FFF8E1;
+    border-left: 4px solid var(--output-color);
+    padding: 16px 20px;
+    border-radius: 6px;
+    margin-top: 24px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+  .insight strong { color: #BF360C; }
+  .insight p + p, .insight p + ul { margin-top: 8px; }
+  .insight ul { margin: 6px 0 6px 20px; line-height: 1.7; }
+
+  .domain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .domain-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--text-light);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .domain-card.role-a-b { border-top-color: var(--role-a); }
+  .domain-card.role-b-b { border-top-color: var(--role-b); }
+  .domain-card.role-c-b { border-top-color: var(--role-c); }
+  .domain-card.role-d-b { border-top-color: var(--role-d); }
+  .domain-card.role-e-b { border-top-color: var(--role-e); }
+  .domain-card.role-g-b { border-top-color: var(--role-g); }
+  .domain-card h4 { font-size: 0.95rem; margin-bottom: 6px; }
+  .domain-card .domain-knowledge {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+  .domain-card .domain-output {
+    font-size: 0.82rem;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.83rem;
+    line-height: 1.7;
+  }
+  footer code {
+    background: var(--card);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1 data-en="Hybrid AI Development Methodology" data-zh="混合式 AI 開發方法論">混合式 AI 開發方法論</h1>
+    <p class="subtitle" data-en="Discovery-Driven BDD Analysis fills the exploration &amp; boundary gap; Contract-First TDD + tracking fills implementation management &amp; traceability" data-zh="Discovery-Driven BDD Analysis 補足探索與邊界覆蓋，Contract-First TDD 契約 + 追蹤系統補足實作管理與可溯源性">Discovery-Driven BDD Analysis 補足探索與邊界覆蓋，Contract-First TDD 契約 + 追蹤系統補足實作管理與可溯源性</p>
+  </header>
+
+  <h2><span class="icon">🌳</span><span data-en="Development Process — Decision Tree" data-zh="開發流程 — 決策樹">開發流程 — 決策樹</span></h2>
+  <p class="section-desc" data-en='<strong style="color:var(--success)">Green solid line</strong> = happy path (left→right); <strong style="color:var(--failure)">Red dashed arc</strong> = failure/rework paths. <strong>Phase 0</strong> (nodes 1-2): Discovery (Discovery-Driven). <strong>Phase 1</strong> (nodes 3-5): TDD Generation (Contract-First). <strong>Phase 2</strong> (nodes 6-9): Implementation. <br/><strong>👉 Click any node</strong> to see Who / What / Output details.' data-zh='<strong style="color:var(--success)">綠色實線</strong> = 正常路徑（左→右）；<strong style="color:var(--failure)">紅色虛線弧</strong> = 失敗/返工路徑。<strong>Phase 0</strong>（節點 1-2）：探索（Discovery-Driven）。<strong>Phase 1</strong>（節點 3-5）：TDD 產出（Contract-First）。<strong>Phase 2</strong>（節點 6-9）：實作。<br/><strong>👉 點擊節點</strong>查看 Who / What / Output 細節。'>
+    <strong style="color:var(--success)">綠色實線</strong> = 正常路徑（左→右）；<strong style="color:var(--failure)">紅色虛線弧</strong> = 失敗/返工路徑。<strong>Phase 0</strong>（節點 1-2）：探索（Discovery-Driven）。<strong>Phase 1</strong>（節點 3-5）：TDD 產出（Contract-First）。<strong>Phase 2</strong>（節點 6-9）：實作。<br/><strong>👉 點擊節點</strong>查看 Who / What / Output 細節。
+  </p>
+
+  <div class="legend">
+    <span class="legend-item"><span class="legend-line"></span><span data-en="Happy Path" data-zh="正常路徑">正常路徑</span></span>
+    <span class="legend-item"><span class="legend-line failure"></span><span data-en="Failure/Rework" data-zh="失敗/返工">失敗/返工</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-a)"></span><span data-en="PM / Discovery" data-zh="PM / 探索">PM / 探索</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-b)"></span><span data-en="BDD Analyst" data-zh="BDD 分析師">BDD 分析師</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-c)"></span><span data-en="QA / Validator" data-zh="QA / 驗證者">QA / 驗證者</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-e)"></span><span data-en="Developer" data-zh="開發者">開發者</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-g)"></span><span data-en="AI Assistant" data-zh="AI 助手">AI 助手</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-d)"></span><span data-en="Tracking" data-zh="追蹤管理">追蹤管理</span></span>
+  </div>
+
+  <div class="hflow-scroll">
+    <div class="hflow-inner" id="hflow-inner">
+      <svg class="hflow-svg" id="hflow-svg" viewBox="0 0 1730 520" preserveAspectRatio="xMinYMin meet"></svg>
+      <div class="hflow-nodes" id="hflow-nodes"></div>
+    </div>
+  </div>
+
+  <div class="detail-below" id="detail-panel">
+    <div class="detail-empty">👆 Click any node above to see details</div>
+  </div>
+
+  <!-- ====== Role Relationship ====== -->
+  <h2><span class="icon">🔗</span><span data-en="Methodology Fusion — How Two Approaches Complement Each Other" data-zh="方法論融合 — 兩種方法如何互補">方法論融合 — 兩種方法如何互補</span></h2>
+  <p class="section-desc" data-en="Discovery-Driven provides Discovery + BDD Analysis for exploration and boundary coverage. Contract-First provides TDD contract + Context Engineering + 4-Layer Tracking for implementation management and traceability." data-zh="Discovery-Driven 提供 Discovery + BDD Analysis 進行探索和邊界覆蓋。Contract-First 提供 TDD 契約 + Context Engineering + 四層追蹤進行實作管理和可溯源性。">Discovery-Driven 提供 Discovery + BDD Analysis 進行探索和邊界覆蓋。Contract-First 提供 TDD 契約 + Context Engineering + 四層追蹤進行實作管理和可溯源性。</p>
+  <div class="role-diagram">
+    <div class="mermaid">
+flowchart TD
+    BDD(["🔍 <b>Discovery-Driven</b><br/>Discovery + BDD Analysis"])
+    ON(["📋 <b>Contract-First</b><br/>TDD 12 Chapters + Tracking"])
+
+    D1["Phase 0<br/>Event Storming<br/>+ Clarify Loop"]
+    D2["Phase 0<br/>詞入格組寫<br/>BDD Analysis"]
+
+    T1["Phase 1<br/>TDD + BDD Edge Cases"]
+    T2["Phase 1<br/>Context Engineering"]
+    T3["Phase 1<br/>Ticket Breakdown"]
+
+    I1["Phase 2<br/>AI Coding Loop"]
+    I2["Phase 2<br/>Auto Feedback + TDD Check"]
+    I3["Phase 2<br/>4-Layer Tracking"]
+
+    BDD ==>|"provides"| D1
+    BDD ==>|"provides"| D2
+    D1 ==> T1
+    D2 ==>|"inject Ch09/Ch10"| T1
+    ON ==>|"provides"| T1
+    ON ==>|"provides"| T2
+    ON ==>|"provides"| T3
+    T1 ==> T2
+    T2 ==> T3
+    T3 ==> I1
+    I1 ==> I2
+    BDD ==>|"Auto Feedback Loop"| I2
+    ON ==>|"TDD Contract Check"| I2
+    I2 ==> I3
+    ON ==>|"4-Layer System"| I3
+
+    classDef bddStyle fill:#E91E63,stroke:#9F1239,color:#fff,font-weight:bold;
+    classDef onStyle fill:#4A90E2,stroke:#2C5282,color:#fff,font-weight:bold;
+    classDef phaseStyle fill:#FFC107,stroke:#92400E,color:#1A202C,font-weight:bold;
+    classDef implStyle fill:#43A047,stroke:#1B5E20,color:#fff,font-weight:bold;
+
+    class BDD bddStyle;
+    class ON onStyle;
+    class D1,D2 phaseStyle;
+    class T1,T2,T3 phaseStyle;
+    class I1,I2,I3 implStyle;
+    </div>
+  </div>
+
+  <div class="insight">
+    <p><strong data-en="Key Insight — Complementary, Not Replacement" data-zh="核心洞察 — 互補而非替代">核心洞察 — 互補而非替代</strong></p>
+    <p data-en="Discovery-Driven's Discovery + BDD Analysis fills Contract-First's gap in requirement exploration and boundary testing — Contract-First's Spec Input passively receives docs, Discovery-Driven actively explores and systematically scans. Contract-First's TDD contract + Context Engineering + 4-Layer Tracking fills Discovery-Driven's gap in implementation management and traceability — Discovery-Driven's Auto Feedback Loop is powerful but lacks tracking. It's not about choosing one, but using the right tool at the right phase." data-zh="Discovery-Driven 的 Discovery + BDD Analysis 補足 Contract-First 在需求探索和邊界測試的缺口 — Contract-First 的 Spec Input 是被動接收文件，Discovery-Driven 是主動探索和系統性掃描。Contract-First 的 TDD 契約 + Context Engineering + 4-Layer Tracking 補足 Discovery-Driven 在實作管理和可溯源性的缺口 — Discovery-Driven 的 Auto Feedback Loop 雖然強大但缺乏追蹤機制。不是選一個，而是在正確的階段用正確的工具。">Discovery-Driven 的 Discovery + BDD Analysis 補足 Contract-First 在需求探索和邊界測試的缺口 — Contract-First 的 Spec Input 是被動接收文件，Discovery-Driven 是主動探索和系統性掃描。Contract-First 的 TDD 契約 + Context Engineering + 4-Layer Tracking 補足 Discovery-Driven 在實作管理和可溯源性的缺口 — Discovery-Driven 的 Auto Feedback Loop 雖然強大但缺乏追蹤機制。不是選一個，而是在正確的階段用正確的工具。</p>
+  </div>
+
+  <!-- ====== Domain Knowledge Cards ====== -->
+  <h2><span class="icon">📚</span><span data-en="Methodology Source Map" data-zh="方法論來源對照">方法論來源對照</span></h2>
+  <p class="section-desc" data-en="Each step in the hybrid methodology traces back to either Discovery-Driven or Contract-First, applied where it adds the most value." data-zh="混合方法論的每個步驟都可追溯至 Discovery-Driven 或 Contract-First，在最能發揮價值的地方使用。">混合方法論的每個步驟都可追溯至 Discovery-Driven 或 Contract-First，在最能發揮價值的地方使用。</p>
+  <div class="domain-grid">
+    <div class="domain-card role-a-b">
+      <h4>Discovery</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>From Discovery-Driven</strong> — Event Storming + Checklist + Clarify Loop" data-zh="📚 <strong>來自 Discovery-Driven</strong> — Event Storming + Checklist + Clarify Loop">📚 <strong>來自 Discovery-Driven</strong> — Event Storming + Checklist + Clarify Loop</div>
+      <div class="domain-output" data-en="Fills Contract-First's passive spec reception gap" data-zh="補足 Contract-First 被動接收規格的缺口">補足 Contract-First 被動接收規格的缺口</div>
+    </div>
+    <div class="domain-card role-b-b">
+      <h4>BDD Analysis</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>From Discovery-Driven</strong> — 5-step, only for complex boundaries" data-zh="📚 <strong>來自 Discovery-Driven</strong> — 詞入格組寫五步驟，只對高複雜度邊界使用">📚 <strong>來自 Discovery-Driven</strong> — 詞入格組寫五步驟，只對高複雜度邊界使用</div>
+      <div class="domain-output" data-en="Fills Contract-First's boundary test coverage gap" data-zh="補足 Contract-First 的邊界測試覆蓋">補足 Contract-First 的邊界測試覆蓋</div>
+    </div>
+    <div class="domain-card role-g-b">
+      <h4>TDD 12 Chapters</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>From Contract-First</strong> — core contract, BDD injects Ch09/Ch10" data-zh="📚 <strong>來自 Contract-First</strong> — 核心契約，BDD 注入 Ch09/Ch10">📚 <strong>來自 Contract-First</strong> — 核心契約，BDD 注入 Ch09/Ch10</div>
+      <div class="domain-output" data-en="Main architecture stays Contract-First" data-zh="主架構保持 Contract-First">主架構保持 Contract-First</div>
+    </div>
+    <div class="domain-card role-e-b">
+      <h4>Context Engineering</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>From Contract-First</strong> — .mdc rules + Adapter" data-zh="📚 <strong>來自 Contract-First</strong> — .mdc 規則 + Adapter 機制">📚 <strong>來自 Contract-First</strong> — .mdc 規則 + Adapter 機制</div>
+      <div class="domain-output" data-en="Architecture-agnostic rule constraints" data-zh="架構無關的規則約束">架構無關的規則約束</div>
+    </div>
+    <div class="domain-card role-c-b">
+      <h4>Auto Feedback Loop</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>From Discovery-Driven</strong> — fully automated test-fix loop" data-zh="📚 <strong>來自 Discovery-Driven</strong> — 全自動測試修復閉環">📚 <strong>來自 Discovery-Driven</strong> — 全自動測試修復閉環</div>
+      <div class="domain-output" data-en="Fills Contract-First's manual verification gap" data-zh="補足 Contract-First 的人工驗證">補足 Contract-First 的人工驗證</div>
+    </div>
+    <div class="domain-card role-d-b">
+      <h4>4-Layer Tracking</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>From Contract-First</strong> — 4-layer audit trail" data-zh="📚 <strong>來自 Contract-First</strong> — Daily Log + Changelog + AI Record + Amendment">📚 <strong>來自 Contract-First</strong> — Daily Log + Changelog + AI Record + Amendment</div>
+      <div class="domain-output" data-en="Fills Discovery-Driven's tracking gap" data-zh="補足 Discovery-Driven 的追蹤缺口">補足 Discovery-Driven 的追蹤缺口</div>
+    </div>
+  </div>
+
+  <footer>
+    <p data-en='Methodology designed and validated across 3 organizations by Reed Hsin' data-zh='由 Reed Hsin 設計並在 3 個組織中驗證的方法論'>由 Reed Hsin 設計並在 3 個組織中驗證的方法論</p>
+  </footer>
+
+</div>
+
+<script>
+  // ===== i18n =====
+  const LANG = new URLSearchParams(window.location.search).get('lang') || 'zh';
+
+  function applyLang(lang) {
+    document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+      const val = el.getAttribute(`data-${lang}`);
+      if (val) el.innerHTML = val;
+    });
+  }
+
+  // ===== Embedded detection =====
+  try { if (window.self !== window.top) document.body.classList.add('embedded'); }
+  catch(e) { document.body.classList.add('embedded'); }
+  if (new URLSearchParams(window.location.search).has('embedded'))
+    document.body.classList.add('embedded');
+
+  // ===== Flow chart constants =====
+  const NODE_WIDTH = 140;
+  const NODE_HEIGHT = 80;
+  const GAP = 30;
+  const START_X = 30;
+  const MAIN_Y = 280;
+
+  // ===== Flow nodes =====
+  const zh = LANG === 'zh';
+  const flowNodes = [
+    { id: 1, name: zh ? "Event Storming<br/>+ Discovery" : "Event Storming<br/>+ Discovery", color: "role-a" },
+    { id: 2, name: zh ? "BDD 分析<br/>詞入格組寫" : "BDD Analysis<br/>5-Step Spec", color: "role-b" },
+    { id: 3, name: zh ? "TDD 12 章<br/>+ BDD 邊界" : "TDD 12 Chapters<br/>+ BDD Edges", color: "role-g" },
+    { id: 4, name: zh ? "Context 設定<br/>.mdc 規則" : "Context Setup<br/>.mdc Rules", color: "role-e" },
+    { id: 5, name: zh ? "Ticket<br/>拆分" : "Ticket<br/>Breakdown", color: "role-e" },
+    { id: 6, name: zh ? "AI 編碼<br/>循環" : "AI Coding<br/>Loop", color: "role-g" },
+    { id: 7, name: zh ? "Auto Feedback<br/>+ TDD 驗證" : "Auto Feedback<br/>+ TDD Check", color: "role-c" },
+    { id: 8, name: zh ? "四層<br/>追蹤紀錄" : "4-Layer<br/>Tracking", color: "role-d" },
+    { id: 9, name: zh ? "回顧<br/>與改善" : "Retrospective<br/>& Improve", color: "mix" },
+    { id: "done", name: zh ? "🎉 功能<br/>完成" : "🎉 Feature<br/>Complete", color: "done" }
+  ];
+
+  // ===== Failure paths =====
+  const failurePaths = [
+    { from: 3, to: 1, label: zh ? "Domain 缺口" : "Domain gap" },
+    { from: 3, to: 2, label: zh ? "Edge case 不足" : "Edge cases insufficient" },
+    { from: 6, to: 5, label: zh ? "Context 不足" : "Context insufficient" },
+    { from: 7, to: 6, label: zh ? "測試失敗 → 修碼" : "Test fail → fix" },
+    { from: 7, to: 3, label: zh ? "重大偏差 → 修 TDD" : "Large deviation → amend TDD" },
+    { from: 8, to: 6, label: zh ? "偏差記錄 → 重做" : "Deviation → redo" },
+    { from: 9, to: 4, label: zh ? "流程更新" : "Process update" }
+  ];
+
+  // ===== Helpers =====
+  function getNodeIndex(id) {
+    return flowNodes.findIndex(n => String(n.id) === String(id));
+  }
+  function getX(id) { return START_X + getNodeIndex(id) * (NODE_WIDTH + GAP); }
+  function getCenterX(id) { return getX(id) + NODE_WIDTH / 2; }
+
+  // ===== Render flow =====
+  function renderFlow() {
+    const svg = document.getElementById('hflow-svg');
+    const container = document.getElementById('hflow-nodes');
+
+    let svgHtml = `
+      <defs>
+        <marker id="arr-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#43A047"/>
+        </marker>
+        <marker id="arr-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#D32F2F"/>
+        </marker>
+      </defs>
+    `;
+
+    // Phase divider 1: between node 2 (index 1) and node 3 (index 2)
+    const divider1X = getX(flowNodes[2].id) - GAP / 2;
+    svgHtml += `<line x1="${divider1X}" y1="${MAIN_Y - 120}" x2="${divider1X}" y2="${MAIN_Y + 120}" stroke="${'var(--border)'}" stroke-width="2" stroke-dasharray="8 4" opacity="0.6"/>`;
+    svgHtml += `<text x="${divider1X - 8}" y="${MAIN_Y - 130}" text-anchor="end" font-size="10" fill="#4A5568" font-weight="700" opacity="0.7">PHASE 0 — DISCOVERY</text>`;
+    svgHtml += `<text x="${divider1X + 8}" y="${MAIN_Y - 130}" text-anchor="start" font-size="10" fill="#4A5568" font-weight="700" opacity="0.7">PHASE 1 — TDD GENERATION</text>`;
+
+    // Phase divider 2: between node 5 (index 4) and node 6 (index 5)
+    const divider2X = getX(flowNodes[5].id) - GAP / 2;
+    svgHtml += `<line x1="${divider2X}" y1="${MAIN_Y - 120}" x2="${divider2X}" y2="${MAIN_Y + 120}" stroke="${'var(--border)'}" stroke-width="2" stroke-dasharray="8 4" opacity="0.6"/>`;
+    svgHtml += `<text x="${divider2X - 8}" y="${MAIN_Y - 110}" text-anchor="end" font-size="10" fill="#4A5568" font-weight="700" opacity="0.7">PHASE 1 — GENERATION</text>`;
+    svgHtml += `<text x="${divider2X + 8}" y="${MAIN_Y - 110}" text-anchor="start" font-size="10" fill="#4A5568" font-weight="700" opacity="0.7">PHASE 2 — IMPLEMENTATION</text>`;
+
+    // Happy path arrows
+    for (let i = 0; i < flowNodes.length - 1; i++) {
+      const sx = getX(flowNodes[i].id) + NODE_WIDTH;
+      const tx = getX(flowNodes[i+1].id);
+      svgHtml += `<line x1="${sx}" y1="${MAIN_Y}" x2="${tx - 4}" y2="${MAIN_Y}" stroke="#43A047" stroke-width="3" marker-end="url(#arr-h)"/>`;
+    }
+
+    // Failure arcs
+    failurePaths.forEach((f, idx) => {
+      if (f.to === "kill") {
+        const cx = getCenterX(f.from);
+        const sy = MAIN_Y + NODE_HEIGHT / 2;
+        const ty = 415;
+        svgHtml += `<path d="M ${cx} ${sy} L ${cx} ${ty - 4}" stroke="#D32F2F" stroke-width="1.8" stroke-dasharray="5 4" opacity="0.4" fill="none" marker-end="url(#arr-f)" data-from="${f.from}" data-idx="${idx}" class="failure-arc"/>`;
+        svgHtml += `<text x="${cx + 10}" y="${(sy + ty) / 2}" text-anchor="start" font-size="11" fill="#7F1D1D" class="failure-label" data-from="${f.from}" data-idx="${idx}" font-weight="600" opacity="0">${f.label}</text>`;
+      } else {
+        const sx = getCenterX(f.from);
+        const tx = getCenterX(f.to);
+        const span = Math.abs(getNodeIndex(f.from) - getNodeIndex(f.to));
+        const arcHeight = 30 + span * 16;
+        const sy = MAIN_Y - NODE_HEIGHT / 2;
+        const peakY = sy - arcHeight;
+        svgHtml += `<path d="M ${sx} ${sy} C ${sx} ${peakY}, ${tx} ${peakY}, ${tx} ${sy - 4}" stroke="#D32F2F" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.28" fill="none" marker-end="url(#arr-f)" data-from="${f.from}" data-idx="${idx}" class="failure-arc"/>`;
+        const midX = (sx + tx) / 2;
+        svgHtml += `<text x="${midX}" y="${peakY - 5}" text-anchor="middle" font-size="11" fill="#7F1D1D" class="failure-label" data-from="${f.from}" data-idx="${idx}" font-weight="600" opacity="0">${f.label}</text>`;
+      }
+    });
+
+    svg.innerHTML = svgHtml;
+
+    // Render node cards
+    let html = '';
+    flowNodes.forEach(n => {
+      const x = getX(n.id);
+      const failures = failurePaths.filter(f => f.from === n.id).length;
+      const num = typeof n.id === 'number' ? n.id : '';
+      html += `
+        <div class="hflow-node ${n.color}" data-id="${n.id}" style="left:${x}px; top:${MAIN_Y - NODE_HEIGHT/2}px;"
+             onclick="onNodeClick('${n.id}')"
+             onmouseenter="onNodeHover('${n.id}', true)"
+             onmouseleave="onNodeHover('${n.id}', false)">
+          ${num ? `<div class="num">${num}</div>` : ''}
+          <div class="name">${n.name}</div>
+          ${failures > 0 ? `<div class="fail-badge">⚠ ${failures}</div>` : ''}
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ===== Node detail data =====
+  const nodeData_zh = {
+    "1": {
+      name: "Step 1 — Event Storming + Discovery",
+      colorClass: "role-a",
+      who: [["PM / Domain Expert", "role-a-t"], ["AI 助手", "role-g-t"]],
+      what: {
+        did: "結合 Discovery-Driven 的 Discovery 方法，比 Contract-First 的「Spec Input」更結構化：<strong>Event Storming</strong> 識別 Domain Events → Aggregate → Command → Query。使用 <strong>Checklist</strong> 系統性掃描 AMB/ASM/GAP/BDY。執行 <strong>Clarify Loop</strong> 直到 CiC 清零。不只是被動接收 PRD — 而是主動探索、主動發現問題。",
+        pains: [
+          "Event Storming 需要 domain expert 參與",
+          "CiC 清零耗時但不可跳過"
+        ],
+        solutions: [
+          "✅ AI 輔助 Event Storming 自動標記概念",
+          "✅ Checklist 強制掃描消除遺漏"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>Domain Concept Map + CiC 清零報告</strong> → 進入 BDD Analysis",
+        failure: []
+      }
+    },
+    "2": {
+      name: "Step 2 — BDD Analysis 詞入格組寫",
+      colorClass: "role-b",
+      who: [["AI 助手", "role-g-t"], ["開發者", "role-e-t"]],
+      what: {
+        did: "只對<strong>高複雜度 boundary rules</strong> 執行「詞入格組寫」五步驟。不是所有功能都需要 — 用測試複雜度三維分析（Reason of Change + Change Flow + Pattern Language）判斷。產出的 Gherkin Feature File 將在下一步注入 TDD 的 Ch09（Error Handling）和 Ch10（Test Scenarios），<strong>增強 Contract-First 的 edge case 覆蓋</strong>。簡單功能可跳過此步。",
+        pains: [
+          "判斷「高複雜度」的標準需要經驗",
+          "不是所有功能都值得做完整 BDD Analysis"
+        ],
+        solutions: [
+          "✅ 用測試複雜度三維度分析客觀判斷",
+          "💡 簡單功能跳過此步直接進 TDD"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>Gherkin Feature Files（邊界場景）+ DSL 句型表</strong> → 注入 TDD 12 章",
+        failure: []
+      }
+    },
+    "3": {
+      name: "Step 3 — TDD 12 章 + BDD Edge Cases",
+      colorClass: "role-g",
+      who: [["AI 助手", "role-g-t"], ["開發者（審核）", "role-e-t"]],
+      what: {
+        did: "AI 產出 Contract-First 標準 12 章 TDD（Ch00-12），同時將 BDD Analysis 的邊界場景<strong>注入 Ch09（Error Handling）和 Ch10（Test Scenarios）</strong>。BDD 的 Feature File 是 TDD 的 edge case 補充，不是替代。TDD 仍是主契約，BDD 產出是加強版測試覆蓋。保持 Contract-First 的 12 章結構完整性，只在需要的章節增強。",
+        pains: [
+          "BDD 邊界場景和 TDD 測試場景可能重疊",
+          "兩種格式需要協調整合"
+        ],
+        solutions: [
+          "✅ BDD 產出只注入 Ch09/Ch10 兩章",
+          "✅ Feature File 轉為 TDD 格式整合"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>12 章 TDD + 增強版 Edge Case 覆蓋</strong> → 進入 Context Setup",
+        failure: [
+          { condition: "Domain 模型缺口 → 重新探索", target: 1 },
+          { condition: "Edge case 不足 → 重新分析", target: 2 }
+        ]
+      }
+    },
+    "4": {
+      name: "Step 4 — Context Setup",
+      colorClass: "role-e",
+      who: [["開發者", "role-e-t"]],
+      what: {
+        did: "從 TDD 建立 <strong>.mdc 規則檔</strong>（9 個核心規則）+ <strong>Adapter 機制</strong>（{{placeholder}} token）。同 Contract-First Step 3。核心規則保持通用，Adapter 處理技術棧差異（iOS TCA、Android MVVM、Web）。",
+        pains: [
+          "Adapter placeholder 太多時 AI 容易混淆",
+          "規則之間可能互相矛盾"
+        ],
+        solutions: [
+          "✅ Adapter 檔獨立管理，核心規則保持通用",
+          "✅ 每次修改規則後 dry-run 驗證"
+        ]
+      },
+      output: {
+        happy: "⚙️ <strong>.mdc 規則 + Adapter</strong> → 約束 AI 產出",
+        failure: []
+      }
+    },
+    "5": {
+      name: "Step 5 — Ticket 拆分",
+      colorClass: "role-e",
+      who: [["開發者", "role-e-t"], ["AI 助手", "role-g-t"]],
+      what: {
+        did: "同 Contract-First Step 4。依 TDD Ch12 拆分 Ticket，遵守 bottom-up 順序：<strong>Domain Model → API → Client → Repository → UseCase → Feature → View</strong>。每個 ticket 限一個模組 + 一個層級。",
+        pains: [
+          "Ticket 粒度太粗會讓 AI context 超載",
+          "跨 ticket 依賴不明確"
+        ],
+        solutions: [
+          "✅ 嚴格 bottom-up 順序",
+          "💡 Ticket 間用 blocked-by 標注"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>排序好的 Ticket 清單</strong> → 進入 AI 編碼",
+        failure: []
+      }
+    },
+    "6": {
+      name: "Step 6 — AI 編碼循環",
+      colorClass: "role-g",
+      who: [["AI 助手", "role-g-t"], ["開發者（引導）", "role-e-t"]],
+      what: {
+        did: "Feed TDD → Generate → Verify → Record。同 Contract-First Step 6 但增加一項：對 BDD 標記的<strong>高複雜度 boundary</strong>，使用 Discovery-Driven 的 Auto Feedback Loop 自動修復測試失敗，而非人工 debug。日常功能走 Contract-First 標準流程，邊界場景走 BDD 自動化流程。",
+        pains: [
+          "AI 容易超出 TDD 範圍「創造性發揮」",
+          "跨 Ticket 的 context drift"
+        ],
+        solutions: [
+          "✅ 每次對話重新載入 .mdc 規則",
+          "✅ 用 TDD exact content 作為 prompt"
+        ]
+      },
+      output: {
+        happy: "💻 <strong>通過初步驗證的程式碼</strong> → 進入三重驗證",
+        failure: [
+          { condition: "Context 不足 → 重新準備", target: 5 }
+        ]
+      }
+    },
+    "7": {
+      name: "Step 7 — Auto Feedback + TDD 驗證",
+      colorClass: "role-c",
+      who: [["AI（Auto Feedback）", "role-g-t"], ["開發者（TDD Check）", "role-c-t"]],
+      what: {
+        did: "結合兩者驗證機制，三重驗證：<strong>(1) Discovery-Driven Auto Feedback Loop</strong> — 自動執行測試、解析報告、修正、重跑直到全綠。<strong>(2) Contract-First TDD 契約驗證</strong> — 偏差分三級：小→記 Changelog；中→修 TDD + 更新下游；大→停止走 Amendment Flow。<strong>(3) 一致性檢查</strong> — Feature File ↔ DBML ↔ API Spec 三角一致。三者各管各的：Auto Feedback 管代碼，TDD Check 管規格，一致性管文件。",
+        pains: [
+          "三重驗證可能感覺太重",
+          "Auto Feedback Loop 和 TDD Check 結論可能矛盾"
+        ],
+        solutions: [
+          "✅ 三者各管各的範疇不重疊",
+          "✅ Auto Feedback 處理自動化部分，TDD Check 只管規格偏差"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>三重驗證全部通過</strong> → 進入追蹤紀錄",
+        failure: [
+          { condition: "測試失敗 → 修正程式碼", target: 6 },
+          { condition: "重大偏差 → 修改 TDD", target: 3 }
+        ]
+      }
+    },
+    "8": {
+      name: "Step 8 — 四層追蹤紀錄",
+      colorClass: "role-d",
+      who: [["開發者", "role-e-t"]],
+      what: {
+        did: "同 Contract-First Step 8。<strong>(1) Daily Log</strong>（每日進度）<strong>(2) Changelog</strong>（程式碼變更 + TDD 偏差）<strong>(3) AI Conversation Record</strong>（AI 關鍵決策萃取）<strong>(4) Amendment Log</strong>（TDD 變更理由和影響範圍）。每個 Ticket 完成後立即寫，不等下班前。",
+        pains: [
+          "四層紀錄太重，容易省略",
+          "事後補寫品質差"
+        ],
+        solutions: [
+          "✅ 每 Ticket 完成後立即記錄",
+          "💡 AI 自動萃取 key decisions"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>四層追蹤完成</strong> → 繼續下一個 Ticket 或回顧",
+        failure: [
+          { condition: "偏差記錄揭露需重新實作", target: 6 }
+        ]
+      }
+    },
+    "9": {
+      name: "Step 9 — 回顧與改善",
+      colorClass: "mix",
+      who: [["開發者", "role-e-t"], ["Tech Lead", "role-f-t"]],
+      what: {
+        did: "同 Contract-First Step 9 的三種回顧週期（週/Sprint/Feature）。額外增加：回顧 <strong>BDD Analysis 是否被正確應用</strong> — 是否有功能應該做 BDD Analysis 但被跳過了？是否有功能不需要做但做了（過度分析）？調整複雜度判斷標準。",
+        pains: [
+          "回顧流於形式",
+          "BDD 使用的過度/不足判斷不易"
+        ],
+        solutions: [
+          "✅ 每次回顧必須產出至少一個 .mdc 規則更新",
+          "💡 累積 BDD 使用案例作為判斷基準"
+        ]
+      },
+      output: {
+        happy: "🔄 <strong>更新的規則 + BDD 使用標準</strong> → 下個功能更好",
+        failure: [
+          { condition: "流程需根本改動 → 更新規則", target: 4 }
+        ]
+      }
+    },
+    "done": {
+      name: "🎉 功能完成",
+      colorClass: "mix",
+      who: [["全團隊", "role-e-t"]],
+      what: {
+        did: "功能完成。TDD 契約全部通過 + BDD 邊界測試全綠 + 四層追蹤完整 + Feature 回顧完成。",
+        pains: [],
+        solutions: []
+      },
+      output: { happy: "🎉 <strong>可交付功能 + 完整開發軌跡 + 邊界覆蓋</strong>", failure: [] }
+    }
+  };
+
+  const nodeData_en = {
+    "1": {
+      name: "Step 1 — Event Storming + Discovery",
+      colorClass: "role-a",
+      who: [["PM / Domain Expert", "role-a-t"], ["AI Assistant", "role-g-t"]],
+      what: {
+        did: "Combines Discovery-Driven's Discovery method, more structured than Contract-First's 'Spec Input': <strong>Event Storming</strong> identifies Domain Events → Aggregate → Command → Query. Uses <strong>Checklist</strong> to systematically scan AMB/ASM/GAP/BDY. Executes <strong>Clarify Loop</strong> until CiC reaches zero. Not just passively receiving PRD — actively exploring and discovering issues.",
+        pains: [
+          "Event Storming requires domain expert participation",
+          "CiC zero-out is time-consuming but cannot be skipped"
+        ],
+        solutions: [
+          "✅ AI-assisted Event Storming auto-tags concepts",
+          "✅ Checklist enforces systematic scanning to eliminate gaps"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>Domain Concept Map + CiC Zero Report</strong> → enter BDD Analysis",
+        failure: []
+      }
+    },
+    "2": {
+      name: "Step 2 — BDD Analysis (5-Step Spec)",
+      colorClass: "role-b",
+      who: [["AI Assistant", "role-g-t"], ["Developer", "role-e-t"]],
+      what: {
+        did: "Only for <strong>high-complexity boundary rules</strong>, execute the 5-step BDD spec process. Not all features need this — use 3-dimensional test complexity analysis (Reason of Change + Change Flow + Pattern Language) to decide. The resulting Gherkin Feature Files will be injected into TDD Ch09 (Error Handling) and Ch10 (Test Scenarios), <strong>enhancing Contract-First's edge case coverage</strong>. Simple features can skip this step.",
+        pains: [
+          "Judging 'high complexity' requires experience",
+          "Not all features warrant full BDD Analysis"
+        ],
+        solutions: [
+          "✅ Use 3-dimensional test complexity analysis for objective judgment",
+          "💡 Simple features skip this step and go directly to TDD"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>Gherkin Feature Files (boundary scenarios) + DSL Pattern Table</strong> → inject into TDD 12 chapters",
+        failure: []
+      }
+    },
+    "3": {
+      name: "Step 3 — TDD 12 Chapters + BDD Edge Cases",
+      colorClass: "role-g",
+      who: [["AI Assistant", "role-g-t"], ["Developer (reviewer)", "role-e-t"]],
+      what: {
+        did: "AI generates standard Contract-First 12-chapter TDD (Ch00-12), while <strong>injecting BDD Analysis boundary scenarios into Ch09 (Error Handling) and Ch10 (Test Scenarios)</strong>. BDD Feature Files supplement TDD edge cases, not replace them. TDD remains the main contract; BDD output enhances test coverage. Maintains Contract-First's 12-chapter structural integrity, enhancing only where needed.",
+        pains: [
+          "BDD boundary scenarios and TDD test scenarios may overlap",
+          "Two formats need coordinated integration"
+        ],
+        solutions: [
+          "✅ BDD output only injected into Ch09/Ch10",
+          "✅ Feature Files converted to TDD format for integration"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>12-chapter TDD + enhanced edge case coverage</strong> → enter Context Setup",
+        failure: [
+          { condition: "Domain model gap → re-explore", target: 1 },
+          { condition: "Edge cases insufficient → re-analyze", target: 2 }
+        ]
+      }
+    },
+    "4": {
+      name: "Step 4 — Context Setup",
+      colorClass: "role-e",
+      who: [["Developer", "role-e-t"]],
+      what: {
+        did: "Build <strong>.mdc rule files</strong> (9 core rules) + <strong>Adapter mechanism</strong> ({{placeholder}} tokens) from TDD. Same as Contract-First Step 3. Core rules stay generic, Adapters handle tech stack differences (iOS TCA, Android MVVM, Web).",
+        pains: [
+          "Too many Adapter placeholders confuse AI",
+          "Rules may contradict each other"
+        ],
+        solutions: [
+          "✅ Adapter files managed separately, core rules stay generic",
+          "✅ Dry-run validation after each rule change"
+        ]
+      },
+      output: {
+        happy: "⚙️ <strong>.mdc rules + Adapter</strong> → constrain AI output",
+        failure: []
+      }
+    },
+    "5": {
+      name: "Step 5 — Ticket Breakdown",
+      colorClass: "role-e",
+      who: [["Developer", "role-e-t"], ["AI Assistant", "role-g-t"]],
+      what: {
+        did: "Same as Contract-First Step 4. Break tickets per TDD Ch12, following bottom-up order: <strong>Domain Model → API → Client → Repository → UseCase → Feature → View</strong>. Each ticket limited to one module + one layer.",
+        pains: [
+          "Tickets too coarse will overload AI context",
+          "Cross-ticket dependencies unclear"
+        ],
+        solutions: [
+          "✅ Strictly follow bottom-up order",
+          "💡 Mark inter-ticket dependencies with blocked-by"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>Ordered ticket list</strong> → enter AI coding",
+        failure: []
+      }
+    },
+    "6": {
+      name: "Step 6 — AI Coding Loop",
+      colorClass: "role-g",
+      who: [["AI Assistant", "role-g-t"], ["Developer (guide)", "role-e-t"]],
+      what: {
+        did: "Feed TDD → Generate → Verify → Record. Same as Contract-First Step 6 with one addition: for BDD-flagged <strong>high-complexity boundaries</strong>, use Discovery-Driven's Auto Feedback Loop for automatic test failure repair instead of manual debug. Routine features follow Contract-First standard flow; boundary scenarios use BDD automated flow.",
+        pains: [
+          "AI tends to 'creatively elaborate' beyond TDD scope",
+          "Cross-ticket context drift"
+        ],
+        solutions: [
+          "✅ Reload .mdc rules at every conversation start",
+          "✅ Use exact TDD content as prompt"
+        ]
+      },
+      output: {
+        happy: "💻 <strong>Code passing initial verification</strong> → enter triple validation",
+        failure: [
+          { condition: "Context insufficient → re-prepare", target: 5 }
+        ]
+      }
+    },
+    "7": {
+      name: "Step 7 — Auto Feedback + TDD Check",
+      colorClass: "role-c",
+      who: [["AI (Auto Feedback)", "role-g-t"], ["Developer (TDD Check)", "role-c-t"]],
+      what: {
+        did: "Combines both validation mechanisms in triple verification: <strong>(1) Discovery-Driven Auto Feedback Loop</strong> — automatically run tests, parse reports, fix, re-run until all green. <strong>(2) Contract-First TDD Contract Check</strong> — deviation graded: small → log Changelog; medium → amend TDD + update downstream; large → stop, full Amendment Flow. <strong>(3) Consistency Check</strong> — Feature File ↔ DBML ↔ API Spec triangulation. Each handles its own scope: Auto Feedback for code, TDD Check for spec, consistency for docs.",
+        pains: [
+          "Triple validation may feel too heavy",
+          "Auto Feedback Loop and TDD Check conclusions may conflict"
+        ],
+        solutions: [
+          "✅ Three scopes don't overlap",
+          "✅ Auto Feedback handles automation, TDD Check only handles spec deviations"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>Triple validation all passed</strong> → enter tracking",
+        failure: [
+          { condition: "Test fails → fix code", target: 6 },
+          { condition: "Large deviation → amend TDD", target: 3 }
+        ]
+      }
+    },
+    "8": {
+      name: "Step 8 — 4-Layer Tracking",
+      colorClass: "role-d",
+      who: [["Developer", "role-e-t"]],
+      what: {
+        did: "Same as Contract-First Step 8. <strong>(1) Daily Log</strong> (daily progress) <strong>(2) Changelog</strong> (code changes + TDD deviations) <strong>(3) AI Conversation Record</strong> (AI key decision extraction) <strong>(4) Amendment Log</strong> (TDD change rationale and impact scope). Write immediately after each ticket, not at end of day.",
+        pains: [
+          "Four layers feel too heavy, easily skipped",
+          "Retrospective logging loses detail quality"
+        ],
+        solutions: [
+          "✅ Record immediately after each ticket completion",
+          "💡 AI auto-extracts key decisions"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>4-layer tracking complete</strong> → continue to next ticket or retrospective",
+        failure: [
+          { condition: "Deviation record reveals re-implementation needed", target: 6 }
+        ]
+      }
+    },
+    "9": {
+      name: "Step 9 — Retrospective & Improve",
+      colorClass: "mix",
+      who: [["Developer", "role-e-t"], ["Tech Lead", "role-f-t"]],
+      what: {
+        did: "Same as Contract-First Step 9's three retrospective cycles (Weekly/Sprint/Feature). Additional review: was <strong>BDD Analysis correctly applied</strong> — were there features that should have had BDD Analysis but were skipped? Were there features that didn't need it but were over-analyzed? Adjust complexity judgment criteria.",
+        pains: [
+          "Retros become formality",
+          "BDD over-use/under-use hard to judge"
+        ],
+        solutions: [
+          "✅ Each retro must produce at least one .mdc rule update",
+          "💡 Accumulate BDD usage cases as judgment baseline"
+        ]
+      },
+      output: {
+        happy: "🔄 <strong>Updated rules + BDD usage criteria</strong> → next feature is better",
+        failure: [
+          { condition: "Fundamental process change needed → update rules", target: 4 }
+        ]
+      }
+    },
+    "done": {
+      name: "🎉 Feature Complete",
+      colorClass: "mix",
+      who: [["Full Team", "role-e-t"]],
+      what: {
+        did: "Feature complete. TDD contract fully passed + BDD boundary tests all green + 4-layer tracking complete + feature retrospective done.",
+        pains: [],
+        solutions: []
+      },
+      output: { happy: "🎉 <strong>Deliverable feature + complete development audit trail + boundary coverage</strong>", failure: [] }
+    }
+  };
+
+  const nodeData = LANG === 'en' ? nodeData_en : nodeData_zh;
+
+  // ===== Interaction =====
+  let selectedId = null;
+
+  window.onNodeClick = function(id) {
+    selectedId = String(id);
+    showDetail(selectedId);
+    highlightSelection();
+  };
+
+  window.onNodeHover = function(id, entering) {
+    if (selectedId === String(id)) return;
+    if (entering) highlightFailures(String(id), 0.9, 1);
+    else highlightSelection();
+  };
+
+  function highlightSelection() {
+    if (selectedId) {
+      highlightFailures(selectedId, 0.9, 1);
+    } else {
+      document.querySelectorAll('.failure-arc').forEach(a => {
+        a.style.opacity = '0.28';
+        a.style.strokeWidth = '';
+      });
+      document.querySelectorAll('.failure-label').forEach(l => { l.style.opacity = '0'; });
+    }
+  }
+
+  function highlightFailures(id, arcOpacity, labelOpacity) {
+    document.querySelectorAll('.failure-arc').forEach(a => {
+      if (a.dataset.from === id) {
+        a.style.opacity = arcOpacity;
+        a.style.strokeWidth = '2.5';
+      } else {
+        a.style.opacity = '0.18';
+        a.style.strokeWidth = '';
+      }
+    });
+    document.querySelectorAll('.failure-label').forEach(l => {
+      l.style.opacity = l.dataset.from === id ? labelOpacity : '0';
+    });
+    document.querySelectorAll('.hflow-node').forEach(n => {
+      n.classList.toggle('selected', n.dataset.id === id);
+    });
+  }
+
+  function showDetail(id) {
+    const data = nodeData[id];
+    if (!data) return;
+
+    const who = data.who.map(([n, cls]) => `<span class="role-tag ${cls}">${n}</span>`).join(' ');
+    const pains = data.what.pains.length
+      ? data.what.pains.map(p => `<li>${p}</li>`).join('')
+      : '<li class="muted">—</li>';
+    const solutions = data.what.solutions.length
+      ? data.what.solutions.map(s => `<li>${s}</li>`).join('')
+      : '<li class="muted">—</li>';
+
+    let failureHtml;
+    if (data.output.failure.length === 0) {
+      failureHtml = `<div class="subcontent muted">(${LANG === 'en' ? 'no failure path' : '無失敗路徑'})</div>`;
+    } else {
+      failureHtml = `<ul class="failure-list">${
+        data.output.failure.map(f => {
+          if (f.target === null && f.action === 'kill') {
+            return `<li><strong>${f.condition}</strong> → <span class="kill">🚫 Reject</span></li>`;
+          }
+          const backLabel = LANG === 'en' ? `Back to Step ${f.target}` : `回到 Step ${f.target}`;
+          return `<li><strong>${f.condition}</strong> → <span class="goto" onclick="onNodeClick('${f.target}')">${backLabel}</span></li>`;
+        }).join('')
+      }</ul>`;
+    }
+
+    const numDisplay = id === 'done' ? '🎉' : id;
+    document.getElementById('detail-panel').innerHTML = `
+      <div class="detail-header">
+        <div class="detail-num ${data.colorClass}">${numDisplay}</div>
+        <h3>${data.name}</h3>
+      </div>
+      <div class="detail-3col">
+        <div class="dcol who-col">
+          <h4>WHO</h4>
+          <div>${who}</div>
+        </div>
+        <div class="dcol what-col">
+          <h4>WHAT · Activity · Pains · Solutions</h4>
+          <div class="subsection">
+            <div class="sublabel did">📋 ${LANG === 'en' ? 'What happens' : '執行內容'}</div>
+            <div class="subcontent">${data.what.did}</div>
+          </div>
+          <div class="subsection">
+            <div class="sublabel pain">⚠️ ${LANG === 'en' ? 'Pain points' : '痛點'}</div>
+            <ul class="subcontent">${pains}</ul>
+          </div>
+          <div class="subsection">
+            <div class="sublabel solution">💡 ${LANG === 'en' ? 'Solutions' : '解決方案'}</div>
+            <ul class="subcontent">${solutions}</ul>
+          </div>
+        </div>
+        <div class="dcol output-col">
+          <h4>OUTPUT</h4>
+          <div class="subsection">
+            <div class="sublabel happy">✅ ${LANG === 'en' ? 'Happy Path' : '正常路徑'}</div>
+            <div class="subcontent">${data.output.happy}</div>
+          </div>
+          <div class="subsection">
+            <div class="sublabel failure-out">🔁 ${LANG === 'en' ? 'Failure Path' : '失敗路徑'}</div>
+            ${failureHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ===== Init =====
+  applyLang(LANG);
+  renderFlow();
+  highlightSelection();
+  setTimeout(() => onNodeClick("1"), 100);
+
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    flowchart: { curve: 'basis', htmlLabels: true, padding: 14 },
+    securityLevel: 'loose',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif'
+  });
+</script>
+</body>
+</html>
