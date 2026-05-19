@@ -228,6 +228,80 @@
   .page-view { display: none; }
   .page-view.active { display: block; }
 
+  /* ── Jobs Page ── */
+  .jobs-header-title { display: flex; align-items: center; gap: 12px; }
+  .jobs-header-title svg { width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+  .jobs-header-title h1 { font-size: 28px; font-weight: 700; }
+  .jobs-header-title .jobs-count { font-size: 16px; color: #888; font-weight: 400; }
+  .job-row {
+    display: flex; align-items: center; gap: 14px;
+    background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 10px; cursor: default;
+    transition: border-color 0.15s;
+  }
+  .job-row:hover { border-color: #ccc; }
+  .job-row svg.chevron { width: 16px; height: 16px; color: #ccc; flex-shrink: 0; }
+  .job-name {
+    font-size: 14px; font-weight: 600;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    min-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .job-module {
+    display: inline-block; padding: 3px 10px; border-radius: 6px;
+    font-size: 12px; background: #f0f0f0; color: #555; font-weight: 500;
+    white-space: nowrap;
+  }
+  .job-schedule { font-size: 13px; color: #888; flex: 1; min-width: 160px; }
+  .job-status-area { display: flex; align-items: center; gap: 8px; min-width: 100px; justify-content: flex-end; }
+  .badge-running { background: #2563eb; color: #fff; }
+  .badge-none { background: transparent; color: #ccc; font-weight: 400; }
+  .job-dash { color: #ccc; font-size: 14px; }
+
+  /* ── Settings Page ── */
+  .settings-section {
+    background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+    padding: 24px; margin-bottom: 16px;
+  }
+  .settings-section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+  .settings-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0;
+  }
+  .settings-row + .settings-row { border-top: 1px solid #f0f0f0; }
+  .settings-label { font-size: 14px; color: #555; }
+  .settings-value {
+    font-size: 14px; font-weight: 600;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .settings-input-group { display: flex; gap: 10px; align-items: center; }
+  .settings-input {
+    padding: 8px 14px; border: 1px solid #e0e0e0; border-radius: 8px;
+    font-size: 14px; width: 280px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .btn-settings {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border: 1px solid #e0e0e0; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+  }
+  .btn-settings.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .btn-settings.secondary { background: #fff; color: #555; }
+  .btn-settings svg { width: 14px; height: 14px; }
+  .toggle-track {
+    width: 44px; height: 24px; border-radius: 12px;
+    background: #e0e0e0; position: relative; cursor: not-allowed; opacity: 0.6;
+  }
+  .toggle-track::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .dark-mode-info { font-size: 13px; color: #888; margin-top: 2px; }
+  .badge-ok {
+    display: inline-block; background: #16a34a; color: #fff;
+    padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+
   /* ── Demo Overlay Modal ── */
   .demo-overlay {
     position: fixed; inset: 0; z-index: 1000;
@@ -381,13 +455,17 @@
   <!-- ══ Jobs Page ══ -->
   <div class="content page-view" id="page-jobs">
     <div class="page-header">
-      <h2>Jobs</h2>
+      <div class="jobs-header-title">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <h1>Scheduled Jobs</h1>
+        <span class="jobs-count">(24 registered)</span>
+      </div>
       <div class="btn-refresh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
         Refresh
       </div>
     </div>
-    <p style="color:#888;font-size:14px;">Job scheduling and execution history. Actions disabled in demo mode.</p>
+    <div id="jobsList"></div>
   </div>
 
   <!-- ══ Features Page ══ -->
@@ -483,7 +561,48 @@
     <div class="page-header">
       <h2>Settings</h2>
     </div>
-    <p style="color:#888;font-size:14px;">Configuration settings. Disabled in demo mode.</p>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Server URL</div>
+      <div class="settings-input-group">
+        <input class="settings-input" type="text" value="http://localhost:7421" disabled style="cursor:not-allowed;opacity:0.6">
+        <button class="btn-settings primary" disabled style="cursor:not-allowed;opacity:0.6">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save
+        </button>
+        <button class="btn-settings secondary" disabled style="cursor:not-allowed;opacity:0.6">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Appearance</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;font-weight:600;">Dark Mode</div>
+          <div class="dark-mode-info">Current theme: system</div>
+        </div>
+        <div class="toggle-track"></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">System Info</div>
+      <div class="settings-row">
+        <span class="settings-label">Status</span>
+        <span class="badge-ok">ok</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Environment</span>
+        <span class="settings-value">dev</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Version</span>
+        <span class="settings-value">0.1.0</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -508,6 +627,56 @@
 </div>
 
 <script>
+// ── Jobs Data ──
+const JOBS = [
+  { name: 'ai_news_collector', module: 'ai_news_collector', schedule: 'Daily at 02:00, 08:00, 14:00, 20:00', status: 'success' },
+  { name: 'ai_news_collector.pipeline', module: 'ai_news_collector', schedule: 'Daily at 03:00, 09:00, 15:00', status: 'success' },
+  { name: 'ai_news_collector.pipeline_noon', module: 'ai_news_collector', schedule: 'Daily at 12:30', status: null },
+  { name: 'backup', module: 'backup', schedule: 'Weekly on Sun at 03:00', status: null },
+  { name: 'cca_pipeline', module: 'cca_pipeline', schedule: 'Daily at 08:00', status: 'success' },
+  { name: 'citation_verifier', module: 'citation_verifier', schedule: 'Weekly on Sun at 06:00', status: null },
+  { name: 'collector_portrait', module: 'collector_portrait', schedule: 'Weekly on Mon at 04:30', status: 'success' },
+  { name: 'collector_portrait.pipeline', module: 'collector_portrait', schedule: 'Monthly on the 1st at 05:00', status: null },
+  { name: 'creation_pipeline', module: 'creation_pipeline', schedule: 'Daily at 04:30', status: 'success' },
+  { name: 'digest_viz', module: 'digest_viz', schedule: 'Daily at 09:00', status: 'running' },
+  { name: 'memory_optimizer', module: 'memory_optimizer', schedule: 'Daily at 03:00', status: 'success' },
+  { name: 'morning_routine', module: 'morning_routine', schedule: 'Daily at 07:30', status: 'success' },
+  { name: 'morning_routine.check', module: 'morning_routine', schedule: 'Daily at 07:30', status: 'success' },
+  { name: 'photo_aesthetic', module: 'photo_aesthetic', schedule: 'Daily at 04:30', status: 'success' },
+  { name: 'pm_agent', module: 'pm_agent', schedule: 'Daily at 07:00', status: 'error' },
+  { name: 'pm_agent.schedule_pipeline', module: 'pm_agent', schedule: 'Daily at 06:00', status: 'error' },
+  { name: 'product_registry', module: 'product_registry', schedule: 'Weekly on Sun at 00:00', status: null },
+  { name: 'product_scaffolder', module: 'product_scaffolder', schedule: 'Weekly on Sun at 00:00', status: null },
+  { name: 'red_collector', module: 'red_collector', schedule: 'Daily at every 6h', status: 'success' },
+  { name: 'red_collector.pipeline', module: 'red_collector', schedule: 'Daily at every 6h at :30', status: 'running' },
+  { name: 'telegram_channel_summary', module: 'telegram_channel_summary', schedule: 'Daily at 08:00', status: 'error' },
+  { name: 'thread_consolidator', module: 'thread_consolidator', schedule: 'Daily at 03:30', status: 'success' },
+  { name: 'voice_diary', module: 'voice_diary', schedule: 'Daily at 03:45', status: 'error' },
+  { name: 'voice_diary.pipeline', module: 'voice_diary', schedule: 'Every 30 min', status: 'success' },
+];
+
+function renderJobs() {
+  const html = JOBS.map(j => {
+    let statusBadge = '';
+    if (j.status) {
+      const cls = j.status === 'success' ? 'badge-success' : j.status === 'error' ? 'badge-error' : 'badge-running';
+      statusBadge = `<span class="badge-status ${cls}">${j.status}</span>`;
+    }
+    return `<div class="job-row">
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <span class="job-name">${j.name}</span>
+      <span class="job-module">${j.module}</span>
+      <span class="job-schedule">${j.schedule}</span>
+      <div class="job-status-area">
+        ${statusBadge}
+        <span class="job-dash">–</span>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('jobsList').innerHTML = html;
+}
+renderJobs();
+
 // ── Feature Data ──
 const FEATURES = [
   { name: 'AI News Collector', module: 'ai_news_collector', layer: 'features', kinds: ['job','lib'], count: '0/109' },
