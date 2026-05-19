@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  Contract-First AI Development Workflow — Interactive Flowchart
+  ============================================================
+  Visualizes a Contract-Driven AI Development methodology.
+  Two-phase workflow:
+    Phase 1: TDD Generation (Spec → 12-chapter TDD → Tickets)
+    Phase 2: AI-Assisted Implementation (Daily Loop)
+
+  Standalone page. Supports ?lang=en|zh.
+  ============================================================
+-->
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contract-First AI Development Workflow</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --role-a: #4A90E2;     /* PM / Spec Owner */
+    --role-b: #E91E63;     /* Architect */
+    --role-c: #F57C00;     /* QA / Validator */
+    --role-d: #9C27B0;     /* Tracking / Audit */
+    --role-e: #43A047;     /* Developer */
+    --role-f: #1B5E20;     /* Tech Lead */
+    --role-g: #546E7A;     /* AI Assistant */
+    --mix:    #37474F;     /* Multi-role */
+
+    --success: #43A047;
+    --failure: #D32F2F;
+    --done:    #FFC107;
+    --kill:    #D32F2F;
+    --highlight: #FF6B00;
+
+    --bg:         #F4F6FA;
+    --card:       #FFFFFF;
+    --text:       #1A202C;
+    --text-light: #4A5568;
+    --border:     #E2E8F0;
+    --output-color: #F9A825;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    padding: 36px 16px 80px;
+  }
+  /* Embedded in iframe: tighter padding */
+  body.embedded { padding: 16px 12px 40px; }
+  body.embedded header { margin-bottom: 24px; }
+
+  .container { max-width: 1280px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 44px; }
+  header h1 { font-size: 1.85rem; margin-bottom: 8px; }
+  header .subtitle { color: var(--text-light); font-size: 0.95rem; }
+
+  h2 {
+    font-size: 1.35rem;
+    margin: 56px 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .icon { font-size: 1.4rem; }
+  .section-desc {
+    color: var(--text-light);
+    font-size: 0.92rem;
+    margin-bottom: 24px;
+    max-width: 1000px;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+  .legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; padding: 5px 12px;
+    border-radius: 14px; background: var(--card);
+    border: 1px solid var(--border); color: var(--text-light);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-line { width: 28px; height: 3px; border-radius: 2px; background: var(--success); }
+  .legend-line.failure { height: 0; border-bottom: 2px dashed var(--failure); border-radius: 0; background: transparent; }
+
+  /* Phase divider labels */
+  .phase-label {
+    position: absolute;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-light);
+    writing-mode: horizontal-tb;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid var(--border);
+    z-index: 2;
+  }
+
+  .hflow-scroll {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .hflow-inner {
+    position: relative;
+    width: 1910px;
+    height: 520px;
+  }
+  .hflow-svg {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .hflow-svg .failure-arc { transition: opacity 0.18s, stroke-width 0.18s; }
+  .hflow-svg .failure-label { transition: opacity 0.18s; pointer-events: none; }
+
+  .hflow-nodes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .hflow-node {
+    position: absolute;
+    width: 140px; height: 80px;
+    border-radius: 9px;
+    padding: 10px 8px 8px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    color: white; font-weight: 600;
+    font-size: 0.85rem; line-height: 1.35;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    user-select: none;
+  }
+  .hflow-node:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+    z-index: 5;
+  }
+  .hflow-node.selected {
+    outline: 3px solid var(--highlight);
+    outline-offset: 2px;
+    z-index: 6;
+  }
+  .hflow-node .num {
+    position: absolute; top: 5px; left: 9px;
+    font-size: 0.68rem; opacity: 0.85;
+    font-weight: 700; line-height: 1;
+  }
+  .hflow-node .fail-badge {
+    position: absolute; bottom: 4px; right: 6px;
+    font-size: 0.62rem;
+    background: rgba(0,0,0,0.25);
+    padding: 1px 7px; border-radius: 8px;
+    font-weight: 600;
+  }
+  .hflow-node .name { padding: 0 2px; }
+
+  .hflow-node.role-a { background: var(--role-a); }
+  .hflow-node.role-b { background: var(--role-b); }
+  .hflow-node.role-c { background: var(--role-c); }
+  .hflow-node.role-d { background: var(--role-d); }
+  .hflow-node.role-e { background: var(--role-e); }
+  .hflow-node.role-f { background: var(--role-f); }
+  .hflow-node.role-g { background: var(--role-g); }
+  .hflow-node.mix   { background: var(--mix); }
+  .hflow-node.done {
+    background: var(--done); color: var(--text);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 0 0 4px rgba(255,193,7,0.15);
+  }
+  .hflow-node.kill {
+    background: var(--kill);
+    height: 46px; font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(211,47,47,0.3);
+  }
+
+  .detail-below {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .detail-empty {
+    padding: 60px 20px; text-align: center;
+    color: var(--text-light); font-size: 1rem;
+  }
+  .detail-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-num {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--text); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
+  }
+  .detail-num.role-a { background: var(--role-a); }
+  .detail-num.role-b { background: var(--role-b); }
+  .detail-num.role-c { background: var(--role-c); }
+  .detail-num.role-d { background: var(--role-d); }
+  .detail-num.role-e { background: var(--role-e); }
+  .detail-num.role-f { background: var(--role-f); }
+  .detail-num.role-g { background: var(--role-g); }
+  .detail-num.mix   { background: var(--mix); }
+  .detail-header h3 { font-size: 1.1rem; line-height: 1.4; }
+
+  .detail-3col {
+    display: grid;
+    grid-template-columns: 0.7fr 1.6fr 1.1fr;
+    gap: 0;
+  }
+  @media (max-width: 900px) { .detail-3col { grid-template-columns: 1fr; } }
+  .dcol {
+    padding: 18px 22px;
+    border-right: 1px solid var(--border);
+  }
+  .dcol:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .dcol { border-right: none; border-bottom: 1px solid var(--border); }
+    .dcol:last-child { border-bottom: none; }
+  }
+  .dcol h4 {
+    font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-light);
+    margin-bottom: 12px; font-weight: 700;
+  }
+  .dcol.what-col h4 { color: var(--role-e); }
+  .dcol.output-col h4 { color: #B45309; }
+
+  .role-tag {
+    display: inline-block;
+    font-size: 0.74rem; padding: 3px 10px;
+    border-radius: 10px; margin: 2px 4px 4px 0;
+    font-weight: 600;
+    background: #E2E8F0; color: var(--text);
+  }
+  .role-tag.role-a-t { background: var(--role-a); color: white; }
+  .role-tag.role-b-t { background: var(--role-b); color: white; }
+  .role-tag.role-c-t { background: var(--role-c); color: white; }
+  .role-tag.role-d-t { background: var(--role-d); color: white; }
+  .role-tag.role-e-t { background: var(--role-e); color: white; }
+  .role-tag.role-f-t { background: var(--role-f); color: white; }
+  .role-tag.role-g-t { background: var(--role-g); color: white; }
+
+  .subsection { margin-bottom: 14px; }
+  .subsection:last-child { margin-bottom: 0; }
+  .sublabel {
+    font-size: 0.85rem; font-weight: 700;
+    margin-bottom: 6px; padding-left: 10px;
+    border-left: 3px solid var(--text-light);
+  }
+  .sublabel.did { border-left-color: #3B82F6; color: #1D4ED8; }
+  .sublabel.pain { border-left-color: var(--failure); color: #991B1B; }
+  .sublabel.solution { border-left-color: #10B981; color: #065F46; }
+  .sublabel.happy { border-left-color: var(--success); color: #166534; }
+  .sublabel.failure-out { border-left-color: var(--failure); color: #991B1B; }
+
+  .subcontent {
+    font-size: 0.88rem; line-height: 1.65;
+    padding-left: 13px; color: var(--text);
+  }
+  .subcontent ul, ul.subcontent {
+    list-style: none; padding-left: 13px;
+  }
+  .subcontent li, ul.subcontent li {
+    padding: 4px 0 4px 14px;
+    position: relative;
+  }
+  .subcontent li::before, ul.subcontent li::before {
+    content: '·'; position: absolute; left: 0;
+    color: var(--text-light); font-weight: 700;
+  }
+
+  .failure-list li {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 6px;
+    padding: 8px 12px !important;
+    margin: 6px 0;
+    list-style: none;
+  }
+  .failure-list li::before { display: none; }
+  .failure-list .goto {
+    background: #FEE2E2;
+    color: #991B1B;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600; font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .failure-list .goto:hover { background: #FCA5A5; color: white; }
+  .failure-list .kill {
+    background: #1F2937;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600; font-size: 0.78rem;
+  }
+  .muted { color: var(--text-light); font-style: italic; }
+
+  .role-diagram {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 20px;
+    overflow-x: auto;
+  }
+  .role-diagram .mermaid { text-align: center; }
+
+  .insight {
+    background: #FFF8E1;
+    border-left: 4px solid var(--output-color);
+    padding: 16px 20px;
+    border-radius: 6px;
+    margin-top: 24px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+  .insight strong { color: #BF360C; }
+  .insight p + p, .insight p + ul { margin-top: 8px; }
+  .insight ul { margin: 6px 0 6px 20px; line-height: 1.7; }
+
+  .domain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .domain-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--text-light);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .domain-card.role-a-b { border-top-color: var(--role-a); }
+  .domain-card.role-b-b { border-top-color: var(--role-b); }
+  .domain-card.role-c-b { border-top-color: var(--role-c); }
+  .domain-card.role-d-b { border-top-color: var(--role-d); }
+  .domain-card.role-e-b { border-top-color: var(--role-e); }
+  .domain-card.role-g-b { border-top-color: var(--role-g); }
+  .domain-card h4 { font-size: 0.95rem; margin-bottom: 6px; }
+  .domain-card .domain-knowledge {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+  .domain-card .domain-output {
+    font-size: 0.82rem;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.83rem;
+    line-height: 1.7;
+  }
+  footer code {
+    background: var(--card);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1 data-en="Contract-First AI Development Workflow" data-zh="契約驅動 AI 開發工作流程">契約驅動 AI 開發工作流程</h1>
+    <p class="subtitle" data-en="Contract-Driven AI Development: TDD as executable contract, AI as implementer, 4-layer tracking for traceability" data-zh="契約驅動 AI 開發：TDD 作為可執行契約，AI 作為實現者，四層追蹤確保可溯源性">契約驅動 AI 開發：TDD 作為可執行契約，AI 作為實現者，四層追蹤確保可溯源性</p>
+  </header>
+
+  <h2><span class="icon">🌳</span><span data-en="Development Process — Decision Tree" data-zh="開發流程 — 決策樹">開發流程 — 決策樹</span></h2>
+  <p class="section-desc" data-en='<strong style="color:var(--success)">Green solid line</strong> = happy path (left→right); <strong style="color:var(--failure)">Red dashed arc</strong> = failure/rework paths. <strong>Phase 1</strong> (nodes 1-4): TDD Generation. <strong>Phase 2</strong> (nodes 5-9): Daily AI Implementation Loop. <br/><strong>👉 Click any node</strong> to see Who / What / Output details.' data-zh='<strong style="color:var(--success)">綠色實線</strong> = 正常路徑（左→右）；<strong style="color:var(--failure)">紅色虛線弧</strong> = 失敗/返工路徑。<strong>Phase 1</strong>（節點 1-4）：TDD 產出。<strong>Phase 2</strong>（節點 5-9）：每日 AI 實作循環。<br/><strong>👉 點擊節點</strong>查看 Who / What / Output 細節。'>
+    <strong style="color:var(--success)">綠色實線</strong> = 正常路徑（左→右）；<strong style="color:var(--failure)">紅色虛線弧</strong> = 失敗/返工路徑。<strong>Phase 1</strong>（節點 1-4）：TDD 產出。<strong>Phase 2</strong>（節點 5-9）：每日 AI 實作循環。<br/><strong>👉 點擊節點</strong>查看 Who / What / Output 細節。
+  </p>
+
+  <div class="legend">
+    <span class="legend-item"><span class="legend-line"></span><span data-en="Happy Path" data-zh="正常路徑">正常路徑</span></span>
+    <span class="legend-item"><span class="legend-line failure"></span><span data-en="Failure/Rework" data-zh="失敗/返工">失敗/返工</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-a)"></span><span data-en="PM / Spec Owner" data-zh="PM / 規格擁有者">PM / 規格擁有者</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-g)"></span><span data-en="AI Assistant" data-zh="AI 助手">AI 助手</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-e)"></span><span data-en="Developer" data-zh="開發者">開發者</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-c)"></span><span data-en="Validator" data-zh="驗證者">驗證者</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--role-d)"></span><span data-en="Tracking" data-zh="追蹤">追蹤</span></span>
+  </div>
+
+  <div class="hflow-scroll">
+    <div class="hflow-inner" id="hflow-inner">
+      <svg class="hflow-svg" id="hflow-svg" viewBox="0 0 1910 520" preserveAspectRatio="xMinYMin meet"></svg>
+      <div class="hflow-nodes" id="hflow-nodes"></div>
+    </div>
+  </div>
+
+  <div class="detail-below" id="detail-panel">
+    <div class="detail-empty">👆 Click any node above to see details</div>
+  </div>
+
+  <!-- ====== Role Relationship ====== -->
+  <h2><span class="icon">🔗</span><span data-en="Artifact Flow — TDD as Central Contract" data-zh="產出物流向 — TDD 作為核心契約">產出物流向 — TDD 作為核心契約</span></h2>
+  <p class="section-desc" data-en="The 12-chapter TDD document is the single source of truth. All implementation, testing, and tracking revolve around it." data-zh="12 章 TDD 文件是唯一的真相來源。所有實作、測試和追蹤都圍繞它展開。">12 章 TDD 文件是唯一的真相來源。所有實作、測試和追蹤都圍繞它展開。</p>
+  <div class="role-diagram">
+    <div class="mermaid">
+flowchart TD
+    PM(["👤 <b>PM / Spec Owner</b>"])
+    TDD["📄 <b>TDD 12 Chapters</b><br/>Single Source of Truth"]
+    MDC["⚙️ <b>.mdc Rule Files</b><br/>Context Engineering"]
+    AI(["🤖 <b>AI Assistant</b>"])
+    DEV(["💻 <b>Developer</b>"])
+    CODE["📦 <b>Source Code</b><br/>Domain → API → View"]
+    TRACK["📋 <b>4-Layer Tracking</b><br/>Log + Changelog + AI Record + Amendment"]
+
+    PM ==>|"PRD + API + UI/UX"| TDD
+    TDD ==>|"generates"| MDC
+    TDD ==>|"feeds context"| AI
+    MDC ==>|"constrains"| AI
+    AI ==>|"generates"| CODE
+    DEV ==>|"verifies & guides"| AI
+    DEV ==>|"records"| TRACK
+    TRACK ==>|"deviations feed back"| TDD
+    CODE ==>|"tested against"| TDD
+
+    classDef pmStyle fill:#4A90E2,stroke:#2C5282,color:#fff,font-weight:bold;
+    classDef aiStyle fill:#546E7A,stroke:#37474F,color:#fff,font-weight:bold;
+    classDef devStyle fill:#43A047,stroke:#1B5E20,color:#fff,font-weight:bold;
+    classDef docStyle fill:#FFC107,stroke:#92400E,color:#1A202C,font-weight:bold;
+    classDef trackStyle fill:#9C27B0,stroke:#6A1B9A,color:#fff,font-weight:bold;
+
+    class PM pmStyle;
+    class AI aiStyle;
+    class DEV devStyle;
+    class TDD,MDC,CODE docStyle;
+    class TRACK trackStyle;
+    </div>
+  </div>
+
+  <div class="insight">
+    <p><strong data-en="Key Insight — TDD as Executable Contract" data-zh="核心洞察 — TDD 作為可執行契約">核心洞察 — TDD 作為可執行契約</strong></p>
+    <ul>
+      <li data-en="The 12-chapter TDD is NOT just documentation — it's the contract AI must implement against. Any deviation must be explicitly logged and approved." data-zh="12 章 TDD 不只是文件 — 它是 AI 必須遵守的契約。任何偏差都必須明確記錄和批准。">12 章 TDD 不只是文件 — 它是 AI 必須遵守的契約。任何偏差都必須明確記錄和批准。</li>
+      <li data-en="Context Engineering (.mdc rules) + Adapter mechanism make this workflow architecture-agnostic — same process works for iOS (TCA), Android (MVVM), or web." data-zh="Context Engineering（.mdc 規則）+ Adapter 機制使此流程與架構無關 — iOS (TCA)、Android (MVVM) 或 Web 都適用。">Context Engineering（.mdc 規則）+ Adapter 機制使此流程與架構無關 — iOS (TCA)、Android (MVVM) 或 Web 都適用。</li>
+      <li data-en="4-layer tracking creates a complete audit trail: what changed (Changelog), why (Amendment Log), what AI decided (AI Record), and daily progress (Daily Log)." data-zh="四層追蹤創建完整的審計軌跡：改了什麼（Changelog）、為什麼（Amendment Log）、AI 決定了什麼（AI Record）、每日進度（Daily Log）。">四層追蹤創建完整的審計軌跡：改了什麼（Changelog）、為什麼（Amendment Log）、AI 決定了什麼（AI Record）、每日進度（Daily Log）。</li>
+    </ul>
+  </div>
+
+  <!-- ====== Domain Knowledge Cards ====== -->
+  <h2><span class="icon">📚</span><span data-en="TDD 12 Chapters — Structure" data-zh="TDD 12 章 — 結構">TDD 12 章 — 結構</span></h2>
+  <p class="section-desc" data-en="Chapters 00-05 are mandatory for every feature. Chapters 06-12 are optional, chosen based on feature complexity." data-zh="第 00-05 章為每個功能必寫。第 06-12 章為選用，依功能複雜度決定。">第 00-05 章為每個功能必寫。第 06-12 章為選用，依功能複雜度決定。</p>
+  <div class="domain-grid">
+    <div class="domain-card role-a-b">
+      <h4>Ch00 Overview</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>Mandatory</strong><br/>Feature scope, goals, constraints" data-zh="📚 <strong>必寫</strong><br/>功能範圍、目標、約束">📚 <strong>必寫</strong><br/>功能範圍、目標、約束</div>
+      <div class="domain-output" data-en="Feature boundary definition" data-zh="功能邊界定義">功能邊界定義</div>
+    </div>
+    <div class="domain-card role-a-b">
+      <h4>Ch01 Sequence Diagram</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>Mandatory</strong><br/>User → View → Feature → API flow" data-zh="📚 <strong>必寫</strong><br/>User → View → Feature → API 流程">📚 <strong>必寫</strong><br/>User → View → Feature → API 流程</div>
+      <div class="domain-output" data-en="Mermaid sequence diagrams (3-box rule)" data-zh="Mermaid 時序圖（三框規則）">Mermaid 時序圖（三框規則）</div>
+    </div>
+    <div class="domain-card role-b-b">
+      <h4>Ch02 Architecture</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>Mandatory</strong><br/>Clean Architecture layers, dependency rules" data-zh="📚 <strong>必寫</strong><br/>Clean Architecture 分層、依賴規則">📚 <strong>必寫</strong><br/>Clean Architecture 分層、依賴規則</div>
+      <div class="domain-output" data-en="Layer diagram + adapter bindings" data-zh="分層圖 + adapter 綁定">分層圖 + adapter 綁定</div>
+    </div>
+    <div class="domain-card role-b-b">
+      <h4>Ch03 Module Responsibility</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>Mandatory</strong><br/>Module boundaries, consolidation rules" data-zh="📚 <strong>必寫</strong><br/>模組邊界、合併規則">📚 <strong>必寫</strong><br/>模組邊界、合併規則</div>
+      <div class="domain-output" data-en="Module list + responsibility matrix" data-zh="模組清單 + 職責矩陣">模組清單 + 職責矩陣</div>
+    </div>
+    <div class="domain-card role-e-b">
+      <h4>Ch04 Domain Model</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>Mandatory</strong><br/>Entity vs VO, aggregates, value objects" data-zh="📚 <strong>必寫</strong><br/>Entity vs VO、聚合、值對象">📚 <strong>必寫</strong><br/>Entity vs VO、聚合、值對象</div>
+      <div class="domain-output" data-en="Domain model diagram + field specs" data-zh="Domain model 圖 + 欄位規格">Domain model 圖 + 欄位規格</div>
+    </div>
+    <div class="domain-card role-e-b">
+      <h4>Ch05 Module Sequences</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>Mandatory</strong><br/>Per-module detailed sequence diagrams" data-zh="📚 <strong>必寫</strong><br/>各模組詳細時序圖">📚 <strong>必寫</strong><br/>各模組詳細時序圖</div>
+      <div class="domain-output" data-en="Implementation-ready sequence per module" data-zh="可實作的模組時序圖">可實作的模組時序圖</div>
+    </div>
+    <div class="domain-card role-c-b">
+      <h4>Ch06-11 Optional</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>Optional</strong><br/>State/Action, UseCase IO, API Spec, Error Handling, Test Scenarios, Risks" data-zh="📚 <strong>選用</strong><br/>State/Action、UseCase IO、API Spec、錯誤處理、測試場景、風險">📚 <strong>選用</strong><br/>State/Action、UseCase IO、API Spec、錯誤處理、測試場景、風險</div>
+      <div class="domain-output" data-en="Chosen based on feature complexity" data-zh="依功能複雜度選用">依功能複雜度選用</div>
+    </div>
+    <div class="domain-card role-d-b">
+      <h4>Ch12 Tickets</h4>
+      <div class="domain-knowledge" data-en="📚 <strong>Optional</strong><br/>Ticket breakdown + estimation" data-zh="📚 <strong>選用</strong><br/>Ticket 拆分 + 估時">📚 <strong>選用</strong><br/>Ticket 拆分 + 估時</div>
+      <div class="domain-output" data-en="Ordered ticket list for implementation" data-zh="排序好的 ticket 清單">排序好的 ticket 清單</div>
+    </div>
+  </div>
+
+  <footer>
+    <p data-en='Methodology designed and validated across 3 organizations by Reed Hsin' data-zh='由 Reed Hsin 設計並在 3 個組織中驗證的方法論'>由 Reed Hsin 設計並在 3 個組織中驗證的方法論</p>
+  </footer>
+
+</div>
+
+<script>
+  // ===== i18n =====
+  const LANG = new URLSearchParams(window.location.search).get('lang') || 'zh';
+
+  function applyLang(lang) {
+    document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+      const val = el.getAttribute(`data-${lang}`);
+      if (val) el.innerHTML = val;
+    });
+  }
+
+  // ===== Embedded detection =====
+  try { if (window.self !== window.top) document.body.classList.add('embedded'); }
+  catch(e) { document.body.classList.add('embedded'); }
+  if (new URLSearchParams(window.location.search).has('embedded'))
+    document.body.classList.add('embedded');
+
+  // ===== Flow chart constants =====
+  const NODE_WIDTH = 140;
+  const NODE_HEIGHT = 80;
+  const GAP = 30;
+  const START_X = 30;
+  const MAIN_Y = 280;
+
+  // ===== Flow nodes =====
+  const flowNodes = [
+    { id: 1, name: LANG === 'en' ? "Spec Input<br/>PRD + API + UI" : "規格輸入<br/>PRD + API + UI", color: "role-a" },
+    { id: 2, name: LANG === 'en' ? "TDD Generation<br/>12 Chapters" : "TDD 產出<br/>12 章", color: "role-g" },
+    { id: 3, name: LANG === 'en' ? "Context Setup<br/>.mdc Rules" : "Context 設定<br/>.mdc 規則", color: "role-e" },
+    { id: 4, name: LANG === 'en' ? "Ticket<br/>Breakdown" : "Ticket<br/>拆分", color: "role-e" },
+    { id: 5, name: LANG === 'en' ? "Morning Prep<br/>Review + Plan" : "早晨準備<br/>回顧 + 規劃", color: "role-e" },
+    { id: 6, name: LANG === 'en' ? "AI Coding<br/>Feed → Generate" : "AI 編碼<br/>餵入 → 產出", color: "role-g" },
+    { id: 7, name: LANG === 'en' ? "TDD Contract<br/>Verification" : "TDD 契約<br/>驗證", color: "role-c" },
+    { id: 8, name: LANG === 'en' ? "4-Layer<br/>Tracking" : "四層<br/>追蹤紀錄", color: "role-d" },
+    { id: 9, name: LANG === 'en' ? "Retrospective<br/>& Improve" : "回顧<br/>與改善", color: "mix" },
+    { id: "done", name: LANG === 'en' ? "🎉 Feature<br/>Complete" : "🎉 功能<br/>完成", color: "done" }
+  ];
+
+  // ===== Failure paths =====
+  const failurePaths = [
+    { from: 2, to: 1, label: LANG === 'en' ? "Spec unclear" : "規格不清" },
+    { from: 6, to: 5, label: LANG === 'en' ? "Context insufficient" : "Context 不足" },
+    { from: 7, to: 6, label: LANG === 'en' ? "Test fails → fix code" : "測試失敗 → 修碼" },
+    { from: 7, to: 2, label: LANG === 'en' ? "Large deviation → amend TDD" : "重大偏差 → 修改 TDD" },
+    { from: 8, to: 6, label: LANG === 'en' ? "Deviation logged → re-impl" : "偏差記錄 → 重做" },
+    { from: 9, to: 3, label: LANG === 'en' ? "Process update → new rules" : "流程更新 → 新規則" }
+  ];
+
+  // ===== Helpers =====
+  function getNodeIndex(id) {
+    return flowNodes.findIndex(n => String(n.id) === String(id));
+  }
+  function getX(id) { return START_X + getNodeIndex(id) * (NODE_WIDTH + GAP); }
+  function getCenterX(id) { return getX(id) + NODE_WIDTH / 2; }
+
+  // ===== Render flow =====
+  function renderFlow() {
+    const svg = document.getElementById('hflow-svg');
+    const container = document.getElementById('hflow-nodes');
+
+    let svgHtml = `
+      <defs>
+        <marker id="arr-h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#43A047"/>
+        </marker>
+        <marker id="arr-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#D32F2F"/>
+        </marker>
+      </defs>
+    `;
+
+    // Phase divider line between node 4 and 5
+    const dividerX = getX(flowNodes[4].id) - GAP / 2;
+    svgHtml += `<line x1="${dividerX}" y1="${MAIN_Y - 120}" x2="${dividerX}" y2="${MAIN_Y + 120}" stroke="${'var(--border)'}" stroke-width="2" stroke-dasharray="8 4" opacity="0.6"/>`;
+    svgHtml += `<text x="${dividerX - 8}" y="${MAIN_Y - 130}" text-anchor="end" font-size="11" fill="#4A5568" font-weight="700" opacity="0.7">PHASE 1</text>`;
+    svgHtml += `<text x="${dividerX + 8}" y="${MAIN_Y - 130}" text-anchor="start" font-size="11" fill="#4A5568" font-weight="700" opacity="0.7">PHASE 2</text>`;
+
+    // Happy path arrows
+    for (let i = 0; i < flowNodes.length - 1; i++) {
+      const sx = getX(flowNodes[i].id) + NODE_WIDTH;
+      const tx = getX(flowNodes[i+1].id);
+      svgHtml += `<line x1="${sx}" y1="${MAIN_Y}" x2="${tx - 4}" y2="${MAIN_Y}" stroke="#43A047" stroke-width="3" marker-end="url(#arr-h)"/>`;
+    }
+
+    // Failure arcs
+    failurePaths.forEach((f, idx) => {
+      if (f.to === "kill") {
+        const cx = getCenterX(f.from);
+        const sy = MAIN_Y + NODE_HEIGHT / 2;
+        const ty = 415;
+        svgHtml += `<path d="M ${cx} ${sy} L ${cx} ${ty - 4}" stroke="#D32F2F" stroke-width="1.8" stroke-dasharray="5 4" opacity="0.4" fill="none" marker-end="url(#arr-f)" data-from="${f.from}" data-idx="${idx}" class="failure-arc"/>`;
+        svgHtml += `<text x="${cx + 10}" y="${(sy + ty) / 2}" text-anchor="start" font-size="11" fill="#7F1D1D" class="failure-label" data-from="${f.from}" data-idx="${idx}" font-weight="600" opacity="0">${f.label}</text>`;
+      } else {
+        const sx = getCenterX(f.from);
+        const tx = getCenterX(f.to);
+        const span = Math.abs(getNodeIndex(f.from) - getNodeIndex(f.to));
+        const arcHeight = 30 + span * 16;
+        const sy = MAIN_Y - NODE_HEIGHT / 2;
+        const peakY = sy - arcHeight;
+        svgHtml += `<path d="M ${sx} ${sy} C ${sx} ${peakY}, ${tx} ${peakY}, ${tx} ${sy - 4}" stroke="#D32F2F" stroke-width="1.3" stroke-dasharray="5 4" opacity="0.28" fill="none" marker-end="url(#arr-f)" data-from="${f.from}" data-idx="${idx}" class="failure-arc"/>`;
+        const midX = (sx + tx) / 2;
+        svgHtml += `<text x="${midX}" y="${peakY - 5}" text-anchor="middle" font-size="11" fill="#7F1D1D" class="failure-label" data-from="${f.from}" data-idx="${idx}" font-weight="600" opacity="0">${f.label}</text>`;
+      }
+    });
+
+    svg.innerHTML = svgHtml;
+
+    // Render node cards
+    let html = '';
+    flowNodes.forEach(n => {
+      const x = getX(n.id);
+      const failures = failurePaths.filter(f => f.from === n.id).length;
+      const num = typeof n.id === 'number' ? n.id : '';
+      html += `
+        <div class="hflow-node ${n.color}" data-id="${n.id}" style="left:${x}px; top:${MAIN_Y - NODE_HEIGHT/2}px;"
+             onclick="onNodeClick('${n.id}')"
+             onmouseenter="onNodeHover('${n.id}', true)"
+             onmouseleave="onNodeHover('${n.id}', false)">
+          ${num ? `<div class="num">${num}</div>` : ''}
+          <div class="name">${n.name}</div>
+          ${failures > 0 ? `<div class="fail-badge">⚠ ${failures}</div>` : ''}
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ===== Node detail data =====
+  const nodeData_zh = {
+    "1": {
+      name: "Step 1 — 規格輸入",
+      colorClass: "role-a",
+      who: [["PM / 規格擁有者", "role-a-t"]],
+      what: {
+        did: "提供三份核心輸入文件：<strong>PRD</strong>（產品需求文件）、<strong>API Spec</strong>（後端 API 規格）、<strong>UI/UX Spec</strong>（畫面設計稿）。這三份是 TDD 產出的原料。",
+        pains: [
+          "PRD 經常缺少邊界條件和錯誤處理流程",
+          "API 規格可能在開發中途變更",
+          "UI/UX 和 API 不一致（欄位名、資料結構不對稱）"
+        ],
+        solutions: [
+          "✅ 用 API-First 方式，API Spec 先定再開發",
+          "💡 PRD 中明確列出 edge case 和 error state",
+          "🔧 建立 PRD ↔ API ↔ UI 的交叉引用表"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>PRD + API Spec + UI/UX Spec</strong> → 餵入 Step 2 TDD 產出",
+        failure: []
+      }
+    },
+    "2": {
+      name: "Step 2 — TDD 12 章產出",
+      colorClass: "role-g",
+      who: [["AI 助手", "role-g-t"], ["開發者（審核）", "role-e-t"]],
+      what: {
+        did: "AI 根據三份輸入文件產出 <strong>12 章 TDD</strong>。必寫 6 章（Ch00-05）：Overview、Sequence Diagram、Architecture、Module Responsibility、Domain Model、Module Sequences。選用 6 章（Ch06-11）：State/Action、UseCase IO、API Spec、Error Handling、Test Scenarios、Risks。Ch12 為 Ticket 拆分。",
+        pains: [
+          "AI 可能對 Domain 理解不足，產出錯誤的 Entity/VO 分類",
+          "Sequence Diagram 的三框規則容易被 AI 違反",
+          "Ch05 Module Sequences 是最複雜的章節，AI 常漏掉 error path"
+        ],
+        solutions: [
+          "✅ 用 .mdc 規則約束 AI 的產出格式",
+          "✅ 開發者逐章審核，Domain Model 優先",
+          "💡 累積 Entity vs VO 判斷範例作為 few-shot"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>12 章 TDD 文件</strong> → 餵入 Step 3 Context 設定",
+        failure: [
+          { condition: "規格不清，需要補充", target: 1 }
+        ]
+      }
+    },
+    "3": {
+      name: "Step 3 — Context Engineering",
+      colorClass: "role-e",
+      who: [["開發者", "role-e-t"]],
+      what: {
+        did: "從 TDD 文件建立 <strong>.mdc 規則檔</strong>（9 個核心規則）放入 <code>.cursor/rules/</code>。規則使用 <code>{{placeholder}}</code> token 的 <strong>Adapter 機制</strong>，讓同一套規則適用不同技術棧（iOS TCA、Android MVVM、Web 等）。核心規則包括：UseCase 合併規則、Module 合併規則、Domain Model vs DTO 規則、Sequence Diagram 三框規則、Mermaid 語法規則。",
+        pains: [
+          "Adapter placeholder 太多時 AI 容易混淆",
+          "新技術棧需要重新撰寫 Adapter 定義檔",
+          "規則之間可能互相矛盾（如合併 vs 分離的邊界）"
+        ],
+        solutions: [
+          "✅ Adapter 檔獨立管理，核心規則保持通用",
+          "✅ 每次修改規則後跑一次 dry-run 驗證",
+          "💡 建立規則衝突偵測機制"
+        ]
+      },
+      output: {
+        happy: "⚙️ <strong>9 個 .mdc 規則檔 + Adapter 定義</strong> → 約束後續 AI 產出",
+        failure: []
+      }
+    },
+    "4": {
+      name: "Step 4 — Ticket 拆分",
+      colorClass: "role-e",
+      who: [["開發者", "role-e-t"], ["AI 助手", "role-g-t"]],
+      what: {
+        did: "根據 TDD Ch12 將功能拆分為可執行的 <strong>Tickets</strong>。遵守實作順序：<strong>Domain Model → API → Client → Repository → UseCase → Feature → View</strong>。每個 ticket 對應一個 TDD 章節的一部分，確保可追溯。",
+        pains: [
+          "Ticket 粒度太粗會讓 AI context 超載",
+          "Ticket 順序錯誤（如先寫 View 再寫 Domain）會導致返工",
+          "跨 ticket 的依賴關係不明確"
+        ],
+        solutions: [
+          "✅ 每個 ticket 限制在一個模組 + 一個層級",
+          "✅ 嚴格遵守 bottom-up 實作順序",
+          "💡 Ticket 間用 「blocked by」標注依賴"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>排序好的 Ticket 清單</strong> → 進入 Phase 2 每日循環",
+        failure: []
+      }
+    },
+    "5": {
+      name: "Step 5 — 早晨準備",
+      colorClass: "role-e",
+      who: [["開發者", "role-e-t"]],
+      what: {
+        did: "<strong>每日 15-30 分鐘</strong>的固定儀式：(1) 回顧昨日 Daily Log 和未完成項 (2) 選定今日 Tickets (3) 準備 AI Context（選擇相關 TDD 章節 + .mdc 規則 + 現有程式碼片段）。目標：讓 AI 在每次對話開始時就有完整的實作上下文。",
+        pains: [
+          "忘記更新 Context 導致 AI 產出與現有代碼衝突",
+          "選錯 TDD 章節餵入 AI，導致實作方向偏差",
+          "早晨準備省略 → 全天 AI 產出品質下降"
+        ],
+        solutions: [
+          "✅ 用 checklist 確保每項都做到",
+          "✅ Context 包含最新的 Changelog 摘要",
+          "💡 自動化 Context 組裝腳本"
+        ]
+      },
+      output: {
+        happy: "📝 <strong>今日計畫 + 準備好的 AI Context</strong> → 進入 AI 編碼",
+        failure: []
+      }
+    },
+    "6": {
+      name: "Step 6 — AI 編碼循環",
+      colorClass: "role-g",
+      who: [["AI 助手", "role-g-t"], ["開發者（引導）", "role-e-t"]],
+      what: {
+        did: "核心迭代循環：<strong>Feed TDD → Generate → Verify → Record</strong>。每個 Ticket 依序執行：(1) 將對應 TDD 章節 + .mdc 規則餵入 AI (2) AI 產出程式碼 (3) 開發者立即驗證是否符合 TDD 契約 (4) 記錄 AI 的關鍵決策。遵守 Clean Architecture 分層：Domain Model → API → Client → Repository → UseCase → Feature → View。",
+        pains: [
+          "AI 容易「創造性發揮」，產出不在 TDD 範圍內的功能",
+          "跨 Ticket 累積的 context drift（AI 忘記之前的約定）",
+          "AI 產出的程式碼風格不一致"
+        ],
+        solutions: [
+          "✅ 每次對話都重新載入 .mdc 規則",
+          "✅ 用 TDD 章節的 exact 內容作為 prompt，不靠 AI 記憶",
+          "✅ 產出後立即 diff review，不等累積",
+          "💡 建立 code style .mdc 規則檔"
+        ]
+      },
+      output: {
+        happy: "💻 <strong>通過驗證的程式碼</strong> → 進入 Step 7 TDD 契約驗證",
+        failure: [
+          { condition: "Context 不足，需重新準備", target: 5 }
+        ]
+      }
+    },
+    "7": {
+      name: "Step 7 — TDD 契約驗證",
+      colorClass: "role-c",
+      who: [["開發者（驗證者角色）", "role-c-t"]],
+      what: {
+        did: "比對 AI 產出與 TDD 契約：(1) Domain Model 欄位和類型是否一致 (2) API 端點和參數是否符合 Ch05 Sequence (3) UseCase IO 是否對齊 Ch07 規格 (4) 錯誤處理是否涵蓋 Ch09 場景。<strong>偏差分三級</strong>：小偏差 → 記錄 Changelog；中偏差 → 修改 TDD + 更新下游；大偏差 → <strong>停止</strong>，走完整 Amendment Flow。",
+        pains: [
+          "API 返回結構與預期不同（後端沒照 spec 做）",
+          "小偏差累積成大偏差時才被發現",
+          "Amendment Flow 太重，開發者傾向跳過"
+        ],
+        solutions: [
+          "✅ 每個 Ticket 完成後立即驗證，不等批次",
+          "✅ 偏差分級有明確標準（欄位名 vs 資料結構 vs 流程改變）",
+          "💡 自動化偏差偵測（diff TDD spec vs actual code）"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>TDD 契約驗證通過</strong> → 進入 Step 8 追蹤紀錄",
+        failure: [
+          { condition: "測試失敗 → 修正程式碼", target: 6 },
+          { condition: "重大偏差 → 修改 TDD 文件", target: 2 }
+        ]
+      }
+    },
+    "8": {
+      name: "Step 8 — 四層追蹤紀錄",
+      colorClass: "role-d",
+      who: [["開發者", "role-e-t"]],
+      what: {
+        did: "記錄四層追蹤文件：<strong>(1) Daily Log</strong>（每日進度、問題、AI 互動摘要，存放 <code>15_Daily_Logs/YYYY-MM-DD.md</code>）<strong>(2) Changelog</strong>（程式碼變更 + TDD 偏差紀錄，<code>14_Changelog/CHANGELOG.md</code>）<strong>(3) AI Conversation Record</strong>（AI 關鍵決策萃取，<code>16_Cursor_Workflow/</code>）<strong>(4) Amendment Log</strong>（TDD 變更理由和影響範圍，<code>AMENDMENT_LOG.md</code>）。",
+        pains: [
+          "四層紀錄太重，容易省略",
+          "事後補寫紀錄品質差（忘了細節）",
+          "四層之間缺少交叉引用"
+        ],
+        solutions: [
+          "✅ 每個 Ticket 完成後立即寫，不等下班前",
+          "✅ Daily Log 用模板自動填充骨架",
+          "💡 AI 自動萃取對話中的 key decisions 作為 AI Record"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>四層追蹤紀錄完成</strong> → 繼續下一個 Ticket 或進入 Step 9",
+        failure: [
+          { condition: "偏差記錄揭露需重新實作", target: 6 }
+        ]
+      }
+    },
+    "9": {
+      name: "Step 9 — 回顧與改善",
+      colorClass: "mix",
+      who: [["開發者", "role-e-t"], ["Tech Lead", "role-f-t"]],
+      what: {
+        did: "三種回顧週期：<strong>(1) 週回顧</strong>（30-60 min）：metrics 分析 + 問題解析 + AI 使用回顧。<strong>(2) Sprint 回顧</strong>（1-2 hr）：趨勢分析。<strong>(3) Feature 回顧</strong>（2-3 hr）：深度評估 + 流程更新。回顧輸出：更新 .mdc 規則、改善 TDD 模板、調整 AI prompt 策略。",
+        pains: [
+          "回顧流於形式，缺少 actionable output",
+          "改善項目沒人追蹤",
+          "跨 Feature 的 pattern 沒被提煉"
+        ],
+        solutions: [
+          "✅ 每次回顧必須產出至少一個 .mdc 規則更新",
+          "✅ 改善項目轉為 Ticket 追蹤",
+          "💡 累積 retro 洞察為 knowledge base"
+        ]
+      },
+      output: {
+        happy: "🔄 <strong>更新的規則 + 改善計畫</strong> → 新 Feature 用更好的流程",
+        failure: [
+          { condition: "流程需要根本改動 → 更新規則", target: 3 }
+        ]
+      }
+    },
+    "done": {
+      name: "🎉 功能完成",
+      colorClass: "mix",
+      who: [["全團隊", "role-e-t"]],
+      what: {
+        did: "功能開發完成。所有 Tickets close、TDD 契約全部通過、四層追蹤紀錄完整、Feature 回顧已完成。",
+        pains: [],
+        solutions: []
+      },
+      output: { happy: "🎉 <strong>可交付的功能 + 完整的開發軌跡</strong>", failure: [] }
+    }
+  };
+
+  const nodeData_en = {
+    "1": {
+      name: "Step 1 — Spec Input",
+      colorClass: "role-a",
+      who: [["PM / Spec Owner", "role-a-t"]],
+      what: {
+        did: "Provide three core input documents: <strong>PRD</strong> (Product Requirements), <strong>API Spec</strong> (backend API specification), <strong>UI/UX Spec</strong> (design mockups). These three are the raw material for TDD generation.",
+        pains: [
+          "PRD often lacks edge cases and error handling flows",
+          "API spec may change mid-development",
+          "UI/UX and API inconsistencies (field names, data structures)"
+        ],
+        solutions: [
+          "✅ API-First approach: define API Spec before development",
+          "💡 Explicitly list edge cases and error states in PRD",
+          "🔧 Build cross-reference table between PRD ↔ API ↔ UI"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>PRD + API Spec + UI/UX Spec</strong> → feeds Step 2 TDD Generation",
+        failure: []
+      }
+    },
+    "2": {
+      name: "Step 2 — TDD 12 Chapters",
+      colorClass: "role-g",
+      who: [["AI Assistant", "role-g-t"], ["Developer (reviewer)", "role-e-t"]],
+      what: {
+        did: "AI generates <strong>12-chapter TDD</strong> from three input docs. 6 mandatory chapters (Ch00-05): Overview, Sequence Diagram, Architecture, Module Responsibility, Domain Model, Module Sequences. 6 optional chapters (Ch06-11): State/Action, UseCase IO, API Spec, Error Handling, Test Scenarios, Risks. Ch12 for Ticket breakdown.",
+        pains: [
+          "AI may misclassify Entity vs Value Object in Domain Model",
+          "Sequence Diagram 3-box rule easily violated by AI",
+          "Ch05 Module Sequences is most complex — AI often misses error paths"
+        ],
+        solutions: [
+          "✅ Use .mdc rules to constrain AI output format",
+          "✅ Developer reviews chapter by chapter, Domain Model first",
+          "💡 Accumulate Entity vs VO examples as few-shot references"
+        ]
+      },
+      output: {
+        happy: "📄 <strong>12-chapter TDD document</strong> → feeds Step 3 Context Setup",
+        failure: [
+          { condition: "Spec unclear, needs clarification", target: 1 }
+        ]
+      }
+    },
+    "3": {
+      name: "Step 3 — Context Engineering",
+      colorClass: "role-e",
+      who: [["Developer", "role-e-t"]],
+      what: {
+        did: "Build <strong>.mdc rule files</strong> (9 core rules) from TDD, placed in <code>.cursor/rules/</code>. Rules use <code>{{placeholder}}</code> tokens via <strong>Adapter mechanism</strong>, making the same rules work across tech stacks (iOS TCA, Android MVVM, Web). Core rules: UseCase consolidation, Module consolidation, Domain Model vs DTO, Sequence Diagram 3-box, Mermaid syntax.",
+        pains: [
+          "Too many adapter placeholders confuse AI",
+          "New tech stacks require new Adapter definitions",
+          "Rules may contradict each other (merge vs separate boundaries)"
+        ],
+        solutions: [
+          "✅ Adapter files managed separately, core rules stay generic",
+          "✅ Dry-run validation after each rule change",
+          "💡 Build rule conflict detection mechanism"
+        ]
+      },
+      output: {
+        happy: "⚙️ <strong>9 .mdc rule files + Adapter definitions</strong> → constrain all AI output",
+        failure: []
+      }
+    },
+    "4": {
+      name: "Step 4 — Ticket Breakdown",
+      colorClass: "role-e",
+      who: [["Developer", "role-e-t"], ["AI Assistant", "role-g-t"]],
+      what: {
+        did: "Break feature into executable <strong>Tickets</strong> based on TDD Ch12. Follow strict implementation order: <strong>Domain Model → API → Client → Repository → UseCase → Feature → View</strong>. Each ticket maps to a TDD chapter section for traceability.",
+        pains: [
+          "Tickets too coarse will overload AI context",
+          "Wrong ticket order (View before Domain) causes rework",
+          "Cross-ticket dependencies unclear"
+        ],
+        solutions: [
+          "✅ Each ticket limited to one module + one layer",
+          "✅ Strictly follow bottom-up implementation order",
+          "💡 Mark inter-ticket dependencies with 'blocked by'"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>Ordered ticket list</strong> → enter Phase 2 daily loop",
+        failure: []
+      }
+    },
+    "5": {
+      name: "Step 5 — Morning Prep",
+      colorClass: "role-e",
+      who: [["Developer", "role-e-t"]],
+      what: {
+        did: "<strong>Daily 15-30 min ritual</strong>: (1) Review yesterday's Daily Log and unfinished items (2) Select today's Tickets (3) Prepare AI Context — choose relevant TDD chapters + .mdc rules + existing code snippets. Goal: give AI complete implementation context at conversation start.",
+        pains: [
+          "Forgetting to update context → AI output conflicts with existing code",
+          "Feeding wrong TDD chapters → implementation direction drifts",
+          "Skipping morning prep → all-day AI output quality drops"
+        ],
+        solutions: [
+          "✅ Use checklist to ensure every item is covered",
+          "✅ Context includes latest Changelog summary",
+          "💡 Automate context assembly script"
+        ]
+      },
+      output: {
+        happy: "📝 <strong>Today's plan + prepared AI context</strong> → enter AI coding",
+        failure: []
+      }
+    },
+    "6": {
+      name: "Step 6 — AI Coding Loop",
+      colorClass: "role-g",
+      who: [["AI Assistant", "role-g-t"], ["Developer (guide)", "role-e-t"]],
+      what: {
+        did: "Core iteration: <strong>Feed TDD → Generate → Verify → Record</strong>. Per ticket: (1) Feed corresponding TDD chapter + .mdc rules to AI (2) AI generates code (3) Developer immediately verifies against TDD contract (4) Record AI's key decisions. Follow Clean Architecture layers: Domain Model → API → Client → Repository → UseCase → Feature → View.",
+        pains: [
+          "AI tends to 'creatively elaborate' beyond TDD scope",
+          "Cross-ticket context drift (AI forgets earlier agreements)",
+          "Inconsistent code style across AI sessions"
+        ],
+        solutions: [
+          "✅ Reload .mdc rules at every conversation start",
+          "✅ Use exact TDD chapter content as prompt, don't rely on AI memory",
+          "✅ Diff review immediately after generation, don't batch",
+          "💡 Add code style .mdc rule file"
+        ]
+      },
+      output: {
+        happy: "💻 <strong>Verified code</strong> → enter Step 7 TDD contract verification",
+        failure: [
+          { condition: "Context insufficient, need to re-prep", target: 5 }
+        ]
+      }
+    },
+    "7": {
+      name: "Step 7 — TDD Contract Check",
+      colorClass: "role-c",
+      who: [["Developer (validator role)", "role-c-t"]],
+      what: {
+        did: "Compare AI output against TDD contract: (1) Domain Model fields and types match (2) API endpoints match Ch05 sequences (3) UseCase IO aligns with Ch07 spec (4) Error handling covers Ch09 scenarios. <strong>Deviation grades</strong>: Small → log in Changelog; Medium → amend TDD + update downstream; Large → <strong>STOP</strong>, full Amendment Flow.",
+        pains: [
+          "API returns unexpected structure (backend didn't follow spec)",
+          "Small deviations accumulate into large ones before detection",
+          "Amendment Flow feels too heavy, developers tend to skip"
+        ],
+        solutions: [
+          "✅ Verify after each ticket, don't batch",
+          "✅ Clear criteria for deviation grades (field name vs data structure vs flow change)",
+          "💡 Automated deviation detection (diff TDD spec vs actual code)"
+        ]
+      },
+      output: {
+        happy: "✅ <strong>TDD contract verified</strong> → enter Step 8 tracking",
+        failure: [
+          { condition: "Test fails → fix code", target: 6 },
+          { condition: "Large deviation → amend TDD", target: 2 }
+        ]
+      }
+    },
+    "8": {
+      name: "Step 8 — 4-Layer Tracking",
+      colorClass: "role-d",
+      who: [["Developer", "role-e-t"]],
+      what: {
+        did: "Record four tracking layers: <strong>(1) Daily Log</strong> (progress, problems, AI interaction summary → <code>15_Daily_Logs/YYYY-MM-DD.md</code>) <strong>(2) Changelog</strong> (code changes + TDD deviations → <code>14_Changelog/CHANGELOG.md</code>) <strong>(3) AI Conversation Record</strong> (key AI decisions → <code>16_Cursor_Workflow/</code>) <strong>(4) Amendment Log</strong> (TDD change rationale + impact scope → <code>AMENDMENT_LOG.md</code>).",
+        pains: [
+          "Four layers feel too heavy, easily skipped",
+          "Retrospective logging loses detail quality",
+          "Cross-references between layers missing"
+        ],
+        solutions: [
+          "✅ Log immediately after each ticket, not at end of day",
+          "✅ Daily Log uses template with auto-populated skeleton",
+          "💡 AI auto-extracts key decisions from conversation as AI Record"
+        ]
+      },
+      output: {
+        happy: "📋 <strong>4-layer tracking complete</strong> → continue to next ticket or Step 9",
+        failure: [
+          { condition: "Deviation record reveals re-implementation needed", target: 6 }
+        ]
+      }
+    },
+    "9": {
+      name: "Step 9 — Retrospective",
+      colorClass: "mix",
+      who: [["Developer", "role-e-t"], ["Tech Lead", "role-f-t"]],
+      what: {
+        did: "Three retrospective cycles: <strong>(1) Weekly</strong> (30-60 min): metrics + problem analysis + AI usage review. <strong>(2) Sprint</strong> (1-2 hr): trend analysis. <strong>(3) Feature</strong> (2-3 hr): deep assessment + process update. Output: updated .mdc rules, improved TDD templates, adjusted AI prompt strategies.",
+        pains: [
+          "Retros become formality without actionable output",
+          "Improvement items not tracked",
+          "Cross-feature patterns not extracted"
+        ],
+        solutions: [
+          "✅ Each retro must produce at least one .mdc rule update",
+          "✅ Improvement items become tracked tickets",
+          "💡 Accumulate retro insights into knowledge base"
+        ]
+      },
+      output: {
+        happy: "🔄 <strong>Updated rules + improvement plan</strong> → next feature uses better process",
+        failure: [
+          { condition: "Fundamental process change needed → update rules", target: 3 }
+        ]
+      }
+    },
+    "done": {
+      name: "🎉 Feature Complete",
+      colorClass: "mix",
+      who: [["Full Team", "role-e-t"]],
+      what: {
+        did: "Feature development complete. All tickets closed, TDD contract fully verified, 4-layer tracking records complete, feature retrospective done.",
+        pains: [],
+        solutions: []
+      },
+      output: { happy: "🎉 <strong>Deliverable feature + complete development audit trail</strong>", failure: [] }
+    }
+  };
+
+  const nodeData = LANG === 'en' ? nodeData_en : nodeData_zh;
+
+  // ===== Interaction =====
+  let selectedId = null;
+
+  window.onNodeClick = function(id) {
+    selectedId = String(id);
+    showDetail(selectedId);
+    highlightSelection();
+  };
+
+  window.onNodeHover = function(id, entering) {
+    if (selectedId === String(id)) return;
+    if (entering) highlightFailures(String(id), 0.9, 1);
+    else highlightSelection();
+  };
+
+  function highlightSelection() {
+    if (selectedId) {
+      highlightFailures(selectedId, 0.9, 1);
+    } else {
+      document.querySelectorAll('.failure-arc').forEach(a => {
+        a.style.opacity = '0.28';
+        a.style.strokeWidth = '';
+      });
+      document.querySelectorAll('.failure-label').forEach(l => { l.style.opacity = '0'; });
+    }
+  }
+
+  function highlightFailures(id, arcOpacity, labelOpacity) {
+    document.querySelectorAll('.failure-arc').forEach(a => {
+      if (a.dataset.from === id) {
+        a.style.opacity = arcOpacity;
+        a.style.strokeWidth = '2.5';
+      } else {
+        a.style.opacity = '0.18';
+        a.style.strokeWidth = '';
+      }
+    });
+    document.querySelectorAll('.failure-label').forEach(l => {
+      l.style.opacity = l.dataset.from === id ? labelOpacity : '0';
+    });
+    document.querySelectorAll('.hflow-node').forEach(n => {
+      n.classList.toggle('selected', n.dataset.id === id);
+    });
+  }
+
+  function showDetail(id) {
+    const data = nodeData[id];
+    if (!data) return;
+
+    const who = data.who.map(([n, cls]) => `<span class="role-tag ${cls}">${n}</span>`).join(' ');
+    const pains = data.what.pains.length
+      ? data.what.pains.map(p => `<li>${p}</li>`).join('')
+      : '<li class="muted">—</li>';
+    const solutions = data.what.solutions.length
+      ? data.what.solutions.map(s => `<li>${s}</li>`).join('')
+      : '<li class="muted">—</li>';
+
+    let failureHtml;
+    if (data.output.failure.length === 0) {
+      failureHtml = `<div class="subcontent muted">(${LANG === 'en' ? 'no failure path' : '無失敗路徑'})</div>`;
+    } else {
+      failureHtml = `<ul class="failure-list">${
+        data.output.failure.map(f => {
+          if (f.target === null && f.action === 'kill') {
+            return `<li><strong>${f.condition}</strong> → <span class="kill">🚫 Reject</span></li>`;
+          }
+          const backLabel = LANG === 'en' ? `Back to Step ${f.target}` : `回到 Step ${f.target}`;
+          return `<li><strong>${f.condition}</strong> → <span class="goto" onclick="onNodeClick('${f.target}')">${backLabel}</span></li>`;
+        }).join('')
+      }</ul>`;
+    }
+
+    const numDisplay = id === 'done' ? '🎉' : id;
+    document.getElementById('detail-panel').innerHTML = `
+      <div class="detail-header">
+        <div class="detail-num ${data.colorClass}">${numDisplay}</div>
+        <h3>${data.name}</h3>
+      </div>
+      <div class="detail-3col">
+        <div class="dcol who-col">
+          <h4>WHO</h4>
+          <div>${who}</div>
+        </div>
+        <div class="dcol what-col">
+          <h4>WHAT · Activity · Pains · Solutions</h4>
+          <div class="subsection">
+            <div class="sublabel did">📋 ${LANG === 'en' ? 'What happens' : '執行內容'}</div>
+            <div class="subcontent">${data.what.did}</div>
+          </div>
+          <div class="subsection">
+            <div class="sublabel pain">⚠️ ${LANG === 'en' ? 'Pain points' : '痛點'}</div>
+            <ul class="subcontent">${pains}</ul>
+          </div>
+          <div class="subsection">
+            <div class="sublabel solution">💡 ${LANG === 'en' ? 'Solutions' : '解決方案'}</div>
+            <ul class="subcontent">${solutions}</ul>
+          </div>
+        </div>
+        <div class="dcol output-col">
+          <h4>OUTPUT</h4>
+          <div class="subsection">
+            <div class="sublabel happy">✅ ${LANG === 'en' ? 'Happy Path' : '正常路徑'}</div>
+            <div class="subcontent">${data.output.happy}</div>
+          </div>
+          <div class="subsection">
+            <div class="sublabel failure-out">🔁 ${LANG === 'en' ? 'Failure Path' : '失敗路徑'}</div>
+            ${failureHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ===== Init =====
+  applyLang(LANG);
+  renderFlow();
+  highlightSelection();
+  setTimeout(() => onNodeClick("1"), 100);
+
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    flowchart: { curve: 'basis', htmlLabels: true, padding: 14 },
+    securityLevel: 'loose',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif'
+  });
+</script>
+</body>
+</html>
