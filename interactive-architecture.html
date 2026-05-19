@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  muse-platform — Module Dependency Graph
+  ============================================================
+  Interactive layered architecture diagram showing all modules,
+  their dependencies, and detail panels on click.
+  ============================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>muse-platform — Module Dependency Graph</title>
+<style>
+  :root {
+    --role-a: #4A90E2;
+    --role-b: #E91E63;
+    --role-c: #F57C00;
+    --role-d: #9C27B0;
+    --role-e: #43A047;
+    --role-f: #1B5E20;
+    --role-g: #546E7A;
+    --mix:    #37474F;
+
+    --highlight: #FF6B00;
+
+    --bg:         #F4F6FA;
+    --card:       #FFFFFF;
+    --text:       #1A202C;
+    --text-light: #4A5568;
+    --border:     #E2E8F0;
+
+    --layer-interfaces: #3182CE;
+    --layer-features:   #38A169;
+    --layer-platform:   #D69E2E;
+    --layer-infra:      #805AD5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    padding: 36px 16px 80px;
+  }
+  body.embedded header { display: none; }
+  body.embedded { padding-top: 16px; }
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 { font-size: 1.85rem; margin-bottom: 6px; }
+  header .subtitle { color: var(--text-light); font-size: 0.95rem; }
+
+  /* ===== Legend ===== */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; justify-content: center; }
+  .legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; padding: 5px 12px;
+    border-radius: 14px; background: var(--card);
+    border: 1px solid var(--border); color: var(--text-light);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+  .legend-line { width: 28px; height: 2px; border-radius: 2px; }
+
+  /* ===== Diagram container ===== */
+  .diagram-scroll {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow-x: auto;
+    overflow-y: auto;
+    position: relative;
+  }
+  .diagram-inner {
+    position: relative;
+    min-width: 1300px;
+  }
+
+  /* ===== Detail panel ===== */
+  .detail-below {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .detail-empty {
+    padding: 60px 20px; text-align: center;
+    color: var(--text-light); font-size: 1rem;
+  }
+  .detail-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, #FAFBFC, #F0F4F8);
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-icon {
+    width: 38px; height: 38px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.75rem; flex-shrink: 0;
+    color: white;
+  }
+  .detail-header h3 { font-size: 1.1rem; line-height: 1.4; }
+
+  .detail-3col {
+    display: grid;
+    grid-template-columns: 0.7fr 1.4fr 0.9fr 1fr;
+    gap: 0;
+  }
+  @media (max-width: 1100px) { .detail-3col { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 700px) { .detail-3col { grid-template-columns: 1fr; } }
+  .dcol {
+    padding: 18px 22px;
+    border-right: 1px solid var(--border);
+  }
+  .dcol:last-child { border-right: none; }
+  @media (max-width: 900px) {
+    .dcol { border-right: none; border-bottom: 1px solid var(--border); }
+    .dcol:last-child { border-bottom: none; }
+  }
+  .dcol h4 {
+    font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-light);
+    margin-bottom: 12px; font-weight: 700;
+  }
+  .dcol.who-col h4 { color: var(--text-light); }
+  .dcol.what-col h4 { color: var(--role-e); }
+  .dcol.use-col h4 { color: #7C3AED; }
+  .dcol.rel-col h4 { color: #B45309; }
+
+  .layer-badge {
+    display: inline-block;
+    font-size: 0.74rem; padding: 3px 10px;
+    border-radius: 10px; margin: 2px 4px 4px 0;
+    font-weight: 600; color: white;
+  }
+  .boundary-badge {
+    display: inline-block;
+    font-size: 0.68rem; padding: 2px 8px;
+    border-radius: 8px; margin: 2px 4px 4px 0;
+    font-weight: 600;
+    background: #FED7AA; color: #9C4221;
+    border: 1px solid #FBBF24;
+  }
+
+  .subsection { margin-bottom: 14px; }
+  .subsection:last-child { margin-bottom: 0; }
+  .sublabel {
+    font-size: 0.85rem; font-weight: 700;
+    margin-bottom: 6px; padding-left: 10px;
+    border-left: 3px solid var(--text-light);
+  }
+  .subtext {
+    font-size: 0.88rem; color: var(--text-light);
+    line-height: 1.65; padding-left: 13px;
+  }
+  .subtext ul { padding-left: 16px; margin: 4px 0; }
+  .subtext li { margin-bottom: 3px; }
+
+  .dep-link {
+    display: inline-block;
+    font-size: 0.82rem; padding: 2px 10px;
+    border-radius: 10px; margin: 2px 3px;
+    font-weight: 600; cursor: pointer;
+    background: #EDF2F7; color: var(--text);
+    border: 1px solid var(--border);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .dep-link:hover {
+    background: #FFF3E0;
+    border-color: var(--highlight);
+  }
+
+  .dep-count {
+    font-size: 0.78rem; color: var(--text-light);
+    margin-top: 8px; padding-left: 13px;
+  }
+
+  /* ===== Lang switcher ===== */
+  .lang-switch {
+    position: absolute; top: 12px; right: 16px;
+    display: flex; gap: 4px;
+  }
+  .lang-btn {
+    font-size: 0.75rem; padding: 3px 10px;
+    border-radius: 12px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text-light);
+    cursor: pointer; font-weight: 600;
+    transition: background 0.15s;
+  }
+  .lang-btn.active {
+    background: var(--text); color: white;
+    border-color: var(--text);
+  }
+</style>
+</head>
+<body>
+<div class="container" style="position:relative;">
+  <div class="lang-switch">
+    <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">ZH</button>
+  </div>
+
+  <header>
+    <h1>muse-platform — <span data-i18n="title">Module Dependency Graph</span></h1>
+    <p class="subtitle" data-i18n="subtitle">Interactive architecture diagram — click any module to explore</p>
+  </header>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="diagram-scroll">
+    <div class="diagram-inner" id="diagram"></div>
+  </div>
+
+  <div class="detail-below" id="detailPanel">
+    <div class="detail-empty" data-i18n="click-hint">Click a module to see details</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const LAYERS = [
+  { id: 'interfaces', color: '#3182CE', en: 'Interfaces', zh: '介面層' },
+  { id: 'features',   color: '#38A169', en: 'Features',   zh: '功能層' },
+  { id: 'platform',   color: '#D69E2E', en: 'Platform',   zh: '平台層' },
+  { id: 'infra',      color: '#805AD5', en: 'Infra',      zh: '基礎設施層' },
+];
+
+const MODULES = [
+  // ── Infra (→ only other Infra or nothing) ──
+  { id: 'muse_paths', layer: 'infra', boundary: true, deps: [],
+    tech: 'Python 3.12 · importlib.resources · pathlib · os.environ',
+    en: { role: 'Platform-wide environment resolver and path abstraction layer. Eliminates all hard-coded paths by providing a single-source-of-truth resolver that maps logical keys (e.g. "data_dir", "db_path") to physical paths based on MUSE_ENV (dev/prod). Every other module depends on this for path resolution.',
+      features: ['MUSE_ENV / MUSE_HOME resolution', 'importlib.resources for package data', 'Fail-loud on missing env vars'],
+      techDetails: ['importlib.resources for zero-hardcode package data access', 'pathlib.Path for cross-platform path manipulation', 'Singleton resolver pattern with lazy initialization'],
+      useCases: ['Any module needing file system paths (DB, logs, configs)', 'CI pipelines that run in different directory structures', 'Dev/prod environment switching without code changes'] },
+    zh: { role: '平台級環境解析器與路徑抽象層。消除所有硬編碼路徑，提供單一真實來源的解析器，將邏輯鍵（如 "data_dir"、"db_path"）根據 MUSE_ENV（dev/prod）映射為實體路徑。所有其他模組都依賴它進行路徑解析。',
+      features: ['MUSE_ENV / MUSE_HOME 解析', 'importlib.resources 套件資料', '缺少環境變數時 fail-loud'],
+      techDetails: ['importlib.resources 零硬編碼套件資料存取', 'pathlib.Path 跨平台路徑操作', '單例解析器模式搭配延遲初始化'],
+      useCases: ['任何需要檔案系統路徑的模組（DB、日誌、配置）', 'CI 管線在不同目錄結構中運行', 'Dev/Prod 環境切換無需修改程式碼'] } },
+  { id: 'muse_secrets', layer: 'infra', boundary: true, deps: ['muse_paths'],
+    tech: 'Python 3.12 · macOS Keychain (security CLI) · python-dotenv · dataclasses',
+    en: { role: 'Three-tier secret management with cascading resolution. Resolves credentials through Keychain (most secure) → .env.$MUSE_ENV file → shell environment, providing a unified API regardless of storage tier. Enforces domain-specific errors for missing or expired secrets.',
+      features: ['Keychain > .env.$MUSE_ENV > ~/.zshrc', 'Secret rotation support', 'Domain error on parse failure'],
+      techDetails: ['macOS security CLI subprocess for Keychain read/write', 'python-dotenv for .env file parsing with env-aware paths', 'Custom domain exceptions for parse/missing/expired errors'],
+      useCases: ['LLM API key retrieval for muse_llm router', 'Telegram bot token resolution per environment', 'GitHub personal access token for automated PR operations'] },
+    zh: { role: '三層級密鑰管理搭配級聯解析。透過 Keychain（最安全）→ .env.$MUSE_ENV 檔案 → shell 環境逐層解析憑證，無論儲存層級皆提供統一 API。對缺失或過期的密鑰強制使用 domain-specific errors。',
+      features: ['Keychain > .env.$MUSE_ENV > ~/.zshrc', '密鑰輪換支援', '解析失敗時 domain error'],
+      techDetails: ['macOS security CLI subprocess 讀寫 Keychain', 'python-dotenv 解析 .env 檔案（環境感知路徑）', '自訂 domain exceptions 處理解析/缺失/過期錯誤'],
+      useCases: ['muse_llm 路由器取得 LLM API 金鑰', 'Telegram bot token 依環境解析', 'GitHub personal access token 用於自動化 PR 操作'] } },
+  { id: 'muse_logging', layer: 'infra', deps: ['muse_paths'],
+    tech: 'Python 3.12 · logging · structlog · JSONL',
+    en: { role: 'Structured JSON logging infrastructure with correlation tracking. Wraps Python stdlib logging with structlog processors to produce machine-parseable JSONL output. Injects request correlation IDs across async boundaries for distributed tracing.',
+      features: ['JSONL output format', 'Per-module log config', 'Audit trail integration'],
+      techDetails: ['structlog processors for JSON serialization', 'Rotating file handler with JSONL format', 'Context-injecting middleware for request correlation IDs'],
+      useCases: ['Debugging collector pipeline failures across async stages', 'Audit trail for all Telegram bot commands', 'Performance analysis via structured timing logs'] },
+    zh: { role: '結構化 JSON 日誌基礎設施搭配關聯追蹤。以 structlog 處理器包裝 Python stdlib logging，產生機器可解析的 JSONL 輸出。跨非同步邊界注入請求關聯 ID 以實現分散式追蹤。',
+      features: ['JSONL 輸出格式', '每模組日誌設定', '審計軌跡整合'],
+      techDetails: ['structlog 處理器做 JSON 序列化', 'Rotating file handler 搭配 JSONL 格式', '上下文注入中介層提供請求關聯 ID'],
+      useCases: ['跨非同步階段偵錯收集器管線故障', '所有 Telegram bot 命令的審計軌跡', '透過結構化計時日誌做效能分析'] } },
+  { id: 'muse_scheduler', layer: 'infra', deps: ['muse_paths'],
+    tech: 'Python 3.12 · launchd plist · plistlib · subprocess',
+    en: { role: 'macOS-native cron job management via launchd. Programmatically generates and manages launchd plist files for scheduled tasks, supporting both interval-based and calendar-based schedules with enable/disable lifecycle control.',
+      features: ['launchd plist generation', 'Schedule enable/disable', 'Job status monitoring'],
+      techDetails: ['plistlib for type-safe plist XML generation', 'launchctl subprocess wrapper for load/unload lifecycle', 'Interval & calendar-based scheduling with StartCalendarInterval'],
+      useCases: ['Morning routine daily briefing at 07:00', 'News collector polling every 30 minutes', 'Database backup rotation on weekly schedule'] },
+    zh: { role: '透過 launchd 實現 macOS 原生排程任務管理。程式化生成與管理 launchd plist 檔案，支援基於間隔與日曆的排程，含啟用/停用生命週期控制。',
+      features: ['launchd plist 生成', '排程啟用/停用', '任務狀態監控'],
+      techDetails: ['plistlib 型別安全 plist XML 生成', 'launchctl subprocess 封裝 load/unload 生命週期', '支援 interval 與 StartCalendarInterval 日曆排程'],
+      useCases: ['每日簡報於 07:00 執行', '新聞收集器每 30 分鐘輪詢', '資料庫備份依每週排程輪換'] } },
+  { id: 'muse_permissions', layer: 'infra', deps: ['muse_paths', 'muse_secrets'],
+    tech: 'Python 3.12 · RBAC · dataclasses · functools',
+    en: { role: 'Role-based access control with decorator-driven enforcement. Provides RBAC primitives that can be applied via Python decorators, with API key validation using constant-time comparison and append-only audit logging for compliance.',
+      features: ['Role-based permissions', 'API key validation', 'Action audit logging'],
+      techDetails: ['Decorator-based RBAC with functools.wraps', 'API key hash comparison via hmac.compare_digest', 'Append-only JSONL audit log per action'],
+      useCases: ['Restricting Telegram bot admin commands to authorized users', 'API key validation for ops_server endpoints', 'Compliance audit trail for all state-changing operations'] },
+    zh: { role: '基於角色的存取控制搭配裝飾器驅動執行。提供可透過 Python 裝飾器套用的 RBAC 原語，使用常數時間比對做 API 金鑰驗證，並以唯追加審計日誌確保合規。',
+      features: ['角色權限管理', 'API 金鑰驗證', '操作審計日誌'],
+      techDetails: ['基於裝飾器的 RBAC 搭配 functools.wraps', 'hmac.compare_digest 做 API 金鑰雜湊比對', '每個操作記錄至唯追加 JSONL 審計日誌'],
+      useCases: ['限制 Telegram bot 管理命令僅授權用戶可用', 'ops_server 端點的 API 金鑰驗證', '所有狀態變更操作的合規審計軌跡'] } },
+  { id: 'muse_github', layer: 'infra', deps: ['muse_paths', 'muse_secrets'],
+    tech: 'Python 3.12 · PyGithub · GitHub REST API v3 · webhook HMAC',
+    en: { role: 'GitHub API integration layer providing typed CRUD for Issues, PRs, and Projects. Handles both REST v3 and GraphQL ProjectV2 APIs, with HMAC-SHA256 webhook signature verification for secure event ingestion.',
+      features: ['Issue/PR management', 'Project board sync', 'Webhook handling'],
+      techDetails: ['PyGithub for typed Issue/PR/Project CRUD operations', 'GraphQL ProjectV2 API for board item mutations', 'HMAC-SHA256 webhook signature verification'],
+      useCases: ['Automated PR creation with linked issue references', 'Board status sync when starting/completing development tasks', 'Webhook-driven CI/CD pipeline triggers'] },
+    zh: { role: 'GitHub API 整合層，提供 Issues、PR 與 Projects 的型別化 CRUD。同時處理 REST v3 與 GraphQL ProjectV2 API，搭配 HMAC-SHA256 webhook 簽章驗證以確保安全事件接收。',
+      features: ['Issue/PR 管理', '專案看板同步', 'Webhook 處理'],
+      techDetails: ['PyGithub 型別化 Issue/PR/Project CRUD 操作', 'GraphQL ProjectV2 API 做看板項目變更', 'HMAC-SHA256 webhook 簽章驗證'],
+      useCases: ['自動建立 PR 並連結 issue 參考', '開始/完成開發任務時同步看板狀態', 'Webhook 驅動的 CI/CD 管線觸發'] } },
+  { id: 'muse_backup', layer: 'infra', deps: ['muse_paths'],
+    tech: 'Python 3.12 · SQLite · shutil · gzip · hashlib',
+    en: { role: 'Automated database backup with integrity verification. Performs online hot backups of SQLite databases using the native backup API, with gzip compression, SHA-256 checksums, and configurable retention policies for daily/weekly/monthly rotation.',
+      features: ['SQLite DB backup', 'Rotation policy', 'Restore verification'],
+      techDetails: ['sqlite3.backup() API for online hot backup', 'gzip compression with SHA-256 integrity checksums', 'Time-based rotation policy (daily/weekly/monthly retention)'],
+      useCases: ['Nightly backup of all collector databases', 'Pre-deploy snapshot before schema migrations', 'Disaster recovery with checksum-verified restoration'] },
+    zh: { role: '自動化資料庫備份搭配完整性驗證。使用原生 backup API 對 SQLite 資料庫進行線上熱備份，搭配 gzip 壓縮、SHA-256 校驗碼，以及可配置的每日/每週/每月保留策略。',
+      features: ['SQLite DB 備份', '輪換策略', '還原驗證'],
+      techDetails: ['sqlite3.backup() API 做線上熱備份', 'gzip 壓縮搭配 SHA-256 完整性校驗', '基於時間的輪換策略（每日/每週/每月保留）'],
+      useCases: ['每夜備份所有收集器資料庫', '部署前 schema 遷移的快照', '搭配校驗碼驗證的災難復原'] } },
+  { id: 'muse_observatory', layer: 'infra', deps: ['muse_paths', 'muse_logging'],
+    tech: 'Python 3.12 · psutil · SQLite · threading',
+    en: { role: 'System health monitoring with time-series metrics storage. Collects CPU, memory, and disk metrics via psutil, stores them in SQLite with automatic rollup aggregation, and fires configurable threshold alerts with cooldown periods to prevent alert fatigue.',
+      features: ['Health check endpoints', 'Resource usage tracking', 'Alert thresholds'],
+      techDetails: ['psutil for CPU/memory/disk metrics collection', 'SQLite time-series storage with automatic rollup', 'Configurable threshold alerts with cooldown periods'],
+      useCases: ['Monitoring disk usage to prevent collector DB overflow', 'CPU spike alerts during concurrent LLM batch operations', 'Health check endpoint for ops_server dashboard display'] },
+    zh: { role: '系統健康監控搭配時間序列指標儲存。透過 psutil 收集 CPU、記憶體與磁碟指標，儲存於 SQLite 並自動匯總聚合，觸發可配置閾值告警並含冷卻週期以防止告警疲勞。',
+      features: ['健康檢查端點', '資源使用追蹤', '告警閾值'],
+      techDetails: ['psutil 收集 CPU/記憶體/磁碟指標', 'SQLite 時間序列儲存搭配自動匯總', '可配置閾值告警含冷卻週期'],
+      useCases: ['監控磁碟使用量防止收集器 DB 溢出', '並行 LLM 批次操作時的 CPU 尖峰告警', '健康檢查端點供 ops_server 儀表板顯示'] } },
+  { id: 'muse_deploy', layer: 'infra', deps: ['muse_paths'],
+    tech: 'Python 3.12 · launchd · subprocess · signal · socket',
+    en: { role: 'Service deployment orchestrator with zero-downtime strategy. Manages launchd-based service lifecycles with blue-green deployment via port swapping, health check gates before traffic cutover, and atomic symlink switching for instant rollback.',
+      features: ['launchd service management', 'Blue-green deploy', 'Rollback support'],
+      techDetails: ['launchd plist-based service lifecycle management', 'Blue-green deploy with port-swap and health check gates', 'Atomic symlink switch for instant rollback'],
+      useCases: ['Zero-downtime ops_server upgrades between dev/prod ports', 'Instant rollback when post-deploy health check fails', 'Automated service restart after system reboot via launchd'] },
+    zh: { role: '服務部署協調器搭配零停機策略。管理基於 launchd 的服務生命週期，透過 port 切換實現藍綠部署，流量切換前執行健康檢查閘門，並以原子 symlink 切換實現即時回滾。',
+      features: ['launchd 服務管理', '藍綠部署', '回滾支援'],
+      techDetails: ['基於 launchd plist 的服務生命週期管理', '藍綠部署搭配 port 切換與健康檢查閘門', '原子 symlink 切換實現即時回滾'],
+      useCases: ['ops_server 在 dev/prod port 之間零停機升級', '部署後健康檢查失敗時即時回滾', '系統重啟後透過 launchd 自動重啟服務'] } },
+
+  // ── Platform (→ only Infra) ──
+  { id: 'muse_core', layer: 'platform', boundary: true, deps: ['muse_paths', 'muse_logging'],
+    tech: 'Python 3.12 · Pydantic v2 · dataclasses · enum · contextlib',
+    en: { role: 'Central platform kernel providing configuration, error handling, and cross-cutting concerns. Uses Pydantic v2 BaseSettings for typed config binding with automatic env var injection. Defines a hierarchical error taxonomy so all modules share consistent error semantics.',
+      features: ['Centralized config management', 'Error taxonomy & handlers', 'Cross-cutting concerns'],
+      techDetails: ['Pydantic v2 BaseSettings for typed config with env var binding', 'Hierarchical error taxonomy with enum-based error codes', 'Context managers for transaction-like operation scoping'],
+      useCases: ['Unified config loading for all platform and feature modules', 'Consistent error reporting across LLM, HTTP, and collector failures', 'Transaction-scoped operations with automatic cleanup on failure'] },
+    zh: { role: '中央平台核心，提供配置、錯誤處理與橫切關注點。使用 Pydantic v2 BaseSettings 做型別化配置綁定並自動注入環境變數。定義層次化錯誤分類，讓所有模組共享一致的錯誤語義。',
+      features: ['集中式配置管理', '錯誤分類與處理器', '橫切關注點'],
+      techDetails: ['Pydantic v2 BaseSettings 型別化配置綁定環境變數', '層次化錯誤分類搭配 enum 錯誤碼', 'Context managers 實現交易式操作範圍'],
+      useCases: ['所有平台與功能模組的統一配置載入', '跨 LLM、HTTP、收集器故障的一致錯誤回報', '交易範圍操作搭配失敗時自動清理'] } },
+  { id: 'muse_catalog', layer: 'platform', boundary: true, deps: ['muse_paths', 'muse_core'],
+    tech: 'Python 3.12 · TOML (tomllib) · Pydantic v2 · importlib.metadata',
+    en: { role: 'Module registry and auto-discovery system. Parses muse.toml manifest files to build a validated catalog of all platform modules, enabling auto-mount at startup and serving as a CI validation gate that blocks merges when module metadata is invalid.',
+      features: ['muse.toml parsing & validation', 'Auto-discovery of modules', 'CI validation gate'],
+      techDetails: ['tomllib (stdlib) for zero-dependency TOML parsing', 'Pydantic models for muse.toml schema validation', 'importlib.metadata entry_points for plugin auto-discovery'],
+      useCases: ['Startup auto-mount of all registered modules', 'CI pipeline validation before PR merge', 'CLI "muse catalog list" for module inventory'] },
+    zh: { role: '模組註冊表與自動發現系統。解析 muse.toml 清單檔案以建構所有平台模組的驗證目錄，啟動時自動掛載，並作為 CI 驗證閘門在模組元數據無效時阻擋合併。',
+      features: ['muse.toml 解析與驗證', '模組自動發現', 'CI 驗證閘門'],
+      techDetails: ['tomllib（stdlib）零依賴 TOML 解析', 'Pydantic 模型做 muse.toml schema 驗證', 'importlib.metadata entry_points 做外掛自動發現'],
+      useCases: ['啟動時自動掛載所有已註冊模組', 'PR 合併前的 CI 管線驗證', 'CLI "muse catalog list" 做模組盤點'] } },
+  { id: 'muse_llm', layer: 'platform', boundary: true, deps: ['muse_core', 'muse_secrets'],
+    tech: 'Python 3.12 · Anthropic SDK · OpenAI SDK · tiktoken · SQLite',
+    en: { role: 'Multi-provider LLM router with cost governance. Provides a unified Messages API interface that routes requests to Claude, GPT, or Gemini via the Strategy pattern. Includes pre-request token estimation with tiktoken for budget gating and a SQLite cost ledger for per-model daily aggregation.',
+      features: ['Messages API unified interface', 'Model selection & fallback', 'Token usage tracking & billing'],
+      techDetails: ['Anthropic Messages API as primary with streaming support', 'Strategy pattern for multi-provider routing (Claude/GPT/Gemini)', 'tiktoken for pre-request token estimation and budget gating', 'SQLite ledger for per-model cost tracking and daily aggregation'],
+      useCases: ['News collector relevance scoring with Claude Haiku (cost-optimized)', 'Content creation pipeline with Claude Opus (quality-optimized)', 'Daily cost dashboard showing per-feature LLM spend breakdown'] },
+    zh: { role: '多供應商 LLM 路由器搭配成本治理。提供統一的 Messages API 介面，透過 Strategy pattern 將請求路由至 Claude、GPT 或 Gemini。包含 tiktoken 做請求前 token 估算以實現預算閘門，以及 SQLite 成本帳本做每模型每日匯總。',
+      features: ['Messages API 統一介面', '模型選擇與降級', 'Token 用量追蹤與計費'],
+      techDetails: ['Anthropic Messages API 為主要介面含串流支援', 'Strategy pattern 做多供應商路由（Claude/GPT/Gemini）', 'tiktoken 做請求前 token 估算與預算閘門', 'SQLite 帳本做每模型成本追蹤與每日匯總'],
+      useCases: ['新聞收集器以 Claude Haiku 做相關性評分（成本最佳化）', '內容創作管線以 Claude Opus 做生成（品質最佳化）', '每日成本儀表板顯示各功能 LLM 支出明細'] } },
+  { id: 'muse_notify', layer: 'platform', boundary: true, deps: ['muse_core', 'muse_secrets'],
+    tech: 'Python 3.12 · python-telegram-bot · asyncio · JSONL',
+    en: { role: 'Notification delivery and command audit system. Sends Telegram messages with MarkdownV2 formatting through environment-isolated bots (dev/prod), while maintaining an append-only JSONL audit log of every command and notification for compliance and debugging.',
+      features: ['Telegram message delivery', 'Dev/prod bot separation', 'Command audit to JSONL'],
+      techDetails: ['python-telegram-bot async API with MarkdownV2 formatting', 'Environment-based bot token routing (dev/prod isolation)', 'Append-only JSONL audit log with structured command metadata'],
+      useCases: ['Morning routine briefing delivery to personal Telegram', 'Alert notifications when collector pipeline fails', 'Dev bot testing before promoting messages to prod bot'] },
+    zh: { role: '通知投遞與命令審計系統。透過環境隔離的 bot（dev/prod）以 MarkdownV2 格式發送 Telegram 訊息，同時維護唯追加 JSONL 審計日誌記錄每個命令與通知，用於合規與除錯。',
+      features: ['Telegram 訊息投遞', 'Dev/Prod bot 分離', '命令審計至 JSONL'],
+      techDetails: ['python-telegram-bot 非同步 API 含 MarkdownV2 格式化', '基於環境的 bot token 路由（dev/prod 隔離）', '唯追加 JSONL 審計日誌含結構化命令元數據'],
+      useCases: ['每日簡報投遞至個人 Telegram', '收集器管線失敗時的告警通知', 'Dev bot 測試後再推送訊息至 prod bot'] } },
+  { id: 'muse_http_clients', layer: 'platform', boundary: true, deps: ['muse_core'],
+    tech: 'Python 3.12 · httpx · tenacity · VCR.py · asyncio',
+    en: { role: 'Resilient HTTP client layer with test recording. Wraps httpx.AsyncClient with connection pooling, tenacity-powered exponential backoff with jitter, and VCR.py cassette recording so CI tests replay real HTTP interactions deterministically without hitting external APIs.',
+      features: ['httpx async client', 'Exponential retry policy', 'VCR.py recording for CI'],
+      techDetails: ['httpx.AsyncClient with connection pooling and timeout config', 'tenacity retry with exponential backoff + jitter', 'VCR.py cassette recording for deterministic CI replay'],
+      useCases: ['RSS feed fetching with automatic retry on timeout', 'GitHub API calls with rate-limit-aware backoff', 'CI test suite replaying recorded HTTP cassettes offline'] },
+    zh: { role: '具韌性的 HTTP 客戶端層搭配測試錄製。以連線池包裝 httpx.AsyncClient，搭配 tenacity 驅動的指數退避加抖動，以及 VCR.py cassette 錄製讓 CI 測試確定性重放真實 HTTP 互動而不打外部 API。',
+      features: ['httpx 非同步客戶端', '指數退避重試', 'VCR.py 錄製供 CI 使用'],
+      techDetails: ['httpx.AsyncClient 含連線池與逾時配置', 'tenacity 重試搭配指數退避 + 抖動', 'VCR.py cassette 錄製做確定性 CI 重放'],
+      useCases: ['RSS feed 擷取搭配逾時自動重試', 'GitHub API 呼叫搭配速率限制感知退避', 'CI 測試套件離線重放已錄製的 HTTP cassettes'] } },
+  { id: 'muse_collectors', layer: 'platform', deps: ['muse_core', 'muse_llm', 'muse_http_clients'],
+    tech: 'Python 3.12 · ABC · asyncio · SQLite · hashlib',
+    en: { role: 'Abstract base collector with multi-stage enrichment pipeline. Defines the BaseCollector template method pattern that all feature collectors extend: fetch → dedupe (SHA-256) → LLM enrich → store. Provides SQLite storage adapters with upsert semantics for zero-loss ingestion.',
+      features: ['Abstract collector base class', 'LLM enrichment pipeline', 'Dedup & storage abstraction'],
+      techDetails: ['ABC-based BaseCollector with template method pattern', 'Multi-stage async pipeline: fetch → dedupe → enrich → store', 'SHA-256 content hashing for cross-source deduplication', 'SQLite storage adapter with upsert semantics'],
+      useCases: ['New collector onboarding: extend BaseCollector with 2 methods', 'Cross-source dedup when same news appears in RSS and Twitter', 'LLM enrichment adding tags and summaries to raw scraped content'] },
+    zh: { role: '抽象基底收集器搭配多階段富集管線。定義所有功能收集器繼承的 BaseCollector 模板方法模式：fetch → dedupe（SHA-256）→ LLM enrich → store。提供 SQLite 儲存適配器搭配 upsert 語義實現零損失接收。',
+      features: ['抽象收集器基底類別', 'LLM 富集管線', '去重與儲存抽象'],
+      techDetails: ['基於 ABC 的 BaseCollector 搭配模板方法模式', '多階段非同步管線：fetch → dedupe → enrich → store', 'SHA-256 內容雜湊做跨來源去重', 'SQLite 儲存適配器搭配 upsert 語義'],
+      useCases: ['新收集器上線：繼承 BaseCollector 只需實作 2 個方法', '同一新聞同時出現在 RSS 與 Twitter 時的跨來源去重', 'LLM 富集為原始爬取內容添加標籤與摘要'] } },
+  { id: 'muse_selector_tagger', layer: 'platform', deps: ['muse_core', 'muse_llm'],
+    tech: 'Python 3.12 · Claude structured output · SQLite FTS5 · re',
+    en: { role: 'AI-powered content classification and tagging engine. Uses Claude structured output for consistent multi-label tag extraction, backed by a SQLite FTS5 index for fast tag search and suggestion. Includes a regex-based selector rule engine with priority chaining for deterministic routing.',
+      features: ['Tag taxonomy management', 'LLM-assisted tagging', 'Selector rule engine'],
+      techDetails: ['Claude structured output for consistent tag extraction', 'SQLite FTS5 for fast tag search and suggestion', 'Regex-based selector rule engine with priority chaining'],
+      useCases: ['Auto-tagging collected news articles by topic and relevance tier', 'Content routing: AI-tagged articles → creation_pipeline for repurposing', 'Tag-based filtering in morning routine briefing generation'] },
+    zh: { role: 'AI 驅動的內容分類與標記引擎。使用 Claude structured output 做一致性多標籤提取，以 SQLite FTS5 索引支援快速標籤搜尋與建議。包含基於正規表達式的選擇器規則引擎，搭配優先級鏈做確定性路由。',
+      features: ['標籤分類管理', 'LLM 輔助標記', '選擇器規則引擎'],
+      techDetails: ['Claude structured output 做一致性標籤提取', 'SQLite FTS5 做快速標籤搜尋與建議', '基於正規表達式的選擇器規則引擎含優先級鏈'],
+      useCases: ['依主題與相關性層級自動標記收集的新聞文章', '內容路由：AI 標記的文章 → creation_pipeline 做再利用', '每日簡報生成中基於標籤的篩選'] } },
+
+  // ── Features (→ only Platform, never Infra, never each other) ──
+  { id: 'ai_news_collector', layer: 'features', deps: ['muse_collectors', 'muse_llm', 'muse_http_clients', 'muse_notify'],
+    tech: 'Python 3.12 · feedparser · Playwright · BeautifulSoup4 · Claude API',
+    en: { role: 'Automated AI industry news aggregation with LLM-powered relevance scoring. Polls RSS/Atom feeds across 30+ sources, falls back to Playwright headless scraping for JS-rendered pages, and uses Claude to score each article 1-10 for personal relevance with structured JSON reasoning.',
+      features: ['RSS feed polling', 'Playwright scraping fallback', 'LLM relevance scoring'],
+      techDetails: ['feedparser for RSS/Atom feed parsing with encoding detection', 'Playwright headless browser for JS-rendered page fallback', 'BeautifulSoup4 + lxml for HTML content extraction', 'Claude-based 1-10 relevance scoring with structured JSON output'],
+      useCases: ['Daily intake of AI/ML research papers and industry announcements', 'Filtering 200+ daily articles down to top-15 via LLM scoring', 'Feeding scored articles into morning_routine for daily briefing'] },
+    zh: { role: '自動化 AI 產業新聞聚合搭配 LLM 驅動的相關性評分。輪詢 30+ 來源的 RSS/Atom feed，JS 渲染頁面降級至 Playwright 無頭爬取，並使用 Claude 以結構化 JSON 推理為每篇文章評分 1-10 的個人相關性。',
+      features: ['RSS 來源輪詢', 'Playwright 爬取降級', 'LLM 相關性評分'],
+      techDetails: ['feedparser 解析 RSS/Atom feed 含編碼偵測', 'Playwright 無頭瀏覽器做 JS 渲染頁面降級', 'BeautifulSoup4 + lxml 做 HTML 內容提取', 'Claude 1-10 相關性評分搭配結構化 JSON 輸出'],
+      useCases: ['每日吸收 AI/ML 研究論文與產業公告', '透過 LLM 評分將每日 200+ 篇文章篩選至前 15 篇', '將已評分文章匯入 morning_routine 做每日簡報'] } },
+  { id: 'red_collector', layer: 'features', deps: ['muse_collectors', 'muse_llm', 'muse_http_clients', 'muse_notify'],
+    tech: 'Python 3.12 · Playwright CDP · stealth.js · SQLite · asyncio',
+    en: { role: 'Xiaohongshu (RED) content intelligence platform. Uses Chrome DevTools Protocol via Playwright for deep page access, with stealth.js fingerprint masking to avoid detection. Includes OCR pipeline for image-embedded text extraction and rate-limited async queuing for sustainable scraping.',
+      features: ['Chrome DevTools Protocol', 'Anti-detection measures', 'Content enrichment pipeline'],
+      techDetails: ['Playwright CDP for direct Chrome DevTools Protocol access', 'Stealth.js injection for fingerprint masking & detection evasion', 'Image OCR pipeline for text extraction from visual content', 'Rate-limited async queue with randomized delay intervals'],
+      useCases: ['Tracking trending AI tool reviews on Xiaohongshu', 'Extracting visual content text via OCR for knowledge base', 'Competitive analysis of content marketing strategies'] },
+    zh: { role: '小紅書（RED）內容情報平台。透過 Playwright 使用 Chrome DevTools Protocol 做深度頁面存取，搭配 stealth.js 指紋遮蔽避免偵測。包含 OCR 管線從圖片嵌入文字提取，以及限速非同步佇列實現可持續爬取。',
+      features: ['Chrome DevTools Protocol', '反偵測機制', '內容富集管線'],
+      techDetails: ['Playwright CDP 直接存取 Chrome DevTools Protocol', 'Stealth.js 注入做指紋遮蔽與偵測規避', '圖片 OCR 管線從視覺內容提取文字', '限速非同步佇列搭配隨機延遲間隔'],
+      useCases: ['追蹤小紅書上 AI 工具使用評測的趨勢', '透過 OCR 提取視覺內容文字至知識庫', '內容行銷策略的競爭分析'] } },
+  { id: 'youtube_collector', layer: 'features', deps: ['muse_collectors', 'muse_llm'],
+    tech: 'Python 3.12 · yt-dlp · whisper · ffmpeg · SQLite',
+    en: { role: 'YouTube video knowledge extraction pipeline. Downloads video/audio via yt-dlp with format selection, extracts audio segments with ffmpeg, and processes transcripts through Whisper ASR when captions are unavailable. Structures metadata including chapters, tags, and descriptions for knowledge base indexing.',
+      features: ['yt-dlp integration', 'Metadata extraction', 'Transcript processing'],
+      techDetails: ['yt-dlp for video/audio download with format selection', 'ffmpeg subprocess for audio extraction and segmentation', 'Whisper API for speech-to-text when captions unavailable', 'Structured metadata extraction (title, tags, chapters, description)'],
+      useCases: ['Building searchable knowledge base from online course videos', 'Extracting key insights from AI conference talks', 'Auto-generating chapter summaries for long technical lectures'] },
+    zh: { role: 'YouTube 影片知識萃取管線。透過 yt-dlp 下載影片/音訊並選擇格式，以 ffmpeg 提取音訊段落，無字幕時透過 Whisper ASR 處理逐字稿。結構化元數據包含章節、標籤與描述，供知識庫索引使用。',
+      features: ['yt-dlp 整合', '元數據提取', '字幕處理'],
+      techDetails: ['yt-dlp 做影片/音訊下載含格式選擇', 'ffmpeg subprocess 做音訊提取與分段', 'Whisper API 在無字幕時做語音轉文字', '結構化元數據提取（標題、標籤、章節、描述）'],
+      useCases: ['從線上課程影片建構可搜尋知識庫', '從 AI 研討會演講中提取關鍵見解', '為長篇技術講座自動生成章節摘要'] } },
+  { id: 'twitter_collector', layer: 'features', deps: ['muse_collectors', 'muse_llm'],
+    tech: 'Python 3.12 · Twitter API v2 · OAuth 2.0 · SQLite · asyncio',
+    en: { role: 'Real-time Twitter/X intelligence monitor. Tracks curated keyword lists and key opinion leaders via Twitter API v2 filtered streams, aggregates engagement metrics, and uses LLM to identify signal from noise in high-volume feeds with time-windowed deduplication.',
+      features: ['Timeline monitoring', 'Keyword tracking', 'Engagement analytics'],
+      techDetails: ['Twitter API v2 with OAuth 2.0 Bearer token auth', 'Filtered stream endpoint for real-time keyword tracking', 'Engagement metrics aggregation (likes, retweets, replies)', 'SQLite storage with time-windowed deduplication'],
+      useCases: ['Real-time tracking of AI model release announcements', 'Monitoring KOL reactions to new framework/tool launches', 'Engagement trend analysis for content strategy planning'] },
+    zh: { role: '即時 Twitter/X 情報監控。透過 Twitter API v2 filtered streams 追蹤策展的關鍵字列表與關鍵意見領袖，聚合互動指標，並使用 LLM 從高量 feed 中識別信號，搭配時間窗口去重。',
+      features: ['時間軸監控', '關鍵字追蹤', '互動分析'],
+      techDetails: ['Twitter API v2 搭配 OAuth 2.0 Bearer token 認證', 'Filtered stream 端點做即時關鍵字追蹤', '互動指標聚合（按讚、轉推、回覆）', 'SQLite 儲存搭配時間窗口去重'],
+      useCases: ['即時追蹤 AI 模型發布公告', '監控 KOL 對新框架/工具發布的反應', '內容策略規劃的互動趨勢分析'] } },
+  { id: 'pm_agent', layer: 'features', deps: ['muse_core', 'muse_http_clients'],
+    tech: 'Python 3.12 · GitHub REST/GraphQL · Click · Jinja2',
+    en: { role: 'Intelligent project management automation agent. Auto-triages incoming GitHub issues with rule-based label and milestone assignment, syncs status to ProjectV2 boards via GraphQL, and generates standardized issue/PR bodies from Jinja2 templates for consistent documentation.',
+      features: ['Issue triage automation', 'Sprint planning assist', 'Status sync to board'],
+      techDetails: ['GitHub GraphQL ProjectV2 API for board mutations', 'Rule-based issue triage with label + milestone assignment', 'Jinja2 templates for standardized issue/PR body generation', 'Click CLI subcommands for manual override operations'],
+      useCases: ['Auto-labeling new issues by layer (infra/platform/features/interfaces)', 'Syncing "In Progress" status when developer starts a task', 'Generating PR description from commit history with Jinja2 template'] },
+    zh: { role: '智慧專案管理自動化代理。以規則自動分流 GitHub issues 並指派標籤與 milestone，透過 GraphQL 同步狀態至 ProjectV2 看板，並從 Jinja2 模板生成標準化 issue/PR 內容以確保一致的文件。',
+      features: ['Issue 分流自動化', 'Sprint 規劃輔助', '狀態同步至看板'],
+      techDetails: ['GitHub GraphQL ProjectV2 API 做看板變更', '基於規則的 issue 分流搭配標籤 + milestone 指派', 'Jinja2 模板做標準化 issue/PR 內容生成', 'Click CLI 子命令做手動覆寫操作'],
+      useCases: ['依層級（infra/platform/features/interfaces）自動標記新 issues', '開發者開始任務時同步 "In Progress" 狀態', '以 Jinja2 模板從 commit 歷史生成 PR 描述'] } },
+  { id: 'creation_pipeline', layer: 'features', deps: ['muse_core', 'muse_llm', 'muse_selector_tagger'],
+    tech: 'Python 3.12 · Claude API · Jinja2 · Markdown · asyncio',
+    en: { role: 'Multi-stage AI content creation workflow. Orchestrates a 4-phase pipeline (outline → draft → review → polish) using Claude extended thinking for long-form generation, with Jinja2 prompt templates for style consistency and Markdown output with frontmatter for direct publishing.',
+      features: ['Multi-stage content pipeline', 'Template-based generation', 'Review & publish flow'],
+      techDetails: ['Multi-stage pipeline: outline → draft → review → polish', 'Jinja2 prompt templates with variable injection', 'Claude extended thinking for long-form content generation', 'Markdown output with frontmatter metadata for publishing'],
+      useCases: ['Generating weekly AI industry insight articles', 'Repurposing high-scored news into social media content', 'Creating technical blog posts from collected research papers'] },
+    zh: { role: '多階段 AI 內容創作工作流。以 Claude extended thinking 做長篇生成，協調 4 階段管線（大綱 → 草稿 → 審閱 → 潤飾），搭配 Jinja2 提示模板確保風格一致性，輸出含 frontmatter 的 Markdown 供直接發布。',
+      features: ['多階段內容管線', '模板式生成', '審核與發布流程'],
+      techDetails: ['多階段管線：大綱 → 草稿 → 審閱 → 潤飾', 'Jinja2 提示模板搭配變數注入', 'Claude extended thinking 做長篇內容生成', 'Markdown 輸出含 frontmatter 元數據供發布使用'],
+      useCases: ['生成每週 AI 產業洞察文章', '將高分新聞再利用為社群媒體內容', '從收集的研究論文創建技術部落格文章'] } },
+  { id: 'morning_routine', layer: 'features', deps: ['muse_core', 'muse_llm', 'muse_notify'],
+    tech: 'Python 3.12 · Claude API · asyncio.gather · Telegram MarkdownV2',
+    en: { role: 'Personalized daily intelligence briefing generator. Fetches data from multiple collectors in parallel via asyncio.gather, uses Claude to synthesize a priority-ranked briefing with deduplication, and delivers via Telegram with MarkdownV2 formatting on a configurable launchd schedule.',
+      features: ['Multi-source aggregation', 'Priority-ranked briefing', 'Telegram delivery'],
+      techDetails: ['asyncio.gather for parallel multi-source data fetching', 'Claude summarization with priority ranking and dedup', 'Telegram MarkdownV2 formatted briefing with section headers', 'launchd-triggered daily schedule at configurable time'],
+      useCases: ['07:00 daily briefing with top AI news, Twitter signals, and XHS trends', 'Priority ranking separating breaking news from routine updates', 'Weekend condensed briefing combining multiple days'] },
+    zh: { role: '個人化每日情報簡報生成器。透過 asyncio.gather 平行從多個收集器擷取資料，使用 Claude 合成優先級排序且去重的簡報，並透過 Telegram 以 MarkdownV2 格式化在可配置的 launchd 排程投遞。',
+      features: ['多來源聚合', '優先級排序簡報', 'Telegram 投遞'],
+      techDetails: ['asyncio.gather 平行多來源資料擷取', 'Claude 摘要搭配優先級排序與去重', 'Telegram MarkdownV2 格式化簡報含區塊標題', 'launchd 觸發每日排程（可配置時間）'],
+      useCases: ['07:00 每日簡報含頂級 AI 新聞、Twitter 信號與小紅書趨勢', '優先級排序區分突發新聞與例行更新', '週末濃縮簡報合併多日內容'] } },
+  { id: 'memory_optimizer', layer: 'features', deps: ['muse_core'],
+    tech: 'Python 3.12 · tiktoken · pathlib · re · YAML frontmatter',
+    en: { role: 'Claude Code context window optimizer. Monitors MEMORY.md token count using tiktoken, automatically extracts large topics into separate files when exceeding the 200-line threshold, and consolidates stale entries while preserving YAML frontmatter structure.',
+      features: ['Token count monitoring', 'Topic file extraction', 'Auto-consolidation'],
+      techDetails: ['tiktoken cl100k_base for accurate token counting', 'Regex-based section parser for Markdown heading extraction', 'Automatic topic file splitting when exceeding 200-line threshold', 'YAML frontmatter preservation during file restructuring'],
+      useCases: ['Keeping MEMORY.md under 200 lines for fast Claude Code context loading', 'Extracting large project threads into dedicated topic files', 'Consolidating completed project entries to reduce noise'] },
+    zh: { role: 'Claude Code 上下文窗口最佳化器。使用 tiktoken 監控 MEMORY.md token 計數，超過 200 行閾值時自動將大型主題提取至獨立檔案，並在保留 YAML frontmatter 結構的同時合併過時條目。',
+      features: ['Token 計數監控', '主題檔案提取', '自動合併'],
+      techDetails: ['tiktoken cl100k_base 做精確 token 計數', '基於正規表達式的區段解析器提取 Markdown 標題', '超過 200 行閾值時自動分拆主題檔案', '檔案重組時保留 YAML frontmatter'],
+      useCases: ['維持 MEMORY.md 在 200 行以下以加速 Claude Code 上下文載入', '將大型專案主題提取至專屬主題檔案', '合併已完成的專案條目以減少雜訊'] } },
+
+  // ── Interfaces (→ only Features + Platform, never Infra) ──
+  { id: 'ops_server', layer: 'interfaces', deps: ['muse_core', 'muse_catalog', 'pm_agent'],
+    tech: 'Python 3.12 · FastAPI · Uvicorn · Pydantic v2 · SQLite',
+    en: { role: 'Central operations API serving both the Ops UI dashboard and CI pipelines. Runs on dual ports (7420 prod / 7421 dev) via Uvicorn ASGI, provides Pydantic-validated REST endpoints for board status, module health, and QA checklists, with auto-generated OpenAPI documentation.',
+      features: ['RESTful API endpoints', 'Board status sync', 'Health check & metrics'],
+      techDetails: ['FastAPI with automatic OpenAPI schema generation', 'Pydantic v2 request/response models with validation', 'Uvicorn ASGI server with dual-port dev/prod binding', 'SQLite-backed board status persistence with atomic updates'],
+      useCases: ['Ops UI fetching real-time module status and health metrics', 'CI pipeline querying board status for merge gate checks', 'curl-based manual status updates during development'] },
+    zh: { role: '中央營運 API，服務 Ops UI 儀表板與 CI 管線。透過 Uvicorn ASGI 在雙 port（7420 prod / 7421 dev）運行，提供 Pydantic 驗證的 REST 端點用於看板狀態、模組健康與 QA 清單，搭配自動生成的 OpenAPI 文件。',
+      features: ['RESTful API 端點', '看板狀態同步', '健康檢查與指標'],
+      techDetails: ['FastAPI 自動 OpenAPI schema 生成', 'Pydantic v2 請求/回應模型含驗證', 'Uvicorn ASGI 伺服器雙 port dev/prod 綁定', 'SQLite 看板狀態持久化搭配原子更新'],
+      useCases: ['Ops UI 擷取即時模組狀態與健康指標', 'CI 管線查詢看板狀態做合併閘門檢查', '開發期間以 curl 手動更新狀態'] } },
+  { id: 'ops_ui', layer: 'interfaces', deps: ['ops_server'],
+    tech: 'Next.js 14 · React 18 · TypeScript · Tailwind CSS · SWR',
+    en: { role: 'Web-based operations dashboard for platform observability. Built with Next.js 14 App Router and React 18 server components, provides real-time module status overview, interactive QA checklist UI for Mark Ready gates, and SWR-powered auto-refreshing data displays.',
+      features: ['Module status overview', 'QA checklist UI', 'Mark Ready gate'],
+      techDetails: ['Next.js 14 App Router with server components', 'SWR for real-time data fetching with revalidation', 'Tailwind CSS utility-first styling with custom design tokens', 'React 18 Suspense boundaries for loading states'],
+      useCases: ['Checking all module health before initiating a release', 'Walking through QA checklist and clicking Mark Ready per feature', 'Real-time monitoring of collector pipeline status'] },
+    zh: { role: 'Web 營運儀表板用於平台可觀測性。以 Next.js 14 App Router 與 React 18 伺服器元件建構，提供即時模組狀態總覽、互動式 QA 清單 UI 做 Mark Ready 閘門，以及 SWR 驅動的自動重新整理資料顯示。',
+      features: ['模組狀態總覽', 'QA 清單 UI', 'Mark Ready 閘門'],
+      techDetails: ['Next.js 14 App Router 含伺服器元件', 'SWR 即時資料擷取含重新驗證', 'Tailwind CSS utility-first 樣式搭配自訂設計 token', 'React 18 Suspense boundaries 處理載入狀態'],
+      useCases: ['發布前檢查所有模組健康狀態', '逐步走過 QA 清單並點擊每個功能的 Mark Ready', '即時監控收集器管線狀態'] } },
+  { id: 'telegram_bridge', layer: 'interfaces', deps: ['muse_core', 'muse_notify', 'morning_routine'],
+    tech: 'Python 3.12 · python-telegram-bot v20 · asyncio · ConversationHandler',
+    en: { role: 'Primary Telegram bot interface for daily interaction. Built on python-telegram-bot v20 async architecture with ConversationHandler for multi-step flows, InlineKeyboardMarkup for button navigation, and a middleware chain handling auth → rate limit → command routing.',
+      features: ['Command routing', 'Interactive keyboards', 'Dev/prod bot separation'],
+      techDetails: ['python-telegram-bot v20 async-first architecture', 'ConversationHandler for multi-step interactive flows', 'InlineKeyboardMarkup for dynamic button-based navigation', 'Middleware chain for auth check → rate limit → command routing'],
+      useCases: ['Receiving daily morning briefing via /briefing command', 'Interactive news browsing with inline keyboard pagination', 'Triggering ad-hoc collector runs via /collect command'] },
+    zh: { role: '主要 Telegram bot 介面用於日常互動。建構於 python-telegram-bot v20 非同步架構，搭配 ConversationHandler 做多步驟流程、InlineKeyboardMarkup 做按鈕導航，以及處理認證 → 限速 → 命令路由的中介層鏈。',
+      features: ['命令路由', '互動鍵盤', 'Dev/Prod bot 分離'],
+      techDetails: ['python-telegram-bot v20 非同步優先架構', 'ConversationHandler 做多步驟互動流程', 'InlineKeyboardMarkup 做動態按鈕導航', '中介層鏈：認證檢查 → 限速 → 命令路由'],
+      useCases: ['透過 /briefing 命令接收每日簡報', '以 inline keyboard 分頁互動瀏覽新聞', '透過 /collect 命令觸發臨時收集器運行'] } },
+  { id: 'relay', layer: 'interfaces', deps: ['muse_core', 'muse_llm'],
+    tech: 'Python 3.12 · Telegram Bot API (httpx) · asyncio · Claude API',
+    en: { role: 'Lightweight secondary Telegram bot with natural language understanding. Uses direct httpx calls to Telegram Bot API (no framework overhead) with Claude-powered NLU for parsing free-form commands. Stateless design enables zero-maintenance cross-bot message forwarding.',
+      features: ['Lightweight relay', 'Cross-bot forwarding', 'Simple command set'],
+      techDetails: ['Direct Telegram Bot API calls via httpx (no framework)', 'Claude-powered natural language command parsing', 'Cross-bot message forwarding with format preservation', 'Stateless design for zero-maintenance operation'],
+      useCases: ['Quick natural-language queries: "what AI news today?"', 'Forwarding important alerts from dev bot to personal chat', 'Lightweight interface when full telegram_bridge is unnecessary'] },
+    zh: { role: '輕量級次要 Telegram bot 搭配自然語言理解。透過 httpx 直接呼叫 Telegram Bot API（無框架開銷），搭配 Claude 驅動的 NLU 解析自由形式命令。無狀態設計實現零維護的跨 bot 訊息轉發。',
+      features: ['輕量中繼', '跨 bot 轉發', '簡單命令集'],
+      techDetails: ['透過 httpx 直接呼叫 Telegram Bot API（無框架）', 'Claude 驅動自然語言命令解析', '跨 bot 訊息轉發含格式保留', '無狀態設計實現零維護運作'],
+      useCases: ['快速自然語言查詢：「今天有什麼 AI 新聞？」', '將重要告警從 dev bot 轉發至個人聊天', '不需完整 telegram_bridge 時的輕量介面'] } },
+  { id: 'mcp_knowledge', layer: 'interfaces', deps: ['muse_core', 'muse_http_clients'],
+    tech: 'Python 3.12 · MCP SDK · SQLite FTS5 · asyncio · JSON-RPC',
+    en: { role: 'Model Context Protocol knowledge server for AI-assisted development. Exposes collected knowledge across all SQLite databases via FTS5 full-text search through the MCP protocol, enabling Claude Code and other AI tools to search platform knowledge in real-time during coding sessions.',
+      features: ['FTS5 cross-DB search', 'MCP protocol server', 'Real-time index updates'],
+      techDetails: ['MCP SDK server with stdio/SSE transport', 'SQLite FTS5 trigram tokenizer for fuzzy full-text search', 'Cross-database virtual table unions for unified search', 'JSON-RPC 2.0 protocol with tool/resource exposure'],
+      useCases: ['Claude Code searching collected AI news during development', 'Cross-referencing YouTube transcripts with Twitter discussions', 'Real-time knowledge lookup during content creation pipeline'] },
+    zh: { role: 'Model Context Protocol 知識伺服器用於 AI 輔助開發。透過 MCP 協議以 FTS5 全文搜尋暴露所有 SQLite 資料庫中的收集知識，讓 Claude Code 與其他 AI 工具在編碼期間即時搜尋平台知識。',
+      features: ['FTS5 跨 DB 搜尋', 'MCP 協議伺服器', '即時索引更新'],
+      techDetails: ['MCP SDK 伺服器含 stdio/SSE 傳輸', 'SQLite FTS5 trigram tokenizer 做模糊全文搜尋', '跨資料庫虛擬表聯合做統一搜尋', 'JSON-RPC 2.0 協議含工具/資源暴露'],
+      useCases: ['Claude Code 在開發期間搜尋已收集的 AI 新聞', '交叉參照 YouTube 逐字稿與 Twitter 討論', '內容創作管線期間的即時知識查找'] } },
+  { id: 'cli', layer: 'interfaces', deps: ['muse_core', 'muse_catalog'],
+    tech: 'Python 3.12 · Click · Rich · tabulate',
+    en: { role: 'Developer-facing command-line interface for platform management. Built with Click command groups and Rich console output, provides module inventory, catalog validation, and status table displays with auto-generated --help documentation from type hints and docstrings.',
+      features: ['Click-based CLI', 'Module management commands', 'Catalog validation'],
+      techDetails: ['Click command groups with lazy-loading subcommands', 'Rich console for colored output and progress bars', 'tabulate for formatted module status tables', 'Auto-generated --help from docstrings and type hints'],
+      useCases: ['"muse catalog validate" in CI pipeline before merge', '"muse status" for quick terminal-based module health check', '"muse collect --source ai_news --dry-run" for testing collectors'] },
+    zh: { role: '面向開發者的命令列介面用於平台管理。以 Click 命令群組與 Rich console 輸出建構，提供模組盤點、目錄驗證與狀態表格顯示，從型別提示與 docstring 自動生成 --help 文件。',
+      features: ['Click CLI 框架', '模組管理命令', '目錄驗證'],
+      techDetails: ['Click 命令群組搭配延遲載入子命令', 'Rich console 做彩色輸出與進度條', 'tabulate 做格式化模組狀態表格', '從 docstring 與型別提示自動生成 --help'],
+      useCases: ['CI 管線合併前執行 "muse catalog validate"', '"muse status" 做快速終端機模組健康檢查', '"muse collect --source ai_news --dry-run" 測試收集器'] } },
+  { id: 'content_viewer', layer: 'interfaces', deps: [],
+    tech: 'HTML5 · Vanilla JS (ES2022) · CSS Grid/Flexbox · Fetch API',
+    en: { role: 'Zero-dependency static content browser for collected data visualization. Single-file HTML applications with no build step, using Fetch API for local data loading, CSS Grid/Flexbox for responsive layouts, and Intersection Observer for lazy-loading to handle large content sets.',
+      features: ['Standalone HTML viewer', 'Content rendering', 'No server dependency'],
+      techDetails: ['Single-file HTML with zero build dependencies', 'Fetch API for local JSON/Markdown content loading', 'CSS Grid/Flexbox responsive layout without frameworks', 'Intersection Observer for lazy-loading content sections'],
+      useCases: ['Browsing collected news articles with tag filtering', 'Viewing YouTube transcript summaries offline', 'Sharing interactive architecture diagrams via GitHub Pages'] },
+    zh: { role: '零依賴靜態內容瀏覽器用於收集資料視覺化。單檔 HTML 應用程式無需建置步驟，使用 Fetch API 載入本地資料、CSS Grid/Flexbox 做響應式佈局、Intersection Observer 做延遲載入以處理大量內容集。',
+      features: ['獨立 HTML 瀏覽器', '內容渲染', '無伺服器依賴'],
+      techDetails: ['單檔 HTML 零建置依賴', 'Fetch API 載入本地 JSON/Markdown 內容', 'CSS Grid/Flexbox 響應式佈局無需框架', 'Intersection Observer 做內容區段延遲載入'],
+      useCases: ['以標籤篩選瀏覽已收集的新聞文章', '離線檢視 YouTube 逐字稿摘要', '透過 GitHub Pages 分享互動式架構圖'] } },
+];
+
+// ============================================================
+// LAYER DATA (for layer-level detail panel)
+// ============================================================
+const LAYER_DATA = {
+  interfaces: {
+    en: {
+      desc: 'User-facing entry points — APIs, UIs, CLIs, and bots. This layer translates user intent into platform operations. No business logic lives here; it delegates everything downward.',
+      depRule: 'May import Features and Platform layers. Must NOT directly import Infra.',
+      keyModules: ['ops_server — FastAPI operations API', 'telegram_bridge — Telegram bot for daily workflows', 'mcp_knowledge — MCP protocol knowledge search server'],
+    },
+    zh: {
+      desc: '面向使用者的入口 — API、UI、CLI 與機器人。此層將使用者意圖轉譯為平台操作，不包含商業邏輯，一切委派至下層。',
+      depRule: '可 import 功能層與平台層，禁止直接 import 基礎設施層。',
+      keyModules: ['ops_server — FastAPI 營運 API', 'telegram_bridge — 日常工作流 Telegram 機器人', 'mcp_knowledge — MCP 協議知識搜尋伺服器'],
+    },
+  },
+  features: {
+    en: {
+      desc: 'Domain-specific features — collectors, agents, and pipelines. Each feature is an independent vertical that solves one user problem. Features never import each other directly; they communicate through Platform services.',
+      depRule: 'May import Platform layer only. Features must NOT import each other (use Platform as mediator).',
+      keyModules: ['ai_news_collector — RSS + LLM scoring pipeline', 'morning_routine — daily multi-source briefing', 'creation_pipeline — multi-stage content workflow'],
+    },
+    zh: {
+      desc: '領域特定功能 — 收集器、代理與管線。每個功能是解決一個使用者問題的獨立垂直單元。功能之間不直接 import，透過平台層溝通。',
+      depRule: '僅可 import 平台層。功能之間禁止互相 import（以平台層為中介）。',
+      keyModules: ['ai_news_collector — RSS + LLM 評分管線', 'morning_routine — 每日多來源簡報', 'creation_pipeline — 多階段內容工作流'],
+    },
+  },
+  platform: {
+    en: {
+      desc: 'Shared services and cross-cutting concerns — LLM routing, notifications, HTTP clients, and module catalog. Platform modules are the "glue" that features build upon, providing stable contracts without domain knowledge.',
+      depRule: 'May import Infra layer only. Must NOT import Features or Interfaces.',
+      keyModules: ['muse_llm — multi-model LLM router with billing', 'muse_catalog — module manifest and auto-mount', 'muse_collectors — base collector with enrichment pipeline'],
+    },
+    zh: {
+      desc: '共享服務與橫切關注點 — LLM 路由、通知、HTTP 客戶端與模組目錄。平台模組是功能層的「黏合劑」，提供穩定契約，不帶領域知識。',
+      depRule: '僅可 import 基礎設施層。禁止 import 功能層或介面層。',
+      keyModules: ['muse_llm — 多模型 LLM 路由器含計費', 'muse_catalog — 模組清單與自動掛載', 'muse_collectors — 基底收集器含富集管線'],
+    },
+  },
+  infra: {
+    en: {
+      desc: 'Foundation layer — path resolution, secrets, logging, scheduling, and deployment. These modules have zero upward dependencies and form the bedrock of the entire platform. Boundary modules here use fail-loud semantics.',
+      depRule: 'Must NOT import any upper layer. Only depends on Python stdlib and external packages.',
+      keyModules: ['muse_paths — env resolver with importlib.resources', 'muse_secrets — 3-layer Keychain secret management', 'muse_scheduler — launchd plist job management'],
+    },
+    zh: {
+      desc: '基礎層 — 路徑解析、密鑰、日誌、排程與部署。這些模組沒有向上依賴，構成整個平台的基石。邊界模組採用 fail-loud 語義。',
+      depRule: '禁止 import 任何上層。僅依賴 Python 標準庫與外部套件。',
+      keyModules: ['muse_paths — 環境解析器含 importlib.resources', 'muse_secrets — 三層 Keychain 密鑰管理', 'muse_scheduler — launchd plist 任務管理'],
+    },
+  },
+};
+
+// ============================================================
+// I18N
+// ============================================================
+const I18N = {
+  en: {
+    title: 'Module Dependency Graph',
+    subtitle: 'Interactive architecture diagram — click any module to explore',
+    'click-hint': 'Click a module to see details',
+    who: 'WHO',
+    what: 'WHAT',
+    relationships: 'RELATIONSHIPS',
+    layer: 'Layer',
+    boundary: 'Boundary Module',
+    techStack: 'Tech Stack',
+    role: 'Role',
+    keyFeatures: 'Key Features',
+    techImpl: 'Technical Implementation',
+    useCases: 'USE CASES',
+    scenarios: 'Application Scenarios',
+    dependsOn: 'Depends on',
+    usedBy: 'Used by',
+    depCount: 'dependencies',
+    consumerCount: 'consumers',
+    none: 'None (root module)',
+    legendDep: 'Layer dependency',
+    legendBoundary: 'Boundary module',
+    layerModules: 'Modules',
+    layerDeps: 'Dependency Rule',
+    layerDesc: 'Description',
+    layerKeyModules: 'Key Modules',
+  },
+  zh: {
+    title: '模組依賴關係圖',
+    subtitle: '互動式架構圖 — 點擊任何模組以探索',
+    'click-hint': '點擊模組查看詳情',
+    who: '角色',
+    what: '功能',
+    relationships: '關聯',
+    layer: '層級',
+    boundary: '邊界模組',
+    techStack: '技術棧',
+    role: '職責',
+    keyFeatures: '核心功能',
+    techImpl: '技術實作',
+    useCases: '應用場景',
+    scenarios: '實際應用場景',
+    dependsOn: '依賴',
+    usedBy: '被使用於',
+    depCount: '個依賴',
+    consumerCount: '個消費者',
+    none: '無（根模組）',
+    legendDep: '層級依賴',
+    legendBoundary: '邊界模組',
+    layerModules: '模組',
+    layerDeps: '依賴規則',
+    layerDesc: '說明',
+    layerKeyModules: '關鍵模組',
+  }
+};
+
+let currentLang = 'en';
+
+function t(key) { return I18N[currentLang][key] || key; }
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === lang);
+  });
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.documentElement.lang = lang === 'zh' ? 'zh-TW' : 'en';
+  buildLegend();
+  // Re-render diagram so SVG layer labels update
+  const prevSelected = selectedModule;
+  selectedModule = null;
+  render();
+  if (prevSelected) selectNode(prevSelected);
+  else {
+    const dp = document.getElementById('detailPanel');
+    dp.innerHTML = `<div class="detail-empty" data-i18n="click-hint">${t('click-hint')}</div>`;
+  }
+}
+
+// ============================================================
+// LAYOUT CONSTANTS
+// ============================================================
+const NODE_W = 140, NODE_H = 64, NODE_RX = 8;
+const PAD_X = 40, PAD_Y = 30;
+const LAYER_GAP = 20;
+const LAYER_LABEL_W = 100;
+const NODE_GAP_X = 16, NODE_GAP_Y = 16;
+
+// layer order top→bottom
+const LAYER_ORDER = ['interfaces', 'features', 'platform', 'infra'];
+
+function layerColor(lid) {
+  const l = LAYERS.find(x => x.id === lid);
+  return l ? l.color : '#999';
+}
+
+function layerName(lid) {
+  const l = LAYERS.find(x => x.id === lid);
+  return l ? l[currentLang] : lid;
+}
+
+// ============================================================
+// COMPUTE LAYOUT
+// ============================================================
+function computeLayout() {
+  const groups = {};
+  LAYER_ORDER.forEach(l => groups[l] = []);
+  MODULES.forEach(m => groups[m.layer].push(m));
+
+  // Determine max columns per row — features gets 2 rows if >5
+  const positions = {};
+  let curY = PAD_Y;
+  const bandInfo = [];
+
+  LAYER_ORDER.forEach(layerId => {
+    const mods = groups[layerId];
+    const maxCols = layerId === 'infra' ? 5 : layerId === 'platform' ? 4 : layerId === 'features' ? 4 : 4;
+    const rows = [];
+    for (let i = 0; i < mods.length; i += maxCols) {
+      rows.push(mods.slice(i, i + maxCols));
+    }
+
+    const bandH = rows.length * (NODE_H + NODE_GAP_Y) + PAD_Y * 1.5;
+    const bandTop = curY;
+
+    rows.forEach((row, ri) => {
+      const rowWidth = row.length * NODE_W + (row.length - 1) * NODE_GAP_X;
+      row.forEach((m, ci) => {
+        const x = LAYER_LABEL_W + PAD_X + ci * (NODE_W + NODE_GAP_X) + (maxCols * (NODE_W + NODE_GAP_X) - NODE_GAP_X - rowWidth) / 2;
+        const y = curY + PAD_Y * 0.6 + ri * (NODE_H + NODE_GAP_Y);
+        positions[m.id] = { x, y, cx: x + NODE_W / 2, cy: y + NODE_H / 2 };
+      });
+    });
+
+    bandInfo.push({ layerId, top: bandTop, height: bandH });
+    curY += bandH + LAYER_GAP;
+  });
+
+  // total width
+  const allX = Object.values(positions).map(p => p.x + NODE_W + PAD_X);
+  const totalW = Math.max(1300, Math.max(...allX) + LAYER_LABEL_W);
+  const totalH = curY + 10;
+
+  return { positions, bandInfo, totalW, totalH };
+}
+
+// ============================================================
+// BUILD REVERSE DEPS
+// ============================================================
+function getConsumers(moduleId) {
+  return MODULES.filter(m => m.deps.includes(moduleId)).map(m => m.id);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+let selectedModule = null;
+
+function render() {
+  const { positions, bandInfo, totalW, totalH } = computeLayout();
+  const container = document.getElementById('diagram');
+  container.style.width = totalW + 'px';
+  container.style.height = totalH + 'px';
+
+  // Build SVG
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}" style="position:absolute;top:0;left:0;">`;
+
+  // Layer bands (clickable)
+  bandInfo.forEach(b => {
+    const lc = layerColor(b.layerId);
+    svg += `<rect x="0" y="${b.top}" width="${totalW}" height="${b.height}" rx="6" fill="${lc}" opacity="0.06" style="pointer-events:auto;cursor:pointer;" onclick="selectLayer('${b.layerId}')" data-layer-band="${b.layerId}"/>`;
+    // Layer label
+    svg += `<text x="16" y="${b.top + b.height / 2}" fill="${lc}" font-size="13" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'PingFang TC',sans-serif" dominant-baseline="central" style="pointer-events:auto;cursor:pointer;" onclick="selectLayer('${b.layerId}')" data-layer-label="${b.layerId}">${layerName(b.layerId)}</text>`;
+  });
+
+  // Layer-to-layer arrows (between adjacent bands only)
+  for (let i = 0; i < bandInfo.length - 1; i++) {
+    const upper = bandInfo[i];
+    const lower = bandInfo[i + 1];
+    const midX = totalW / 2;
+    const y1 = upper.top + upper.height - 4;
+    const y2 = lower.top + 4;
+    const midY = (y1 + y2) / 2;
+    const arrowColor = '#718096';
+    // Downward arrow between layers
+    svg += `<line x1="${midX}" y1="${y1}" x2="${midX}" y2="${y2}" stroke="${arrowColor}" stroke-width="2" opacity="0.35" stroke-dasharray="6,4"/>`;
+    // Arrowhead
+    const ah = 8;
+    svg += `<polygon points="${midX},${y2} ${midX-ah*0.6},${y2-ah} ${midX+ah*0.6},${y2-ah}" fill="${arrowColor}" opacity="0.35"/>`;
+    // Label
+    const labelText = currentLang === 'zh' ? 'imports ↓' : 'imports ↓';
+    svg += `<text x="${midX + 14}" y="${midY + 4}" fill="${arrowColor}" font-size="11" font-weight="600" opacity="0.5" font-family="-apple-system,sans-serif">${labelText}</text>`;
+  }
+
+  svg += '</svg>';
+
+  // Nodes as HTML divs
+  let nodes = '';
+  MODULES.forEach(m => {
+    const p = positions[m.id];
+    if (!p) return;
+    const lc = layerColor(m.layer);
+    const label = m.id.replace(/^muse_/, '').replace(/_/g, '_');
+    const boundaryDot = m.boundary ? `<span style="position:absolute;top:5px;right:7px;width:8px;height:8px;border-radius:50%;background:#FFF;opacity:0.7;border:1.5px solid rgba(0,0,0,0.2);" title="Boundary Module"></span>` : '';
+    nodes += `<div class="arch-node" data-id="${m.id}" onclick="selectNode('${m.id}')" style="position:absolute;left:${p.x}px;top:${p.y}px;width:${NODE_W}px;height:${NODE_H}px;border-radius:${NODE_RX}px;background:${lc};color:white;display:flex;align-items:center;justify-content:center;text-align:center;font-size:0.78rem;font-weight:600;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.12);user-select:none;transition:transform 0.15s,box-shadow 0.15s,opacity 0.2s;line-height:1.3;padding:6px 8px;">${boundaryDot}<span>${label}</span></div>`;
+  });
+
+  container.innerHTML = svg + nodes;
+
+  // Hover effects
+  container.querySelectorAll('.arch-node').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      if (!el.classList.contains('selected')) {
+        el.style.transform = 'translateY(-3px)';
+        el.style.boxShadow = '0 6px 14px rgba(0,0,0,0.22)';
+        el.style.zIndex = '5';
+      }
+    });
+    el.addEventListener('mouseleave', () => {
+      if (!el.classList.contains('selected')) {
+        el.style.transform = '';
+        el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+        el.style.zIndex = '';
+      }
+    });
+  });
+
+  // Auto-select first
+  if (!selectedModule) selectNode(MODULES.find(m => m.layer === 'interfaces').id);
+  else selectNode(selectedModule);
+}
+
+function selectNode(id) {
+  selectedModule = id;
+  const mod = MODULES.find(m => m.id === id);
+  if (!mod) return;
+
+  const container = document.getElementById('diagram');
+
+  // Highlight selected node + related nodes (deps & consumers)
+  container.querySelectorAll('.arch-node').forEach(el => {
+    const eid = el.dataset.id;
+    const isSelected = eid === id;
+    const isRelated = mod.deps.includes(eid) || getConsumers(id).includes(eid);
+    el.classList.toggle('selected', isSelected);
+    if (isSelected) {
+      el.style.outline = `3px solid var(--highlight)`;
+      el.style.outlineOffset = '2px';
+      el.style.zIndex = '6';
+      el.style.opacity = '1';
+      el.style.transform = '';
+      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+    } else {
+      el.style.outline = 'none';
+      el.style.zIndex = '';
+      el.style.opacity = isRelated ? '1' : '0.35';
+    }
+  });
+
+  showDetail(id);
+}
+
+function showDetail(id) {
+  const mod = MODULES.find(m => m.id === id);
+  if (!mod) return;
+  const lc = layerColor(mod.layer);
+  const data = mod[currentLang];
+  const consumers = getConsumers(id);
+
+  const depsHtml = mod.deps.length > 0
+    ? mod.deps.map(d => `<span class="dep-link" onclick="selectNode('${d}')">${d.replace('muse_','')}</span>`).join(' ')
+    : `<span style="color:var(--text-light);font-size:0.85rem;">${t('none')}</span>`;
+
+  const consumersHtml = consumers.length > 0
+    ? consumers.map(c => `<span class="dep-link" onclick="selectNode('${c}')">${c.replace('muse_','')}</span>`).join(' ')
+    : `<span style="color:var(--text-light);font-size:0.85rem;">—</span>`;
+
+  const boundaryHtml = mod.boundary ? `<span class="boundary-badge">${t('boundary')}</span>` : '';
+
+  const featuresLi = data.features.map(f => `<li>${f}</li>`).join('');
+  const techDetailsLi = (data.techDetails || []).map(t => `<li>${t}</li>`).join('');
+
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-icon" style="background:${lc}">${mod.id.replace('muse_','').substring(0,2).toUpperCase()}</div>
+      <h3>${mod.id}</h3>
+    </div>
+    <div class="detail-3col">
+      <div class="dcol who-col">
+        <h4>${t('who')}</h4>
+        <div class="subsection">
+          <div class="sublabel">${t('layer')}</div>
+          <div class="subtext"><span class="layer-badge" style="background:${lc}">${layerName(mod.layer)}</span>${boundaryHtml}</div>
+        </div>
+        <div class="subsection">
+          <div class="sublabel">${t('techStack')}</div>
+          <div class="subtext">${mod.tech}</div>
+        </div>
+      </div>
+      <div class="dcol what-col">
+        <h4>${t('what')}</h4>
+        <div class="subsection">
+          <div class="sublabel">${t('role')}</div>
+          <div class="subtext">${data.role}</div>
+        </div>
+        <div class="subsection">
+          <div class="sublabel">${t('keyFeatures')}</div>
+          <div class="subtext"><ul>${featuresLi}</ul></div>
+        </div>
+        ${techDetailsLi ? `<div class="subsection">
+          <div class="sublabel">${t('techImpl')}</div>
+          <div class="subtext"><ul>${techDetailsLi}</ul></div>
+        </div>` : ''}
+      </div>
+      <div class="dcol use-col">
+        <h4>${t('useCases')}</h4>
+        <div class="subsection">
+          <div class="sublabel">${t('scenarios')}</div>
+          <div class="subtext"><ul>${(data.useCases || []).map(u => '<li>' + u + '</li>').join('')}</ul></div>
+        </div>
+      </div>
+      <div class="dcol rel-col">
+        <h4>${t('relationships')}</h4>
+        <div class="subsection">
+          <div class="sublabel">${t('dependsOn')}</div>
+          <div class="subtext">${depsHtml}</div>
+        </div>
+        <div class="subsection">
+          <div class="sublabel">${t('usedBy')}</div>
+          <div class="subtext">${consumersHtml}</div>
+        </div>
+        <div class="dep-count">${mod.deps.length} ${t('depCount')} · ${consumers.length} ${t('consumerCount')}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// LAYER SELECTION
+// ============================================================
+function selectLayer(layerId) {
+  selectedModule = null;
+  const container = document.getElementById('diagram');
+
+  // Highlight all modules in this layer, dim the rest
+  container.querySelectorAll('.arch-node').forEach(el => {
+    const mod = MODULES.find(m => m.id === el.dataset.id);
+    const inLayer = mod && mod.layer === layerId;
+    el.classList.remove('selected');
+    el.style.outline = 'none';
+    el.style.zIndex = '';
+    el.style.opacity = inLayer ? '1' : '0.35';
+  });
+
+  // Highlight the layer band
+  container.querySelectorAll('[data-layer-band]').forEach(rect => {
+    const isTarget = rect.dataset.layerBand === layerId;
+    rect.setAttribute('opacity', isTarget ? '0.14' : '0.06');
+  });
+
+  showLayerDetail(layerId);
+}
+
+function showLayerDetail(layerId) {
+  const layer = LAYERS.find(l => l.id === layerId);
+  if (!layer) return;
+  const data = LAYER_DATA[layerId][currentLang];
+  const mods = MODULES.filter(m => m.layer === layerId);
+  const boundaryCount = mods.filter(m => m.boundary).length;
+
+  const modListHtml = mods.map(m => {
+    const label = m.id.replace(/^muse_/, '');
+    return `<span class="dep-link" onclick="selectNode('${m.id}')">${label}</span>`;
+  }).join(' ');
+
+  const keyModulesHtml = data.keyModules.map(k => `<li>${k}</li>`).join('');
+
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-icon" style="background:${layer.color}">${layer.id.substring(0,2).toUpperCase()}</div>
+      <h3>${layer[currentLang]}</h3>
+    </div>
+    <div class="detail-3col">
+      <div class="dcol who-col">
+        <h4>${t('layerDesc')}</h4>
+        <div class="subsection">
+          <div class="subtext">${data.desc}</div>
+        </div>
+        <div class="subsection">
+          <div class="sublabel">${t('layerDeps')}</div>
+          <div class="subtext">${data.depRule}</div>
+        </div>
+      </div>
+      <div class="dcol what-col">
+        <h4>${t('layerKeyModules')}</h4>
+        <div class="subsection">
+          <div class="subtext"><ul>${keyModulesHtml}</ul></div>
+        </div>
+      </div>
+      <div class="dcol rel-col">
+        <h4>${t('layerModules')}</h4>
+        <div class="subsection">
+          <div class="subtext">${modListHtml}</div>
+        </div>
+        <div class="dep-count">${mods.length} ${t('layerModules')}${boundaryCount > 0 ? ` · ${boundaryCount} ${t('legendBoundary')}` : ''}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// LEGEND
+// ============================================================
+function buildLegend() {
+  const legend = document.getElementById('legend');
+  let html = '';
+  LAYERS.forEach(l => {
+    html += `<div class="legend-item"><span class="legend-dot" style="background:${l.color}"></span>${l[currentLang]}</div>`;
+  });
+  html += `<div class="legend-item"><span class="legend-line" style="background:var(--text-light);opacity:0.4;height:2px;border-style:dashed;"></span>${t('legendDep')}</div>`;
+  html += `<div class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:#FFF;border:2px solid #CBD5E0;display:inline-block;"></span>${t('legendBoundary')}</div>`;
+  legend.innerHTML = html;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+(function init() {
+  // Embedded detection
+  if (window.parent !== window) document.body.classList.add('embedded');
+
+  // Lang from URL
+  const params = new URLSearchParams(window.location.search);
+  const lang = params.get('lang');
+  if (lang === 'zh') currentLang = 'zh';
+
+  setLang(currentLang);
+  render();
+})();
+</script>
+</body>
+</html>

@@ -350,6 +350,7 @@
 
 <div class="tab-bar">
   <button class="tab-btn active" data-tab="hld">Architecture HLD</button>
+  <button class="tab-btn" data-tab="archmap">Module Map</button>
   <button class="tab-btn" data-tab="handbook">Interview Tech Handbook</button>
   <button class="tab-btn" data-tab="flows">Interactive Flows</button>
   <button class="tab-btn" data-tab="buildprod">Build Product</button>
@@ -364,6 +365,15 @@
 
 <div id="tab-hld" class="tab-pane active">
   <div class="tab-content" id="content-hld"></div>
+</div>
+<div id="tab-archmap" class="tab-pane">
+  <div style="padding:12px 48px 0;max-width:1100px;margin:0 auto;">
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en" data-target="archmap">English</button>
+      <button class="lang-btn" data-lang="zh" data-target="archmap">中文</button>
+    </div>
+  </div>
+  <iframe id="archmap-iframe" src="./interactive-architecture.html?lang=en" style="width:100%;height:calc(100vh - 120px);border:none;display:block;"></iframe>
 </div>
 <div id="tab-handbook" class="tab-pane">
   <div class="tab-content" id="content-handbook"></div>
@@ -504,6 +514,16 @@ async function switchDeckLang(lang) {
   buildTOC();
 }
 
+// ── Switch archmap language ──
+let activeArchmapLang = 'en';
+function switchArchmapLang(lang) {
+  if (lang === activeArchmapLang) return;
+  document.querySelector('.lang-btn[data-target="archmap"].active').classList.remove('active');
+  activeArchmapLang = lang;
+  document.querySelector(`.lang-btn[data-target="archmap"][data-lang="${lang}"]`).classList.add('active');
+  document.getElementById('archmap-iframe').src = `./interactive-architecture.html?lang=${lang}`;
+}
+
 // ── Switch flows language ──
 let activeFlowsLang = 'en';
 function switchFlowsLang(lang) {
@@ -600,7 +620,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 document.querySelectorAll('.lang-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    if (btn.dataset.target === 'flows') {
+    if (btn.dataset.target === 'archmap') {
+      switchArchmapLang(btn.dataset.lang);
+    } else if (btn.dataset.target === 'flows') {
       switchFlowsLang(btn.dataset.lang);
     } else if (btn.dataset.target === 'buildprod') {
       switchBuildProdLang(btn.dataset.lang);
