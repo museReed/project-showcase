@@ -230,10 +230,113 @@
     border-top: 1px solid var(--border);
   }
 
+  /* Experience Timeline */
+  .exp-timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+  .exp-timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--purple), var(--pink), var(--border));
+    border-radius: 1px;
+  }
+  .exp-item {
+    position: relative;
+    margin-bottom: 28px;
+    padding: 18px 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .exp-item:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px rgba(56,189,248,0.08);
+  }
+  .exp-item:last-child { margin-bottom: 0; }
+  .exp-item::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 24px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    z-index: 1;
+  }
+  .exp-item.current::before {
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(52,211,153,0.5);
+  }
+  .exp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .exp-company {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .exp-company .co-name { color: var(--accent); }
+  .exp-period {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  .exp-role {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+  .exp-highlights {
+    list-style: none;
+    padding: 0;
+  }
+  .exp-highlights li {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.65;
+    padding-left: 16px;
+    position: relative;
+    margin-bottom: 4px;
+  }
+  .exp-highlights li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 0.7rem;
+  }
+  .exp-highlights .metric {
+    color: var(--green);
+    font-weight: 600;
+  }
+  .exp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .exp-grid .exp-item { margin-bottom: 0; }
+
   @media (max-width: 600px) {
     .hero h1 { font-size: 1.8rem; }
     .hero-stats { gap: 28px; }
     .grid { grid-template-columns: 1fr; }
+    .exp-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -266,6 +369,98 @@
 </div>
 
 <div class="container">
+
+  <!-- Working Experience -->
+  <div class="section-title">Working Experience</div>
+  <div class="exp-timeline">
+
+    <div class="exp-item current">
+      <div class="exp-header">
+        <div class="exp-company"><span class="co-name">AI Ad-Tech Company</span> — Consultant</div>
+        <span class="exp-period">Apr 2026 – Present</span>
+      </div>
+      <div class="exp-role">Software Development Process & AI Tool Adoption Consultant</div>
+      <ul class="exp-highlights">
+        <li>Diagnosed workflow pain points for 20+ person team; established end-to-end development process, reducing rework by <span class="metric">41%</span></li>
+        <li>Introduced Claude Code for AI-assisted development, producing 9 development skills, reducing delivery time by <span class="metric">33%</span></li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-company"><span class="co-name">OpenNet</span> — AI Workflow Tech Owner</div>
+        <span class="exp-period">Nov 2025 – Mar 2026</span>
+      </div>
+      <div class="exp-role">Senior iOS Engineer & AI Workflow Tech Owner</div>
+      <ul class="exp-highlights">
+        <li>Created AI-Driven Development Workflow from scratch: PRD → Tech Design Document → AI implementation, achieving <span class="metric">3-5x</span> faster generation, <span class="metric">≥60%</span> AI code adoption rate</li>
+        <li>Built 9 executable rule files with architecture-agnostic Adapter mechanism, enabling reuse across TCA/MVVM-C</li>
+        <li>Coordinated PM/Designer UI mapping, enabling AI Agent to auto-generate frontend pages, saving <span class="metric">23%</span> UI creation time</li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-company"><span class="co-name">ByteDance</span> (TikTok Live) — AI Integration Tech Owner</div>
+        <span class="exp-period">Jul 2024 – Oct 2025</span>
+      </div>
+      <div class="exp-role">Senior iOS Engineer & AI Integration Tech Owner</div>
+      <ul class="exp-highlights">
+        <li>Tech Owner leading 10-person cross-functional team (PM/Designer/BE/QA) with A/B test-driven decisions, improving core metrics by <span class="metric">0.05-0.08%</span></li>
+        <li>Drove AI dev tool adoption across 11 engineers; designed structured docs for closed-loop AI development, reducing estimation by <span class="metric">16.5-24.3%</span></li>
+        <li>Established Chunk-based MR + Walkthrough Code Review, reducing QA-phase bug rate by <span class="metric">33%</span></li>
+        <li>Built AI-automated issue triage pipeline (log database + LLM), improving triage efficiency by <span class="metric">~11%</span></li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-company"><span class="co-name">Crypto.com</span> — Senior iOS Engineer</div>
+        <span class="exp-period">Oct 2023 – Mar 2024</span>
+      </div>
+      <div class="exp-role">Senior iOS Engineer (Contract)</div>
+      <ul class="exp-highlights">
+        <li>Maintained User Onboarding module (multi-country KYC SDK), increasing unit test coverage from <span class="metric">42% → 75%</span></li>
+        <li>Created HLD UML diagrams for KYC review, fixed 3 systemic issues, reducing memory by <span class="metric">0.8%</span></li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-company"><span class="co-name">17Live</span> — Senior iOS Engineer</div>
+        <span class="exp-period">Mar 2021 – Apr 2023</span>
+      </div>
+      <div class="exp-role">Senior iOS Engineer & Tech Owner</div>
+      <ul class="exp-highlights">
+        <li>Tech Owner leading 6-person team for live-streaming room architecture renovation, reducing story points by <span class="metric">~15%</span></li>
+        <li>Introduced design review + API spec workflows to US team, improving sprint completion from <span class="metric">60% → 85%</span></li>
+        <li>Led animation system modernization (Lottie), increasing test coverage by <span class="metric">73%</span>, reducing animation dev time by <span class="metric">65%</span></li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-company"><span class="co-name">Pinkoi</span> — iOS Engineer</div>
+        <span class="exp-period">Jul 2019 – Oct 2020</span>
+      </div>
+      <div class="exp-role">iOS Engineer</div>
+      <ul class="exp-highlights">
+        <li>Redesigned login system architecture and universal shipping system; led Swift migration from legacy Objective-C</li>
+      </ul>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-header">
+        <div class="exp-company"><span class="co-name">Ministry of Foreign Affairs, Taiwan</span> — IT Consultant</div>
+        <span class="exp-period">Oct 2017 – Jun 2019</span>
+      </div>
+      <div class="exp-role">IT Consultant — Belmopan, Belize</div>
+      <ul class="exp-highlights">
+        <li>Developed 3 public-sector mobile apps with local government; trained local backend engineers; cross-language, cross-cultural collaboration</li>
+      </ul>
+    </div>
+
+  </div>
 
   <!-- Muse Platform -->
   <div class="section-title">Muse Platform — Internal Developer Platform</div>
