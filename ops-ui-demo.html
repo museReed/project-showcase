@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muse Ops — Demo</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #fafafa;
+    color: #1a1a1a;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 260px;
+    min-height: 100vh;
+    background: #fff;
+    border-right: 1px solid #e8e8e8;
+    padding: 24px 16px;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 10;
+  }
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 0 8px 20px;
+    color: #1a1a1a;
+  }
+  .sidebar-logo svg { width: 28px; height: 28px; }
+  .sidebar hr { border: none; border-top: 1px solid #e8e8e8; margin: 0 0 16px; }
+  .sidebar nav { display: flex; flex-direction: column; gap: 2px; }
+  .sidebar nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px;
+    text-decoration: none; color: #666;
+    font-size: 14px; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .sidebar nav a:hover { background: #f5f5f5; color: #1a1a1a; }
+  .sidebar nav a.active { background: #f0f0f0; color: #1a1a1a; font-weight: 600; }
+  .sidebar nav a svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+  /* ── Main ── */
+  .main { margin-left: 260px; flex: 1; min-height: 100vh; }
+  .topbar {
+    height: 56px; background: #fff; border-bottom: 1px solid #e8e8e8;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding: 0 24px;
+  }
+  .topbar button {
+    background: none; border: none; cursor: pointer; padding: 8px;
+    border-radius: 8px; color: #666;
+  }
+  .topbar button:hover { background: #f5f5f5; }
+  .topbar button svg { width: 20px; height: 20px; }
+
+  .content { padding: 32px 40px; max-width: 1200px; }
+
+  /* ── Page Header ── */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .page-header h2 { font-size: 28px; font-weight: 700; }
+  .btn-refresh {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border: 1px solid #e0e0e0; border-radius: 8px;
+    background: #fff; font-size: 13px; color: #555; cursor: not-allowed;
+    opacity: 0.6;
+  }
+  .btn-refresh svg { width: 16px; height: 16px; }
+
+  /* ── Overview Cards ── */
+  .overview-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  }
+  .stat-card {
+    background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .stat-card .stat-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .stat-card .stat-label { font-size: 14px; color: #888; font-weight: 500; }
+  .stat-card .stat-header svg { width: 18px; height: 18px; stroke: #bbb; flex-shrink: 0; }
+  .stat-card .stat-value { font-size: 28px; font-weight: 700; font-family: 'SF Mono', 'Fira Code', monospace; }
+  .badge-healthy {
+    display: inline-block; background: #16a34a; color: #fff;
+    padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  }
+
+  /* ── Feature Cards Grid ── */
+  .section-title { font-size: 18px; font-weight: 600; margin: 32px 0 16px; color: #555; }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  }
+  .feature-card {
+    background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+    padding: 20px; cursor: pointer; transition: all 0.15s;
+    text-decoration: none; color: inherit; display: block;
+  }
+  .feature-card:hover { border-color: #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .feature-card-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .feature-card-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .feature-card-count {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; color: #888; white-space: nowrap;
+  }
+  .feature-card-count svg { width: 14px; height: 14px; }
+  .badge-layer {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; margin-left: 8px;
+  }
+  .badge-features { background: #16a34a; color: #fff; }
+  .badge-interfaces { background: #2563eb; color: #fff; }
+  .feature-card-bottom {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .feature-card-module {
+    font-size: 13px; color: #888; font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .badge-kind {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; background: #f0f0f0; color: #666; font-weight: 500;
+  }
+
+  /* ── Feature Detail Panel ── */
+  .detail-panel { display: none; }
+  .detail-panel.active { display: block; }
+  .detail-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: 1px solid #e0e0e0; border-radius: 8px;
+    padding: 6px 10px; cursor: pointer; font-size: 13px; color: #555;
+    margin-bottom: 8px;
+  }
+  .detail-back:hover { background: #f5f5f5; }
+  .detail-back svg { width: 16px; height: 16px; }
+  .detail-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .detail-header h2 {
+    font-size: 24px; font-weight: 700;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .detail-header .detail-layer { font-size: 14px; color: #888; margin-top: 4px; }
+
+  .detail-section {
+    background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+    padding: 24px; margin-bottom: 16px;
+  }
+  .detail-section-title {
+    font-size: 16px; font-weight: 600; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .detail-section-title svg { width: 20px; height: 20px; }
+
+  .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .info-item dt { font-size: 12px; color: #888; margin-bottom: 4px; font-weight: 500; }
+  .info-item dd { font-size: 14px; font-weight: 600; font-family: 'SF Mono', 'Fira Code', monospace; }
+
+  .action-buttons { display: flex; gap: 10px; }
+  .btn-action {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border: 1px solid #e0e0e0; border-radius: 8px;
+    background: #fff; font-size: 13px; color: #555;
+    cursor: not-allowed; opacity: 0.6;
+  }
+  .btn-action svg { width: 16px; height: 16px; }
+
+  /* Execution History */
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .history-list { margin-top: 12px; }
+  .history-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: 8px;
+    font-size: 13px; cursor: default;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .history-row:last-child { border-bottom: none; }
+  .history-row:hover { background: #fafafa; }
+  .history-row svg { width: 14px; height: 14px; color: #ccc; flex-shrink: 0; }
+  .history-name { font-weight: 500; min-width: 200px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+  .badge-status {
+    display: inline-block; padding: 2px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-success { background: #16a34a; color: #fff; }
+  .badge-error { background: #dc2626; color: #fff; }
+  .history-duration { color: #888; min-width: 50px; text-align: right; }
+  .history-time { color: #888; min-width: 140px; }
+  .history-trigger {
+    background: #f5f5f5; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; color: #888;
+  }
+
+  /* QA Section */
+  .qa-section { margin-top: 16px; }
+  .qa-input-group { display: flex; gap: 10px; align-items: flex-end; }
+  .qa-input-group label { font-size: 12px; color: #888; display: block; margin-bottom: 4px; }
+  .qa-input-group input {
+    padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 8px;
+    font-size: 13px; width: 200px;
+  }
+  .btn-qa {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border: 1px solid #e0e0e0; border-radius: 8px;
+    background: #fff; font-size: 13px; color: #555;
+    cursor: not-allowed; opacity: 0.6;
+  }
+
+  /* ── Page Views ── */
+  .page-view { display: none; }
+  .page-view.active { display: block; }
+
+  /* ── Demo Overlay Modal ── */
+  .demo-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .demo-overlay.hidden { display: none; }
+  .demo-modal {
+    background: #fff; border-radius: 16px; padding: 40px;
+    max-width: 520px; width: 90%; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    animation: modalIn 0.3s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .demo-modal-icon {
+    width: 56px; height: 56px; margin: 0 auto 20px;
+    background: #fef3c7; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .demo-modal-icon svg { width: 28px; height: 28px; color: #d97706; }
+  .demo-modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+  .demo-modal p { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 8px; }
+  .demo-modal .demo-note {
+    background: #f8f8f8; border-radius: 8px; padding: 12px 16px;
+    font-size: 12px; color: #888; margin: 16px 0 24px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .demo-modal .btn-enter {
+    background: #1a1a1a; color: #fff; border: none;
+    padding: 12px 32px; border-radius: 10px; font-size: 14px;
+    font-weight: 600; cursor: pointer; transition: background 0.15s;
+  }
+  .demo-modal .btn-enter:hover { background: #333; }
+
+  /* ── Demo Banner ── */
+  .demo-banner {
+    position: fixed; top: 0; left: 260px; right: 0; z-index: 50;
+    background: #fef3c7; border-bottom: 1px solid #fbbf24;
+    padding: 6px 24px; font-size: 12px; color: #92400e;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .demo-banner svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .demo-banner.hidden { display: none; }
+  .main.with-banner .topbar { margin-top: 32px; }
+  .main.with-banner .content { padding-top: 40px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .demo-banner { left: 0; }
+    .overview-grid { grid-template-columns: repeat(2, 1fr); }
+    .features-grid { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="3" y="3" width="7" height="7" rx="1"/>
+      <rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/>
+      <rect x="14" y="14" width="7" height="7" rx="1"/>
+    </svg>
+    Muse Ops
+  </div>
+  <hr>
+  <nav>
+    <a href="#" class="active" data-page="overview" onclick="showPage('overview')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Overview
+    </a>
+    <a href="#" data-page="jobs" onclick="showPage('jobs')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      Jobs
+    </a>
+    <a href="#" data-page="features" onclick="showPage('features')">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Features
+    </a>
+    <a href="#" data-page="settings" onclick="showPage('settings')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </a>
+  </nav>
+</div>
+
+<!-- ── Main Content ── -->
+<div class="main with-banner" id="mainArea">
+  <!-- Demo Banner -->
+  <div class="demo-banner" id="demoBanner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <strong>Demo Mode</strong> — This is a static snapshot for interview demonstration. All action buttons are disabled. The real application runs on a local server.
+  </div>
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <button title="Toggle theme" disabled style="cursor:not-allowed;opacity:0.5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
+
+  <!-- ══ Overview Page ══ -->
+  <div class="content page-view active" id="page-overview">
+    <div class="page-header">
+      <h2>Overview</h2>
+      <div class="btn-refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </div>
+    </div>
+    <div class="overview-grid">
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Status</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <span class="badge-healthy">Healthy</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Environment</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="stat-value">dev</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Version</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="stat-value">0.1.0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Modules</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="stat-value">20</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Jobs Page ══ -->
+  <div class="content page-view" id="page-jobs">
+    <div class="page-header">
+      <h2>Jobs</h2>
+      <div class="btn-refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </div>
+    </div>
+    <p style="color:#888;font-size:14px;">Job scheduling and execution history. Actions disabled in demo mode.</p>
+  </div>
+
+  <!-- ══ Features Page ══ -->
+  <div class="content page-view" id="page-features">
+    <div class="page-header">
+      <h2>Features</h2>
+      <div class="btn-refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </div>
+    </div>
+
+    <!-- Features list -->
+    <div id="featuresListView">
+      <h3 class="section-title">features</h3>
+      <div class="features-grid" id="featuresGrid"></div>
+      <h3 class="section-title">interfaces</h3>
+      <div class="features-grid" id="interfacesGrid"></div>
+    </div>
+
+    <!-- Feature Detail -->
+    <div class="detail-panel" id="featureDetail">
+      <button class="detail-back" onclick="backToList()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="detail-header">
+        <div>
+          <h2 id="detailName"></h2>
+          <div class="detail-layer" id="detailLayer"></div>
+        </div>
+        <div class="btn-refresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Refresh
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Feature Info
+        </div>
+        <div class="info-grid" id="detailInfo"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Actions
+        </div>
+        <div class="action-buttons">
+          <div class="btn-action" title="Disabled in demo mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Run Pipeline
+          </div>
+          <div class="btn-action" title="Disabled in demo mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Check Status
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="history-header">
+          <div class="detail-section-title" style="margin-bottom:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Execution History
+          </div>
+        </div>
+        <div class="history-list" id="detailHistory"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Start QA Session
+        </div>
+        <div class="qa-input-group">
+          <div>
+            <label>PR Number (optional)</label>
+            <input type="text" placeholder="e.g. 42" disabled style="cursor:not-allowed;opacity:0.6">
+          </div>
+          <div class="btn-qa" title="Disabled in demo mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start QA Session
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Settings Page ══ -->
+  <div class="content page-view" id="page-settings">
+    <div class="page-header">
+      <h2>Settings</h2>
+    </div>
+    <p style="color:#888;font-size:14px;">Configuration settings. Disabled in demo mode.</p>
+  </div>
+</div>
+
+<!-- ── Demo Overlay Modal ── -->
+<div class="demo-overlay" id="demoOverlay">
+  <div class="demo-modal">
+    <div class="demo-modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <h3>Demo Mode — Interview Preview</h3>
+    <p>This is a <strong>static snapshot</strong> of the Muse Ops control panel, used for interview demonstration purposes only.</p>
+    <p>You can browse the interface and view module information, but <strong>all action buttons are disabled</strong> — no tasks can be triggered from this page.</p>
+    <div class="demo-note">
+      The real application runs on a local server at localhost:3000
+    </div>
+    <button class="btn-enter" onclick="dismissOverlay()">Got it — Enter Demo</button>
+  </div>
+</div>
+
+<script>
+// ── Feature Data ──
+const FEATURES = [
+  { name: 'AI News Collector', module: 'ai_news_collector', layer: 'features', kinds: ['job','lib'], count: '0/109' },
+  { name: 'CCA Pipeline', module: 'cca_pipeline', layer: 'features', kinds: ['job'] },
+  { name: 'Citation Verifier', module: 'citation_verifier', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Collector Portrait', module: 'collector_portrait', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Creation Pipeline (Bridge)', module: 'creation_pipeline', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Creation Pipeline Dev', module: 'creation_pipeline_dev', layer: 'features', kinds: ['lib'] },
+  { name: 'Digest Viz', module: 'digest_viz', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Memory Optimizer', module: 'memory_optimizer', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Morning Routine', module: 'morning_routine', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Photo Aesthetic', module: 'photo_aesthetic', layer: 'features', kinds: ['job','lib'] },
+  { name: 'PM Agent', module: 'pm_agent', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Product Registry', module: 'product_registry', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Product Scaffolder', module: 'product_scaffolder', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Red Collector', module: 'red_collector', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Telegram Channel Summary', module: 'telegram_channel_summary', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Thread Consolidator', module: 'thread_consolidator', layer: 'features', kinds: ['job','lib'] },
+  { name: 'Voice Diary', module: 'voice_diary', layer: 'features', kinds: ['job','lib'] },
+  { name: 'YouTube Collector', module: 'youtube_collector', layer: 'features', kinds: ['lib'] },
+];
+
+const INTERFACES = [
+  { name: 'Relay (Telegram → tmux → Claude)', module: 'relay', layer: 'interfaces', kinds: ['service'] },
+  { name: 'Telegram Bridge', module: 'telegram_bridge', layer: 'interfaces', kinds: ['service','router'], mount: '/interfaces/telegram-bridge' },
+];
+
+// Sample execution history
+const SAMPLE_HISTORY = [
+  { name: '{mod}.check', status: 'success', duration: '1.0s', time: 'Today 07:30 AM', trigger: 'scheduler' },
+  { name: '{mod}', status: 'success', duration: '4.9s', time: 'Today 07:30 AM', trigger: 'scheduler' },
+  { name: '{mod}', status: 'success', duration: '10.9s', time: 'Yesterday 07:30 AM', trigger: 'scheduler' },
+  { name: '{mod}.check', status: 'success', duration: '1.0s', time: 'Yesterday 07:30 AM', trigger: 'scheduler' },
+  { name: '{mod}', status: 'success', duration: '10.7s', time: 'May 17 07:30 AM', trigger: 'scheduler' },
+  { name: '{mod}.check', status: 'success', duration: '743ms', time: 'May 17 07:30 AM', trigger: 'scheduler' },
+  { name: '{mod}', status: 'error', duration: '10.0s', time: 'May 16 07:30 AM', trigger: 'scheduler' },
+  { name: '{mod}.check', status: 'error', duration: '654ms', time: 'May 16 07:30 AM', trigger: 'scheduler' },
+  { name: '{mod}', status: 'error', duration: '10.3s', time: 'May 15 07:30 AM', trigger: 'scheduler' },
+  { name: '{mod}.check', status: 'error', duration: '521ms', time: 'May 15 07:30 AM', trigger: 'scheduler' },
+];
+
+// ── Render Cards ──
+function renderCard(f) {
+  const countHtml = f.count
+    ? `<span class="feature-card-count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${f.count}</span>`
+    : '';
+  const badgeClass = f.layer === 'features' ? 'badge-features' : 'badge-interfaces';
+  const kindsHtml = f.kinds.map(k => `<span class="badge-kind">${k}</span>`).join('');
+  return `<a class="feature-card" href="#" onclick="showDetail('${f.module}');return false;">
+    <div class="feature-card-top">
+      <span class="feature-card-name">${f.name}</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        ${countHtml}
+        <span class="badge-layer ${badgeClass}">${f.layer}</span>
+      </div>
+    </div>
+    <div class="feature-card-bottom">
+      <span class="feature-card-module">${f.module}</span>
+      ${kindsHtml}
+    </div>
+  </a>`;
+}
+
+document.getElementById('featuresGrid').innerHTML = FEATURES.map(renderCard).join('');
+document.getElementById('interfacesGrid').innerHTML = INTERFACES.map(renderCard).join('');
+
+// ── Page Navigation ──
+function showPage(page) {
+  document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.sidebar nav a').forEach(a => {
+    a.classList.toggle('active', a.dataset.page === page);
+  });
+  // Reset detail view when switching to features
+  if (page === 'features') backToList();
+}
+
+// ── Feature Detail ──
+function showDetail(mod) {
+  const all = [...FEATURES, ...INTERFACES];
+  const f = all.find(x => x.module === mod);
+  if (!f) return;
+
+  document.getElementById('featuresListView').style.display = 'none';
+  document.getElementById('featureDetail').classList.add('active');
+  document.getElementById('detailName').textContent = f.module;
+  document.getElementById('detailLayer').textContent = f.layer;
+
+  document.getElementById('detailInfo').innerHTML = `
+    <div class="info-item"><dt>Name</dt><dd>${f.module}</dd></div>
+    <div class="info-item"><dt>Layer</dt><dd>${f.layer}</dd></div>
+    <div class="info-item"><dt>Kinds</dt><dd>${f.kinds.join(', ')}</dd></div>
+    <div class="info-item"><dt>Mount Path</dt><dd>${f.mount || 'None (job-only)'}</dd></div>
+  `;
+
+  const historyHtml = SAMPLE_HISTORY.map(h => {
+    const name = h.name.replace('{mod}', f.module);
+    const statusClass = h.status === 'success' ? 'badge-success' : 'badge-error';
+    return `<div class="history-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <span class="history-name">${name}</span>
+      <span class="badge-status ${statusClass}">${h.status}</span>
+      <span class="history-duration">${h.duration}</span>
+      <span class="history-time">${h.time}</span>
+      <span class="history-trigger">${h.trigger}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('detailHistory').innerHTML = historyHtml;
+}
+
+function backToList() {
+  document.getElementById('featuresListView').style.display = 'block';
+  document.getElementById('featureDetail').classList.remove('active');
+}
+
+// ── Demo Overlay ──
+function dismissOverlay() {
+  document.getElementById('demoOverlay').classList.add('hidden');
+}
+</script>
+</body>
+</html>
