@@ -497,26 +497,23 @@
     color: var(--accent);
   }
 
-  /* Lang Toggle */
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 48px 0 20px;
-  }
-  .section-header .section-title {
-    margin: 0;
-  }
+  /* Lang Toggle — fixed top-right */
   .lang-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1000;
     display: flex;
     gap: 0;
     border: 1px solid var(--border);
     border-radius: 6px;
     overflow: hidden;
+    background: var(--surface);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
   }
   .lang-btn {
-    padding: 4px 12px;
-    font-size: 0.7rem;
+    padding: 6px 14px;
+    font-size: 0.72rem;
     font-weight: 600;
     background: none;
     border: none;
@@ -541,6 +538,11 @@
 </style>
 </head>
 <body>
+
+<div class="lang-toggle">
+  <button class="lang-btn active" onclick="setStoryLang('en')">EN</button>
+  <button class="lang-btn" onclick="setStoryLang('zh')">ZH</button>
+</div>
 
 <div class="hero">
   <h1>Reed Hsin — <span>Project Showcase</span></h1>
@@ -568,13 +570,7 @@
 <div class="container">
 
   <!-- Working Experience -->
-  <div class="section-header">
-    <div class="section-title" data-en="Working Experience" data-zh="工作經歷">Working Experience</div>
-    <div class="lang-toggle">
-      <button class="lang-btn active" onclick="setStoryLang('en')">EN</button>
-      <button class="lang-btn" onclick="setStoryLang('zh')">ZH</button>
-    </div>
-  </div>
+  <div class="section-title" data-en="Working Experience" data-zh="工作經歷">Working Experience</div>
   <div class="exp-timeline">
 
     <div class="exp-item current">
