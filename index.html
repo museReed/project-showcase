@@ -365,11 +365,178 @@
     color: var(--accent);
   }
 
+  /* Story Chips & Panel */
+  .story-section { margin-top: 14px; }
+  .story-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  .story-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .story-chip:hover { border-color: var(--accent); color: var(--text); }
+  .story-chip.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .story-chip .chip-icon { font-size: 0.85rem; }
+
+  .story-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, margin 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    margin-top: 0;
+  }
+  .story-panel.open {
+    max-height: 2000px;
+    opacity: 1;
+    margin-top: 14px;
+  }
+  .story-inner {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .story-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .story-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0 4px;
+    font-family: inherit;
+  }
+  .story-close:hover { color: var(--text); }
+
+  .star-block {
+    margin-bottom: 14px;
+    padding-left: 14px;
+    border-left: 3px solid var(--border);
+  }
+  .star-block:last-of-type { margin-bottom: 0; }
+  .star-block.s-block { border-color: var(--accent); }
+  .star-block.a-block { border-color: var(--amber); }
+  .star-block.r-block { border-color: var(--green); }
+
+  .star-label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .s-block .star-label { color: var(--accent); }
+  .a-block .star-label { color: var(--amber); }
+  .r-block .star-label { color: var(--green); }
+
+  .star-text {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+  .star-text ul {
+    list-style: none;
+    padding: 0;
+  }
+  .star-text li {
+    padding-left: 14px;
+    position: relative;
+    margin-bottom: 3px;
+  }
+  .star-text li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--text-dim);
+  }
+  .star-text .metric {
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  .story-skills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .skill-tag {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(56,189,248,0.1);
+    color: var(--accent);
+  }
+
+  /* Lang Toggle */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 48px 0 20px;
+  }
+  .section-header .section-title {
+    margin: 0;
+  }
+  .lang-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .lang-btn {
+    padding: 4px 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .lang-btn:first-child { border-right: 1px solid var(--border); }
+  .lang-btn.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
   @media (max-width: 600px) {
     .hero h1 { font-size: 1.8rem; }
     .hero-stats { gap: 28px; }
     .grid { grid-template-columns: 1fr; }
     .exp-grid { grid-template-columns: 1fr; }
+    .story-chips { gap: 4px; }
   }
 </style>
 </head>
@@ -404,7 +571,13 @@
 <div class="container">
 
   <!-- Working Experience -->
-  <div class="section-title">Working Experience</div>
+  <div class="section-header">
+    <div class="section-title">Working Experience</div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setStoryLang('en')">EN</button>
+      <button class="lang-btn" onclick="setStoryLang('zh')">ZH</button>
+    </div>
+  </div>
   <div class="exp-timeline">
 
     <div class="exp-item current">
@@ -440,6 +613,16 @@
         Deliverable — Contract-First AI Development Workflow (Interactive Flowchart)
         <span class="dlv-arrow">&rarr;</span>
       </a>
+      <div class="story-section">
+        <div class="story-chips" id="chips-opennet">
+          <button class="story-chip" onclick="toggleStory('on-a')" data-story="on-a"><span class="chip-icon">🏗</span><span data-en="AI Framework" data-zh="AI 框架">AI Framework</span></button>
+          <button class="story-chip" onclick="toggleStory('on-b')" data-story="on-b"><span class="chip-icon">🎨</span><span data-en="UI Automation" data-zh="UI 自動化">UI Automation</span></button>
+          <button class="story-chip" onclick="toggleStory('on-c')" data-story="on-c"><span class="chip-icon">🚀</span><span data-en="158 SP Delivery" data-zh="158 SP 交付">158 SP Delivery</span></button>
+          <button class="story-chip" onclick="toggleStory('on-d')" data-story="on-d"><span class="chip-icon">💰</span><span data-en="Token Optimization" data-zh="Token 最佳化">Token Optimization</span></button>
+          <button class="story-chip" onclick="toggleStory('on-e')" data-story="on-e"><span class="chip-icon">📢</span><span data-en="Knowledge Transfer" data-zh="知識傳遞">Knowledge Transfer</span></button>
+        </div>
+        <div class="story-panel" id="panel-opennet"></div>
+      </div>
     </div>
 
     <div class="exp-item">
@@ -454,6 +637,16 @@
         <li>Established Chunk-based MR + Walkthrough Code Review, reducing QA-phase bug rate by <span class="metric">33%</span></li>
         <li>Built AI-automated issue triage pipeline (log database + LLM), improving triage efficiency by <span class="metric">~11%</span></li>
       </ul>
+      <div class="story-section">
+        <div class="story-chips" id="chips-tiktok">
+          <button class="story-chip" onclick="toggleStory('tk-a')" data-story="tk-a"><span class="chip-icon">📊</span><span data-en="Funnel Analysis" data-zh="漏斗分析">Funnel Analysis</span></button>
+          <button class="story-chip" onclick="toggleStory('tk-b')" data-story="tk-b"><span class="chip-icon">🚀</span><span data-en="Team Delivery" data-zh="團隊交付">Team Delivery</span></button>
+          <button class="story-chip" onclick="toggleStory('tk-c')" data-story="tk-c"><span class="chip-icon">🔗</span><span data-en="System Design" data-zh="系統設計">System Design</span></button>
+          <button class="story-chip" onclick="toggleStory('tk-d')" data-story="tk-d"><span class="chip-icon">✅</span><span data-en="Code Review" data-zh="Code Review">Code Review</span></button>
+          <button class="story-chip" onclick="toggleStory('tk-e')" data-story="tk-e"><span class="chip-icon">🏗</span><span data-en="SDK Influence" data-zh="SDK 影響力">SDK Influence</span></button>
+        </div>
+        <div class="story-panel" id="panel-tiktok"></div>
+      </div>
     </div>
 
     <div class="exp-item">
@@ -799,5 +992,339 @@
   Reed Hsin &mdash; Project Showcase &mdash; Powered by Muse Platform
 </footer>
 
+<script>
+let storyLang = 'en';
+let activeStory = null;
+
+const STORIES = {
+'tk-a': {
+  panel: 'panel-tiktok',
+  en: {
+    title: 'Million-Level Funnel Analysis Reverses Product Decision',
+    s: 'A live streaming matching feature had only 15% individual acceptance rate. Product team considered removing it. As Metric Analysis lead, I was tasked with full root-cause analysis within one week.',
+    a: [
+      'Built full-link funnel across <span class="metric">8.7M Android + 3.4M iOS</span> pageviews over 7 days, tracking 5 conversion stages',
+      'Developed probability model: P = 1-(1-0.15)^12 = <span class="metric">86%</span> group success rate, proving the feature was healthy at group level',
+      'Classified Top 6 error codes by source (backend vs SDK), identified most errors as normal matching competition — not fixable by retry',
+      'Located real bottleneck: camera detection blocking <span class="metric">4-7%</span> of users'
+    ],
+    r: ['Reversed product decision — feature retained based on data evidence', 'Camera issue became <span class="metric">Q3 OKR</span> optimization priority', 'Analysis became team\'s standard metric analysis template'],
+    skills: ['Data-Driven Decision', 'Quantitative Analysis', 'Cross-Team Influence']
+  },
+  zh: {
+    title: '百萬級漏斗分析翻轉產品決策',
+    s: '直播配對功能上線後個人接受率僅 15%，產品團隊考慮下架。作為指標分析負責人，需在一週內完成完整根因分析。',
+    a: [
+      '建立全鏈路漏斗，橫跨 <span class="metric">870 萬 Android + 340 萬 iOS</span> PV，追蹤 5 個轉換環節',
+      '建立機率模型：P = 1-(1-0.15)^12 = <span class="metric">86%</span> 群組成功率，證明功能在群組層面是健康的',
+      '分類 Top 6 error code 來源（Backend vs SDK），識別多數錯誤為正常匹配競爭',
+      '定位真正瓶頸：相機偵測機制擋住 <span class="metric">4-7%</span> 用戶'
+    ],
+    r: ['用數據翻轉產品判斷 — 功能保留', '相機問題列入 <span class="metric">Q3 OKR</span> 優化方向', '分析成為團隊標準指標分析範本'],
+    skills: ['數據驅動決策', '量化分析', '跨團隊影響力']
+  }
+},
+'tk-b': {
+  panel: 'panel-tiktok',
+  en: {
+    title: 'Cross-Functional Team Feature Delivery',
+    s: 'New interactive gift feature needed, directly impacting live streaming revenue core metrics. Led end-to-end delivery with a 5-person cross-functional team (PM/iOS/Android/Backend/QA).',
+    a: [
+      'Co-authored Tech Design covering UI architecture, gift state machine, and backward compatibility strategy',
+      'Designed fallback mechanism — old app versions gracefully ignore new feature sections without crashing',
+      'Aligned cross-platform event tracking schema (7 events) with Android engineer to ensure data comparability',
+      'Managed timeline: 3.5d dev + 1d tracking + 1d testing, synchronized with QA and release schedule'
+    ],
+    r: ['Shipped on schedule with <span class="metric">zero P0/P1</span> regression bugs', 'Tech Design became reference template for subsequent gift features', 'Cross-platform tracking alignment ensured reliable A/B test data'],
+    skills: ['End-to-End Delivery', 'Cross-Platform Alignment', 'Timeline Management']
+  },
+  zh: {
+    title: '跨職能團隊功能交付',
+    s: '新互動禮物功能需上線，直接影響直播營收核心指標。領導 5 人跨職能團隊（PM/iOS/Android/Backend/QA）端到端交付。',
+    a: [
+      '共同撰寫 Tech Design，涵蓋 UI 架構、禮物狀態機、向後相容策略',
+      '設計 fallback 機制 — 舊版 app 自動忽略新功能區塊而不 crash',
+      '與 Android 工程師對齊跨平台 event tracking schema（7 個事件），確保數據可比較',
+      '管理時程：3.5 天開發 + 1 天追蹤 + 1 天測試，同步 QA 與發布排程'
+    ],
+    r: ['如期上線，<span class="metric">零 P0/P1</span> regression bug', 'Tech Design 成為後續禮物功能的參考範本', '跨平台追蹤對齊確保 A/B test 數據可靠'],
+    skills: ['端到端交付', '跨平台對齊', '時程管控']
+  }
+},
+'tk-c': {
+  panel: 'panel-tiktok',
+  en: {
+    title: 'Full-Link System Design: Offline-to-Online Invitation',
+    s: 'Mid-tier streamers struggled to find matches. Solution: allow inviting offline friends to join live sessions, requiring cross-system design spanning push notifications, messaging, APIs, and streaming SDK.',
+    a: [
+      'Identified tracking gap during PRD review — proposed new connection type code to distinguish offline vs regular connections',
+      'Designed iOS integration plan for <span class="metric">8 API endpoints</span> (2 new + 6 modified)',
+      'Discovered cross-platform event handling inconsistency; proposed unified event standard adopted by both platforms',
+      'Designed tracking schema handling edge cases (offline users lack channel IDs)'
+    ],
+    r: ['Expanded matching pool, improved mid-tier streamer experience', 'New connection type tracking adopted by all subsequent offline features', 'Unified event standard became cross-platform standard'],
+    skills: ['System Design', 'API Architecture', 'Cross-Platform Standards']
+  },
+  zh: {
+    title: '全鏈路系統設計：離線邀請上線',
+    s: '中低段位主播配對困難。方案：允許邀請離線好友加入直播，需跨系統設計：推播通知、訊息、API、串流 SDK。',
+    a: [
+      '在 PRD review 中發現 tracking 缺口 — 提出新連線類型碼以區分離線與常規連線',
+      '設計 iOS 端 <span class="metric">8 個 API endpoint</span> 對接方案（2 新增 + 6 修改）',
+      '發現跨平台事件處理不一致，提出統一事件標準並被雙平台採納',
+      '設計 tracking schema 處理邊界情況（離線用戶缺少 channel ID）'
+    ],
+    r: ['成功擴大匹配池，改善中段位主播體驗', '新連線類型追蹤被後續所有離線功能沿用', '統一事件標準成為跨平台標準'],
+    skills: ['系統設計', 'API 架構', '跨平台標準']
+  }
+},
+'tk-d': {
+  panel: 'panel-tiktok',
+  en: {
+    title: 'Establishing Code Review Process to Reduce Bug Rate',
+    s: 'QA phase had excessive bugs causing release delays. Root cause: oversized merge requests, superficial reviews, issues caught too late in the pipeline.',
+    a: [
+      'Introduced <strong>chunk-based MR</strong> policy — each merge request limited to single purpose',
+      'Added <strong>walkthrough review</strong> sessions — author walks reviewer through change logic, not just diff',
+      'Trained <span class="metric">11 engineers</span> (6 iOS + 5 Android) on review best practices: effective descriptions, focus area markers, blocking vs non-blocking comments'
+    ],
+    r: ['QA-phase bug rate reduced by <span class="metric">33%</span>', 'Review turnaround time shortened due to smaller MRs', 'Established "review as quality gate" culture across team'],
+    skills: ['Process Design', 'Team Training', 'Quality Engineering']
+  },
+  zh: {
+    title: '建立 Code Review 機制降低 Bug 率',
+    s: 'QA 階段 bug 過多導致發布延遲。根因：MR 過大、review 流於形式、問題在流程末端才被發現。',
+    a: [
+      '引入 <strong>Chunk-based MR</strong> 政策 — 每個 MR 限定單一目的',
+      '增加 <strong>Walkthrough Review</strong> — 作者帶 reviewer 走過改動邏輯，而非只看 diff',
+      '培訓 <span class="metric">11 位工程師</span>（6 iOS + 5 Android）的 review 最佳實踐'
+    ],
+    r: ['QA 階段 bug 率下降 <span class="metric">33%</span>', 'Review 周轉時間縮短（MR 變小）', '建立「review 是品質守門員」的團隊文化'],
+    skills: ['流程設計', '團隊培訓', '品質工程']
+  }
+},
+'tk-e': {
+  panel: 'panel-tiktok',
+  en: {
+    title: 'Influencing Architecture Decisions Without Authority',
+    s: 'Core streaming SDK accumulated significant tech debt (module coupling, chaotic state machine, high onboarding cost). SDK team initiated refactoring and collected pain points from all consuming teams.',
+    a: [
+      'Extracted <strong>data-backed SDK issues</strong> from my metric analysis — 3 error codes affecting tens of thousands of pageviews',
+      'Marked cross-team dependencies with clear ownership: "this error originates from SDK layer, requires coordination with SDK team"',
+      'Contributed specific business-side requirements: broadcasting mechanism issues, state management pain points from actual usage patterns'
+    ],
+    r: ['SDK team received <strong>data-backed</strong> priority recommendations instead of subjective complaints', 'Cross-team issue tracking pathway established', 'Business pain points included in refactoring scope'],
+    skills: ['Cross-Team Influence', 'Data-Driven Advocacy', 'Stakeholder Management']
+  },
+  zh: {
+    title: '無直接權限下推動架構決策',
+    s: '核心串流 SDK 累積大量技術債（模組耦合、狀態機混亂、接入門檻高）。SDK 團隊啟動重構，向所有使用團隊徵集痛點。',
+    a: [
+      '從指標分析中提取<strong>有數據佐證的 SDK 問題</strong> — 3 個 error code 影響數萬 PV',
+      '標記跨團隊依賴與責任歸屬：「此錯誤源自 SDK 層，需與 SDK 團隊協調」',
+      '從實際使用模式提供具體業務側需求：廣播機制問題、狀態管理痛點'
+    ],
+    r: ['SDK 團隊收到<strong>有數據佐證</strong>的優先級建議，而非主觀抱怨', '跨團隊問題追蹤路徑建立', '業務痛點被納入重構範圍'],
+    skills: ['跨團隊影響力', '數據驅動倡議', '利害關係人管理']
+  }
+},
+'on-a': {
+  panel: 'panel-opennet',
+  en: {
+    title: 'Building AI Development Framework from Scratch',
+    s: 'Team members used different iOS architectures (TCA vs MVVM-C). AI development rules couldn\'t be shared — each engineer\'s AI setup was incompatible with others, keeping AI adoption at "individual occasional use" level.',
+    a: [
+      'Designed <strong>2-phase pipeline</strong>: PRD → 12-chapter Tech Design Document generation → layer-by-layer AI implementation',
+      'Created <strong>{{placeholder}} Adapter mechanism</strong> — 7 architecture-agnostic core rules with swappable architecture bindings. New architecture = new Adapter file only, zero core changes',
+      'Validated with 2 features: small proof-of-concept first, then large-scale (<span class="metric">26 tickets / 158 SP</span>)',
+      'Produced 3 audience guides (personal SOP, team adoption, external presentation) + 45-min team presentation'
+    ],
+    r: ['TDD generation <span class="metric">3-5x faster</span>, AI code adoption rate <span class="metric">≥60%</span>', '<span class="metric">95%</span> TDD consistency, <span class="metric">9/10</span> architecture review on large feature', '<span class="metric">400+</span> files of reusable framework assets'],
+    skills: ['Platform Thinking', 'Architecture Design', '0-to-1 Building']
+  },
+  zh: {
+    title: '從零建立 AI 開發流程框架',
+    s: '團隊成員使用不同 iOS 架構（TCA vs MVVM-C），AI 開發規則無法跨架構共用 — 每個人的 AI 設定互不相容，AI 採用停留在「個人偶爾使用」階段。',
+    a: [
+      '設計<strong>兩階段管線</strong>：PRD → 12 章技術設計文件生成 → 逐層 AI 實作',
+      '創建 <strong>{{placeholder}} Adapter 機制</strong> — 7 份架構無關核心規則 + 可置換的架構綁定。新架構只需新增 Adapter 檔，核心規則零修改',
+      '用 2 個功能驗證：先小型 PoC，再大規模（<span class="metric">26 工單 / 158 SP</span>）',
+      '產出 3 份受眾指南（個人 SOP、團隊入門、對外簡報）+ 45 分鐘團隊技術簡報'
+    ],
+    r: ['TDD 生成速度 <span class="metric">3-5x</span>，AI 代碼採用率 <span class="metric">≥60%</span>', '<span class="metric">95%</span> TDD 一致性，大型功能架構評審 <span class="metric">9/10</span>', '<span class="metric">400+</span> 檔案的可複用框架資產'],
+    skills: ['平台思維', '架構設計', '從零到一']
+  }
+},
+'on-b': {
+  panel: 'panel-opennet',
+  en: {
+    title: 'Cross-Functional UI Automation via Design-Code Mapping',
+    s: 'AI could generate business logic from Tech Design Document but not UI code. Engineers spent 30-40% of time manually translating design tool mockups to code. No structured mapping between User Stories and design frames.',
+    a: [
+      'Designed <strong>User Story ↔ Design Frame UID</strong> mapping standard — each story links to specific design frame',
+      'Integrated <strong>design tool MCP protocol</strong> for AI Agent to read design specs (layout, colors, spacing) directly',
+      'Coordinated PM to add UID field in PRD template; coordinated Designer to align frame naming convention',
+      'Result: AI can generate UI code end-to-end from User Story → Design Frame → SwiftUI'
+    ],
+    r: ['UI creation time saved <span class="metric">23%</span>', '<span class="metric">30+</span> UI preview states generated automatically', 'PRD template standardized — all future features benefit automatically'],
+    skills: ['Cross-Functional Coordination', 'Process Innovation', 'Automation']
+  },
+  zh: {
+    title: '跨職能 UI 自動化：設計稿與程式碼映射',
+    s: 'AI 能從技術設計文件生成業務邏輯但無法處理 UI。工程師花 30-40% 時間手動將設計稿翻譯為代碼。User Story 與設計稿間無結構化對應。',
+    a: [
+      '設計 <strong>User Story ↔ 設計稿 Frame UID</strong> 映射標準 — 每個 story 連結到特定設計稿頁面',
+      '整合<strong>設計工具 MCP 協議</strong>，讓 AI Agent 直接讀取設計規格（佈局、顏色、間距）',
+      '協調 PM 在 PRD 模板增加 UID 欄位；協調 Designer 對齊 Frame 命名規範',
+      '結果：AI 可端到端生成 UI 代碼：User Story → 設計稿 → SwiftUI'
+    ],
+    r: ['UI 創建時間節省 <span class="metric">23%</span>', '自動生成 <span class="metric">30+</span> UI 預覽狀態', 'PRD 模板標準化 — 後續功能自動受益'],
+    skills: ['跨職能協調', '流程創新', '自動化']
+  }
+},
+'on-c': {
+  panel: 'panel-opennet',
+  en: {
+    title: 'Large-Scale AI-Assisted Delivery: 26 Tickets / 158 SP',
+    s: 'After validating the framework with a small feature, needed to prove scalability with a large project — real-time WebSocket messaging + REST API CRUD, totaling 158 Story Points.',
+    a: [
+      'Generated complete 12-chapter Tech Design Document via Phase 1 pipeline',
+      'Established <strong>daily TDD consistency tracking</strong> with quantitative metrics — not "feels good" but measured',
+      'Formalized rules into <strong>7-category library</strong> with dual-format (Markdown for humans + YAML for AI)',
+      'Built <span class="metric">20+</span> scripts for automated Jira ticket generation from TDD'
+    ],
+    r: ['All <span class="metric">26 tickets / 158 SP</span> delivered', '<span class="metric">95%</span> TDD consistency (daily tracked), <span class="metric">9/10</span> architecture review', 'Ticket creation: <span class="metric">2-3 hours → 10 minutes</span> via automation'],
+    skills: ['Project Management', 'Quality Tracking', 'Automation at Scale']
+  },
+  zh: {
+    title: '大規模 AI 輔助交付：26 工單 / 158 SP',
+    s: '用小功能驗證框架後，需以大型專案證明可擴展性 — WebSocket 即時通訊 + REST API CRUD，共 158 Story Points。',
+    a: [
+      '透過 Phase 1 管線生成完整 12 章技術設計文件',
+      '建立<strong>每日 TDD 一致性追蹤</strong>，用量化指標而非「感覺還不錯」',
+      '將規則正式化為 <strong>7 大分類規則庫</strong>，維護雙格式（Markdown 給人 + YAML 給 AI）',
+      '建構 <span class="metric">20+</span> 支腳本，從 TDD 自動生成 Jira 工單'
+    ],
+    r: ['全部 <span class="metric">26 工單 / 158 SP</span> 交付', '<span class="metric">95%</span> TDD 一致性（每日追蹤），架構評審 <span class="metric">9/10</span>', '工單創建：<span class="metric">2-3 小時 → 10 分鐘</span>自動化'],
+    skills: ['專案管理', '品質追蹤', '規模化自動化']
+  }
+},
+'on-d': {
+  panel: 'panel-opennet',
+  en: {
+    title: 'AI Context Optimization: 76% Token Reduction',
+    s: 'Growing rule library consumed ~30% of AI context window, squeezing out space for actual code and design documents. Paradoxically, more rules meant worse AI output.',
+    a: [
+      'Quantified token usage across all Markdown rule files — identified the bottleneck',
+      'Designed <strong>YAML format</strong>: same semantics via key-value pairs instead of prose paragraphs',
+      '<strong>A/B tested</strong> MD-only vs MD+YAML injection: identical AI output quality with <span class="metric">76%</span> fewer tokens',
+      'Established dual-format maintenance with automated sync-checking scripts'
+    ],
+    r: ['<span class="metric">76%</span> token reduction per rule file', 'Rules can grow without sacrificing AI context space', 'Human readability (MD) and AI efficiency (YAML) both maintained'],
+    skills: ['Cost Optimization', 'A/B Testing', 'AI System Design']
+  },
+  zh: {
+    title: 'AI Context 最佳化：節省 76% Token',
+    s: '規則庫增長佔用 AI context window 的 ~30%，擠壓程式碼和設計文件空間。弔詭的是，規則越多 AI 表現反而越差。',
+    a: [
+      '量化所有 Markdown 規則檔的 token 用量 — 識別瓶頸',
+      '設計 <strong>YAML 格式</strong>：用 key-value 結構取代段落描述，保留相同語義',
+      '<strong>A/B 測試</strong> MD-only vs MD+YAML 注入：AI 產出品質相同但 token 減少 <span class="metric">76%</span>',
+      '建立雙格式維護機制與自動同步檢查腳本'
+    ],
+    r: ['每份規則檔 <span class="metric">76%</span> token 節省', '規則可持續增長而不犧牲 AI context 空間', '人類可讀性（MD）與 AI 效率（YAML）兼顧'],
+    skills: ['成本最佳化', 'A/B 測試', 'AI 系統設計']
+  }
+},
+'on-e': {
+  panel: 'panel-opennet',
+  en: {
+    title: 'Automated Kickoff & Systematic Knowledge Transfer',
+    s: 'Team was unfamiliar with the AI workflow framework. Kickoff meetings traditionally required half-day manual preparation to identify technical clarification questions from PRD.',
+    a: [
+      'Used AI to auto-generate <span class="metric">35</span> technical clarification questions from PRD — covering API gaps (8), UI edge cases (12), logic ambiguities (10), cross-platform differences (5)',
+      'Delivered <strong>45-minute team presentation</strong> demonstrating full pipeline with live examples',
+      'Created <strong>3 audience-specific guides</strong>: Personal SOP (step-by-step screenshots), Team Guide (30-min onboarding), External Deck (20 slides + demo script)'
+    ],
+    r: ['Kickoff efficiency dramatically improved — questions covered edge cases PM hadn\'t anticipated', 'Framework knowledge preserved after departure via 3 guides', 'External presentation materials ready for methodology showcase'],
+    skills: ['Knowledge Transfer', 'Technical Communication', 'Scalable Documentation']
+  },
+  zh: {
+    title: '自動化 Kickoff 與系統化知識傳遞',
+    s: '團隊對 AI 開發框架不熟悉。Kickoff 會議傳統做法需半天人工從 PRD 中識別技術澄清問題。',
+    a: [
+      '用 AI 從 PRD 自動生成 <span class="metric">35</span> 個技術澄清問題 — 涵蓋 API 缺口（8）、UI 邊界（12）、邏輯模糊（10）、跨平台差異（5）',
+      '進行 <strong>45 分鐘團隊技術簡報</strong>，展示完整管線與實際案例',
+      '建立 <strong>3 份受眾指南</strong>：個人 SOP（逐步截圖）、團隊入門（30 分鐘上手）、對外簡報（20 slides + demo 腳本）'
+    ],
+    r: ['Kickoff 效率大幅提升 — 問題覆蓋了 PM 未預見的邊界情況', '離職後框架知識透過 3 份指南保存', '對外展示素材就緒'],
+    skills: ['知識傳遞', '技術溝通', '可擴展文件']
+  }
+}
+};
+
+function setStoryLang(lang) {
+  storyLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll(`.lang-btn`).forEach(b => {
+    if ((lang === 'en' && b.textContent === 'EN') || (lang === 'zh' && b.textContent === 'ZH'))
+      b.classList.add('active');
+  });
+  // Update chip labels
+  document.querySelectorAll('.story-chip span[data-en]').forEach(el => {
+    el.textContent = el.getAttribute('data-' + lang);
+  });
+  // Re-render open story if any
+  if (activeStory) renderStory(activeStory);
+}
+
+function toggleStory(id) {
+  const story = STORIES[id];
+  const panel = document.getElementById(story.panel);
+  const chip = document.querySelector(`[data-story="${id}"]`);
+
+  // If clicking the active story, close it
+  if (activeStory === id) {
+    panel.classList.remove('open');
+    chip.classList.remove('active');
+    activeStory = null;
+    return;
+  }
+
+  // Deactivate previous chip in same panel
+  const parentChips = panel.previousElementSibling;
+  parentChips.querySelectorAll('.story-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+
+  // Close any other open panel
+  document.querySelectorAll('.story-panel.open').forEach(p => {
+    if (p.id !== story.panel) {
+      p.classList.remove('open');
+      p.closest('.story-section').querySelectorAll('.story-chip').forEach(c => c.classList.remove('active'));
+    }
+  });
+
+  activeStory = id;
+  renderStory(id);
+  panel.classList.add('open');
+}
+
+function renderStory(id) {
+  const story = STORIES[id];
+  const data = story[storyLang];
+  const panel = document.getElementById(story.panel);
+  const sLabel = storyLang === 'en' ? 'Situation' : '情境';
+  const aLabel = storyLang === 'en' ? 'Action' : '行動';
+  const rLabel = storyLang === 'en' ? 'Result' : '成果';
+
+  panel.innerHTML = `<div class="story-inner">
+    <div class="story-title"><span>${data.title}</span><button class="story-close" onclick="toggleStory('${id}')">&times;</button></div>
+    <div class="star-block s-block"><div class="star-label">${sLabel}</div><div class="star-text">${data.s}</div></div>
+    <div class="star-block a-block"><div class="star-label">${aLabel}</div><div class="star-text"><ul>${data.a.map(x=>'<li>'+x+'</li>').join('')}</ul></div></div>
+    <div class="star-block r-block"><div class="star-label">${rLabel}</div><div class="star-text"><ul>${data.r.map(x=>'<li>'+x+'</li>').join('')}</ul></div></div>
+    <div class="story-skills">${data.skills.map(s=>'<span class="skill-tag">'+s+'</span>').join('')}</div>
+  </div>`;
+}
+</script>
 </body>
 </html>
