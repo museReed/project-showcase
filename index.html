@@ -70,6 +70,23 @@
     letter-spacing: 0.08em;
     margin-top: 4px;
   }
+  .hero-stat-groups {
+    display: flex;
+    justify-content: center;
+    gap: 72px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .stat-group .hero-stats { gap: 32px; }
+  .stat-group-label {
+    font-size: 0.72rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    text-align: center;
+    margin-bottom: 16px;
+    opacity: 0.85;
+  }
 
   /* Grid */
   .container {
@@ -547,23 +564,54 @@
 <div class="hero">
   <h1>Reed Hsin — <span>Project Showcase</span></h1>
   <p class="subtitle" data-en="8+ years of engineering experience distilled into production systems, AI pipelines, and developer tools." data-zh="8+ 年工程經驗，萃取為生產系統、AI 管線與開發工具。">8+ years of engineering experience distilled into production systems, AI pipelines, and developer tools.</p>
-  <div class="hero-stats">
-    <div class="stat">
-      <div class="stat-num">6</div>
-      <div class="stat-label" data-en="Live Projects" data-zh="上線專案">Live Projects</div>
+  <div class="hero-stat-groups">
+
+    <!-- Professional (real work) -->
+    <div class="stat-group">
+      <div class="stat-group-label" data-en="Professional · 8 years" data-zh="職涯 · 8 年">Professional · 8 years</div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num">3</div>
+          <div class="stat-label" data-en="Orgs · AI adoption" data-zh="組織 · AI 導入">Orgs · AI adoption</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">10</div>
+          <div class="stat-label" data-en="Person team led" data-zh="人團隊領導">Person team led</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">&minus;41%</div>
+          <div class="stat-label" data-en="Rework · consultant" data-zh="返工 · 顧問">Rework · consultant</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">&minus;33%</div>
+          <div class="stat-label" data-en="QA bugs · TikTok" data-zh="QA bug · TikTok">QA bugs · TikTok</div>
+        </div>
+      </div>
     </div>
-    <div class="stat">
-      <div class="stat-num">17</div>
-      <div class="stat-label" data-en="AI Modules" data-zh="AI 模組">AI Modules</div>
+
+    <!-- Muse Platform (side project) -->
+    <div class="stat-group">
+      <div class="stat-group-label" data-en="Muse Platform · side project" data-zh="Muse Platform · side project">Muse Platform · side project</div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num">33</div>
+          <div class="stat-label" data-en="Modules · 4 layers" data-zh="模組 · 4 層">Modules · 4 layers</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">4</div>
+          <div class="stat-label" data-en="LLM Providers" data-zh="LLM 供應商">LLM Providers</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">83%</div>
+          <div class="stat-label" data-en="LLM Cost Saved" data-zh="LLM 成本節省">LLM Cost Saved</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">6</div>
+          <div class="stat-label" data-en="Live Sites" data-zh="上線網站">Live Sites</div>
+        </div>
+      </div>
     </div>
-    <div class="stat">
-      <div class="stat-num">83%</div>
-      <div class="stat-label" data-en="LLM Cost Saved" data-zh="LLM 成本節省">LLM Cost Saved</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">4</div>
-      <div class="stat-label" data-en="LLM Providers" data-zh="LLM 供應商">LLM Providers</div>
-    </div>
+
   </div>
 </div>
 
