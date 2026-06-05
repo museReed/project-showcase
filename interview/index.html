@@ -158,7 +158,13 @@
   body.slide-mode section{display:none}
   body.slide-mode section.slide-on{display:block;border-bottom:none;padding:44px 6vw 28px}
   body.slide-mode section.slide-solo{min-height:calc(100vh - 62px - 88px)}
-  body.slide-mode nav .hide-sm{display:none}
+  body.intro-mode nav .hide-sm{display:none}
+  nav a.hide-sm{cursor:pointer}
+  #introdeck{display:none;padding:24px 6vw 28px;min-height:calc(100vh - 62px - 88px);align-items:center;justify-content:center}
+  body.intro-mode #introdeck{display:flex}
+  body.intro-mode section{display:none}
+  #introdeck img{max-width:min(1120px,100%);max-height:calc(100vh - 170px);width:auto;height:auto;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  #introdeck img:not(.on){display:none}
   .slidenav{position:fixed;left:0;right:0;bottom:0;z-index:60;align-items:center;justify-content:center;gap:18px;padding:13px 6vw;background:rgba(255,255,255,.93);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
   body.slide-mode .slidenav{display:flex}
   .slidenav button{background:var(--panel2);border:1px solid var(--line);color:var(--cyan);border-radius:10px;width:46px;height:40px;font-size:22px;font-weight:800;cursor:pointer;line-height:1}
@@ -170,17 +176,16 @@
   .slidenav .dots i.on{background:var(--cyan)}
 </style>
 </head>
-<body>
+<body class="slide-mode">
 <nav>
   <span class="brand">Chung Han Hsin <span class="dot">·</span> AI TPM <span class="dot">·</span> Phison</span>
-  <a href="#stories" class="hide-sm"><span class="en">Highlights</span><span class="zh">公司亮點</span></a>
+  <a href="#stories" class="hide-sm"><span class="en">Past Highlights</span><span class="zh">過去亮點</span></a>
   <a href="#strengths" class="hide-sm"><span class="en">Skills & Value</span><span class="zh">關鍵技能</span></a>
-  <a href="#pillars" class="hide-sm"><span class="en">Reed's Strength</span><span class="zh">核心強項</span></a>
   <a href="#roadmap" class="hide-sm"><span class="en">Roadmap</span><span class="zh">Roadmap</span></a>
   <a href="#why" class="hide-sm"><span class="en">Why Phison</span><span class="zh">為何 Phison</span></a>
   <a href="#attach" class="hide-sm"><span class="en">Showcase</span><span class="zh">Showcase</span></a>
   <button class="langbtn" id="lang">EN</button>
-  <button class="slidebtn" id="slides">Slides</button>
+  <button class="slidebtn" id="intro">Introduction</button>
 </nav>
 
 <!-- HIGHLIGHTS BY COMPANY -->
@@ -291,37 +296,6 @@
   </div>
 </section>
 
-<!-- STRENGTH PILLARS -->
-<section id="pillars">
-  <p class="eyebrow" style="color:var(--muted);font-weight:600">Why Reed? Candidate Fit &amp; Future Plan</p>
-  <h2>Reed's Strength</h2>
-  <div class="pillars">
-    <div class="pillar">
-      <div class="pt"><span class="en">AI dev-workflow design & adoption</span><span class="zh">AI 開發流程設計與導入</span></div>
-      <ul class="bl">
-        <li><span class="en">Rolled AI workflows into <b>3</b> companies (Maxora · OpenNet · TikTok): rework down <b>41%</b> · delivery down <b>33%</b> · estimation down <b>16~24%</b></span><span class="zh">在 <b>3</b> 間企業 (Maxora/OpenNet/TikTok) 導入 AI 開發流程：返工降低 <b>41%</b> · 交付降低 <b>33%</b> · 估時降 <b>16~24%</b></span></li>
-        <li><span class="en">Introduced a new frontend & backend AI software-dev workflow and delivered <b>26</b> tickets, <b>42%</b> faster than estimate</span><span class="zh">導入新的前後端都可使用的 AI 軟體開發流程並交付 <b>26</b> tickets，比團隊估時快 <b>42%</b></span></li>
-        <li><span class="en">AI-code adoption <b>≥70%</b> · spec consistency <b>95%</b> · architecture review <b>9.1/10</b></span><span class="zh">AI code 採用 <b>≥70%</b> · 規格一致性 <b>95%</b> · 架構評審 <b>9.1/10</b></span></li>
-      </ul>
-    </div>
-    <div class="pillar">
-      <div class="pt"><span class="en">Engineering depth + data-driven decisions</span><span class="zh">工程底 + 數據驅動決策</span></div>
-      <ul class="bl">
-        <li><span class="en">CS degree + <b>8</b> yrs software engineering (iOS / React / Python Django / Rust)</span><span class="zh">CS 本科 + <b>8</b> 年軟體工程（iOS / React / Python Django / Rust）</span></li>
-        <li><span class="en">Built an LLM tool that reads QA tickets & the log DB into our internal web platform, online-issue fix time down <b>22%</b></span><span class="zh">透過 LLM 判讀 QA ticket 及 log database 並整合進內部網頁平台系統，online issue 修復時間降低 <b>22%</b></span></li>
-        <li><span class="en">Built a funnel + probability model on <b>8.7M</b> (Android) + <b>3.4M</b> (iOS) PV, proving <b>15%</b> individual acceptance = <b>86%</b> group success, flipped a feature kill decision</span><span class="zh">用 <b>870 萬</b>(Android) + <b>340 萬</b>(iOS) PV 建漏斗＋機率模型，證明 <b>15%</b> 個人接受率＝<b>86%</b> 群組成功率，翻轉 feature 下架決定</span></li>
-      </ul>
-    </div>
-    <div class="pillar">
-      <div class="pt"><span class="en">Cross-functional, cross-timezone delivery</span><span class="zh">跨職能 × 跨時區 program 交付</span></div>
-      <ul class="bl">
-        <li><span class="en">Async collaboration across <b>4</b> timezones (SG / AU / CN / UK)</span><span class="zh">跨 <b>4</b> 時區（SG / AU / CN / UK）async 協作</span></li>
-        <li><span class="en">Tech Owner of a <b>10</b>-person cross-functional team building Live features</span><span class="zh">Tech Owner 帶 <b>10</b> 人跨職能團隊進行 Live 相關 features 開發</span></li>
-        <li><span class="en">Split a hard-deadline campaign into a <b>2</b>-phase delivery (MVP on time, phase 2 data-gated)</span><span class="zh">將 hard-deadline campaign 拆成 <b>2</b> 期專案（MVP 準時上線、第二期由數據決定）</span></li>
-      </ul>
-    </div>
-  </div>
-</section>
 
 <!-- ROADMAP -->
 <section id="roadmap">
@@ -481,51 +455,88 @@
   </div>
 </section>
 
+<!-- INTRODUCTION DECK (PDF pages as images) -->
+<div id="introdeck">
+  <img src="slides/intro-1.png" alt="Introduction slide 1">
+  <img src="slides/intro-2.png" alt="Introduction slide 2">
+  <img src="slides/intro-3.png" alt="Introduction slide 3">
+  <img src="slides/intro-4.png" alt="Introduction slide 4">
+  <img src="slides/intro-5.png" alt="Introduction slide 5">
+  <img src="slides/intro-6.png" alt="Introduction slide 6">
+</div>
+
 <div class="slidenav" id="slidenav">
   <button class="prev" aria-label="Previous">&lsaquo;</button>
-  <span class="ind">1 / 5</span>
+  <span class="ind">1 / 4</span>
   <span class="dots"></span>
   <button class="next" aria-label="Next">&rsaquo;</button>
 </div>
 
 <script>
-  const btn=document.getElementById('lang');
-  btn.addEventListener('click',()=>{
+  const langBtn=document.getElementById('lang');
+  langBtn.addEventListener('click',()=>{
     const en=document.body.classList.toggle('lang-en');
     document.documentElement.lang=en?'en':'zh-Hant';
-    btn.textContent=en?'中文':'EN';
+    langBtn.textContent=en?'中文':'EN';
   });
 
-  // slide mode: regroup the 6 sections into 5 slides (pillars + roadmap share slide 3)
-  const SLIDES=[['stories'],['strengths'],['pillars','roadmap'],['why'],['attach']];
-  const slidesBtn=document.getElementById('slides');
+  // Two always-on decks: main content slides + the PDF introduction deck.
+  const SLIDES=[['stories'],['strengths','roadmap'],['why'],['attach']];
+  const NAV_SLIDE={stories:0,strengths:1,roadmap:1,why:2,attach:3};
+  const deck=document.getElementById('introdeck');
+  const INTRO_PAGES=deck.children.length;
+  const introBtn=document.getElementById('intro');
   const snav=document.getElementById('slidenav');
   const prevBtn=snav.querySelector('.prev'), nextBtn=snav.querySelector('.next');
   const ind=snav.querySelector('.ind'), dots=snav.querySelector('.dots');
-  let cur=0, active=false;
-  SLIDES.forEach((_,i)=>{const d=document.createElement('i');d.addEventListener('click',()=>go(i));dots.appendChild(d);});
+  let mode='main', cur=0;
+
+  const count=()=>mode==='intro'?INTRO_PAGES:SLIDES.length;
+  function buildDots(){
+    dots.innerHTML='';
+    for(let i=0;i<count();i++){const d=document.createElement('i');d.addEventListener('click',()=>go(i));dots.appendChild(d);}
+  }
   function clearOn(){document.querySelectorAll('section.slide-on').forEach(s=>s.classList.remove('slide-on','slide-solo'));}
   function render(){
     clearOn();
-    const ids=SLIDES[cur];
-    ids.forEach(id=>{const s=document.getElementById(id);if(s){s.classList.add('slide-on');if(ids.length===1)s.classList.add('slide-solo');}});
-    ind.textContent=(cur+1)+' / '+SLIDES.length;
-    prevBtn.disabled=cur===0; nextBtn.disabled=cur===SLIDES.length-1;
+    if(mode==='intro'){
+      [...deck.children].forEach((img,i)=>img.classList.toggle('on',i===cur));
+    }else{
+      SLIDES[cur].forEach(id=>{const s=document.getElementById(id);if(s){s.classList.add('slide-on');if(SLIDES[cur].length===1)s.classList.add('slide-solo');}});
+    }
+    ind.textContent=(cur+1)+' / '+count();
+    prevBtn.disabled=cur===0; nextBtn.disabled=cur===count()-1;
     [...dots.children].forEach((d,i)=>d.classList.toggle('on',i===cur));
     window.scrollTo(0,0);
   }
-  function go(i){cur=Math.max(0,Math.min(SLIDES.length-1,i));render();}
-  function enter(){active=true;document.body.classList.add('slide-mode');slidesBtn.textContent='✕ Exit';cur=0;render();}
-  function exit(){active=false;document.body.classList.remove('slide-mode');clearOn();slidesBtn.textContent='Slides';}
-  slidesBtn.addEventListener('click',()=>active?exit():enter());
+  function go(i){cur=Math.max(0,Math.min(count()-1,i));render();}
+  function setMode(m){
+    mode=m; cur=0;
+    document.body.classList.toggle('intro-mode',m==='intro');
+    introBtn.textContent=m==='intro'?'✕ Resume':'Introduction';
+    buildDots(); render();
+  }
+  introBtn.addEventListener('click',()=>setMode(mode==='intro'?'main':'intro'));
   prevBtn.addEventListener('click',()=>go(cur-1));
   nextBtn.addEventListener('click',()=>go(cur+1));
+
+  // breadcrumb links jump to the matching content slide
+  document.querySelectorAll('nav a.hide-sm').forEach(a=>{
+    a.addEventListener('click',e=>{
+      e.preventDefault();
+      const id=a.getAttribute('href').slice(1);
+      if(mode!=='main')setMode('main');
+      if(id in NAV_SLIDE)go(NAV_SLIDE[id]);
+    });
+  });
+
   document.addEventListener('keydown',e=>{
-    if(!active)return;
     if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')go(cur+1);
     else if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1);
-    else if(e.key==='Escape')exit();
+    else if(e.key==='Escape'&&mode==='intro')setMode('main');
   });
+
+  buildDots(); render();
 </script>
 </body>
 </html>
