@@ -465,6 +465,10 @@ const DATA = [
       ],
         en: "\"At TikTok LIVE I was the PIC for interaction-metric analysis. We'd launched **Quick Recommend CoHost** — the system auto-recommends streamer pairings — and the PM saw the invitee acceptance rate was only **15%** and wanted to redesign or kill it; the intuition was '15% = the feature failed.' I wasn't convinced, because the mechanics matter: the system recommends **12 streamers at once and only needs one to accept**. I built a five-step funnel from 7 days of data — **8.7M PV on Android, 3.4M on iOS** — and modeled it: P(group success) = 1 − (1 − 0.15)¹² = **86%**, so group-level success was actually **73–86%**. The 15% wasn't failure — it was healthy. I also classified the top-6 error codes across millions of PV to separate normal match-competition — multiple people racing for one slot, which retries can't fix — from real bottlenecks, and found the genuine one: **4–7% of iOS users blocked by dual-camera detection**. Result: the data flipped the decision — the feature stayed, the dual-camera fix went into the **Q3 OKR**, the analysis became the team's metric-analysis template, and the error-code classification fed straight into the LinkMic SDK refactor. The lesson: a headline number lies if you ignore the mechanism behind it — model the system, don't react to the surface metric. For a TPM evaluating aiDAPTIV's performance or an ISV's technical pushback, that's exactly the discipline needed.\""
       }],
+      notes: [
+        { label: "公式由來｜為什麼是 per-invitee", text: "15% = **per-invitee 接受率**（分母 = 被推薦的主播人次）。所以才能用 `1−(1−p)¹²` 把它拉到群組層級——由來：p=0.15 是單人接受機率 → `1−p`=0.85 是單人不接受 → 12 人彼此獨立、**全部都不接受** = `0.85¹²`（群組失敗）→ **至少 1 人接受（群組成功）= `1−0.85¹²` ≈ 86%**。指數 **12 = 一次推薦的主播數（fan-out）**，跟『只要 1 個接受』無關（那句決定的是成功條件、不是嘗試次數）。" },
+        { label: "為什麼 PM 會誤判（指標缺口）", text: "在這個 feature 之前**我們根本沒有群組層級的成功率指標、只有 per-invitee 接受率**，dashboard 上唯一看得到的就是那 15%，PM 自然把它當成功能成功率讀 → 誤判成『失敗』。我的貢獻正是補上這個缺口：建五環節漏斗 + 機率模型把群組成功率（**73–86%**）量出來——所以 86% **不只是公式估算、我有用漏斗實測驗證**。" }
+      ],
       hit: "數據推翻直覺 + 機率建模（硬分析）+ 翻轉 stakeholder 判斷 + 產出被複用。"
     },
     {
