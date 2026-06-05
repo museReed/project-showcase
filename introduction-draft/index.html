@@ -8,6 +8,7 @@
   :root{
     --bg:#ffffff; --bg2:#f4f7fc; --panel:#f7faff; --panel2:#eef3fb; --line:#d8e2f2;
     --txt:#10203f; --muted:#5a7099; --blue:#2563eb; --cyan:#0284c7; --amber:#d97706;
+    --green:#16a34a; --red:#dc2626;
     --shadow:0 1px 3px rgba(16,32,63,.07),0 1px 2px rgba(16,32,63,.04);
   }
   *{box-sizing:border-box}
@@ -49,6 +50,16 @@
   .script b{color:var(--cyan);font-weight:800;white-space:nowrap}
   .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--amber);
     background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.28);border-radius:6px;padding:2px 9px;margin-bottom:8px}
+  .tag.good{color:var(--green);background:rgba(22,163,74,.09);border-color:rgba(22,163,74,.30)}
+  .tag.weak{color:var(--amber);background:rgba(217,119,6,.09);border-color:rgba(217,119,6,.30)}
+  .num .badge.good{background:var(--green)} .num .badge.weak{background:var(--amber)}
+  .askq{margin-top:0;color:#33425f;font-size:15px;line-height:1.6;font-weight:600;
+    background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--cyan);
+    border-radius:8px;padding:11px 13px}
+  .askq .qlabel{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);margin-bottom:4px}
+  .secdiv{border-top:1px solid var(--line);margin:0;padding:30px 0 6px;text-align:center}
+  body.deck .secdiv{display:none}
+  .secdiv .eyebrow{color:var(--cyan);font-size:13px;letter-spacing:.16em;text-transform:uppercase;font-weight:800}
   @media(max-width:860px){
     .slideblock{grid-template-columns:1fr;gap:16px}
     .visual{position:static}
@@ -220,6 +231,98 @@
       <div class="script">
         <p><span class="zh">以上就是我的背景。從跨產業的工程實戰、帶跨國團隊交付，到親手把 AI 落地成一套完整平台，這條軌跡讓我對「把 AI 從概念推進到可規模化落地」這件事，既有方法也有實戰。</span><span class="en">That's my background. From cross-industry engineering in the trenches, to leading cross-border teams to deliver, to landing AI by hand as a complete platform — this trajectory gives me both a method and real practice for pushing AI from concept to scalable reality.</span></p>
         <p><span class="zh">若面試官對我過往的哪一段經歷想進一步了解，我很樂意展開細節、說明當時遇到的問題、我怎麼解決、以及從中學到了什麼——歡迎您隨時提問。</span><span class="en">If you'd like to go deeper into any part of my background, I'm happy to expand on the details — the problem at the time, how I solved it, and what I learned. Please ask anytime.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="secdiv"><span class="eyebrow"><span class="zh">行為面試 · 三優點 ＆ 三缺點</span><span class="en">Behavioral Q · 3 Strengths &amp; 3 Weaknesses</span></span></div>
+
+  <!-- Strength 1 -->
+  <section class="slideblock">
+    <div class="visual">
+      <span class="tag good"><span class="zh">優點 1 / 3 · 數據驅動</span><span class="en">Strength 1 / 3 · Data-Driven</span></span>
+      <div class="askq"><span class="qlabel"><span class="zh">面試官可能問</span><span class="en">Likely question</span></span><span class="zh">請舉一個你用數據改變決策的例子。</span><span class="en">Tell me about a time you used data to change a decision.</span></div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge good">✓</span><span class="ttl"><span class="zh">讓數據說話的決策力</span><span class="en">Data That Drives the Decision</span></span></div>
+      <div class="script">
+        <p><span class="zh">我最能代表自己的優點是「讓數據說話」。在 TikTok，有個技術功能原本被 PM 判定要下架。我沒有直接接受，而是把匹配漏斗的數據拉出來回推，證明問題不在功能本身——成功翻轉決定、讓它上線，使隨機匹配成功率提升約 <b>86%</b>，過程中還挖出一個藏在客戶端的 bug，修掉後整體配對再 <b>+3%</b>。</span><span class="en">My defining strength is letting the data talk. At TikTok, a technical feature had been marked for removal by the PM. Instead of accepting that, I pulled the matching-funnel data and reasoned backwards, showing the problem wasn't the feature itself — reversing the decision and shipping it, lifting random-match success by about <b>86%</b>, and uncovering a hidden client bug that added another <b>+3%</b>.</span></p>
+        <p><span class="zh">我也習慣用數據做取捨——自建平台時用 A/B test 以 <b>3%</b> 的表現換取 <b>83%</b> 的成本下降。對我來說，數據不是用來證明自己對，而是用來找出什麼才是對的。</span><span class="en">I make trade-offs the same way — on my own platform I used A/B testing to trade <b>3%</b> of quality for an <b>83%</b> cost cut. To me, data isn't there to prove I'm right; it's there to find what's right.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Strength 2 -->
+  <section class="slideblock">
+    <div class="visual">
+      <span class="tag good"><span class="zh">優點 2 / 3 · 跨團隊橋樑</span><span class="en">Strength 2 / 3 · The Bridge</span></span>
+      <div class="askq"><span class="qlabel"><span class="zh">面試官可能問</span><span class="en">Likely question</span></span><span class="zh">你如何在不同團隊或職能之間建立共識？</span><span class="en">How do you build alignment across teams or functions?</span></div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge good">✓</span><span class="ttl"><span class="zh">工程與商業之間的翻譯層</span><span class="en">The Translation Layer Between Eng &amp; Business</span></span></div>
+      <div class="script">
+        <p><span class="zh">第二個優點是我能當「翻譯層」——在工程、PM、AI、QA 之間搭橋。在 TikTok 我是直播團隊對接 AI 團隊的窗口，把工程端的回饋收斂成 AI 團隊能行動的需求。</span><span class="en">My second strength is being the "translation layer" — bridging engineering, PM, AI and QA. At TikTok I was the live team's liaison to the AI team, distilling engineering feedback into requirements the AI team could act on.</span></p>
+        <p><span class="zh">後來我自己因疏失導致營收指標下滑，主持了一場 RCA，沒有停在檢討，而是把它變成一套「feature 跨多團隊時的協作流程」與一道跨團隊 QA 閘門，留給組織。我長期和新加坡、澳洲、中國、英國的團隊非同步協作，所以習慣把模糊的對話收斂成各方都能執行的共識。</span><span class="en">Later, after my own oversight dropped a revenue metric, I ran an RCA — and instead of stopping at the post-mortem, I turned it into a cross-team collaboration process and a cross-team QA gate that stayed with the org. Working asynchronously with teams in Singapore, Australia, China and the UK, I'm used to converging fuzzy conversations into alignment everyone can execute on.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Strength 3 -->
+  <section class="slideblock">
+    <div class="visual">
+      <span class="tag good"><span class="zh">優點 3 / 3 · 0→1 落地</span><span class="en">Strength 3 / 3 · 0→1 Delivery</span></span>
+      <div class="askq"><span class="qlabel"><span class="zh">面試官可能問</span><span class="en">Likely question</span></span><span class="zh">舉一個你從 0 到 1 把想法做成系統的例子。</span><span class="en">Give an example of taking an idea from 0 to 1 into a real system.</span></div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge good">✓</span><span class="ttl"><span class="zh">把模糊想法工程化落地</span><span class="en">Engineering Fuzzy Ideas Into Real Systems</span></span></div>
+      <div class="script">
+        <p><span class="zh">第三個優點是我能把一個模糊的想法工程化、落地成長期能跑的系統。最具體的證明是我工作之餘獨力打造的 agentic AI 平台：<b>33 個</b>模組、串 <b>3 家</b> LLM，每天自動爬 <b>200+</b> 篇內容跑完整 pipeline，已穩定運行一個半月。我的體會是：讓 AI 每天能用，難的不是模型，而是周邊的 pipeline、錯誤處理和成本控制。</span><span class="en">My third strength is engineering a fuzzy idea into a system that runs for the long haul. The clearest proof is the agentic AI platform I built single-handedly outside work: <b>33 modules</b>, <b>3 LLM vendors</b>, pulling <b>200+</b> items a day through a full pipeline, stable for a month and a half. My takeaway: making AI usable daily, the hard part isn't the model — it's the surrounding pipeline, error handling and cost control.</span></p>
+        <p><span class="zh">我也把同樣的能力帶進團隊——在 OpenNet 從 0 到 1 搭出 AI 驅動開發流程（交付快 <b>42%</b>），在 Maxora 幫 researcher 團隊補上流程（返工 <b>-41%</b>）。</span><span class="en">I bring the same to teams — built an AI-driven dev process 0→1 at OpenNet (<b>42%</b> faster delivery) and filled the process gaps for Maxora's researcher team (<b>-41%</b> rework).</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Weakness 1 -->
+  <section class="slideblock">
+    <div class="visual">
+      <span class="tag weak"><span class="zh">缺點 1 / 3 · 難放手</span><span class="en">Weakness 1 / 3 · Over-Owning</span></span>
+      <div class="askq"><span class="qlabel"><span class="zh">面試官可能問</span><span class="en">Likely question</span></span><span class="zh">你最大的缺點是什麼？</span><span class="en">What's your biggest weakness?</span></div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge weak">△</span><span class="ttl"><span class="zh">太想自己扛、難以放手授權</span><span class="en">Wanting to Carry Too Much Myself</span></span></div>
+      <div class="script">
+        <p><span class="zh">我最需要持續修正的是「太想自己扛」。因為很多東西——像那套平台——都是我一個人從 0 到 1 做出來的，我會不自覺把太多細節攬在身上，有時反而成為團隊的瓶頸。</span><span class="en">What I most need to keep correcting is wanting to carry too much myself. Because so much — like that platform — I built solo from 0 to 1, I instinctively hold too many details, and sometimes become the team's bottleneck.</span></p>
+        <p><span class="zh">意識到後，我刻意在 Maxora 和帶團隊時改變做法：把我腦中的判斷標準寫成可被別人複用的流程與文件（這也是我做 Tech Design Document 的初衷），用「把判斷標準交出去」取代「把事情攬回來」。我還在練，但團隊的吞吐和我的可被取代性都明顯變好。</span><span class="en">Once I saw it, I deliberately changed how I work at Maxora and when leading teams: writing the judgment criteria in my head into reusable processes and docs (the very reason I build Tech Design Documents), replacing "pulling work back" with "handing the criteria out." I'm still practicing, but both team throughput and how replaceable I am have clearly improved.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Weakness 2 -->
+  <section class="slideblock">
+    <div class="visual">
+      <span class="tag weak"><span class="zh">缺點 2 / 3 · 陷入細節</span><span class="en">Weakness 2 / 3 · Too Deep, Too Fast</span></span>
+      <div class="askq"><span class="qlabel"><span class="zh">面試官可能問</span><span class="en">Likely question</span></span><span class="zh">你收過最難的回饋是什麼？</span><span class="en">What's the toughest feedback you've received?</span></div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge weak">△</span><span class="ttl"><span class="zh">面對非技術受眾時太快跳進細節</span><span class="en">Diving Into Detail Too Fast</span></span></div>
+      <div class="script">
+        <p><span class="zh">第二個是我面對非技術受眾時，容易太快跳進技術細節。我熱衷把「怎麼做」講清楚，但對 PM 或商業端來說，他們先要的是「這對結果有什麼影響」。</span><span class="en">Second, with non-technical audiences I tend to dive into detail too fast. I love making the "how" precise, but a PM or business partner first wants "what this means for the outcome."</span></p>
+        <p><span class="zh">收到這個回饋後，我養成一個習慣：先講結論和商業價值，再讓對方決定要不要往下鑽細節——其實這份逐頁講稿、還有把數字標粗，就是我在刻意練習這件事。我現在會先問自己「對方此刻最需要哪一層」，再決定講多深。</span><span class="en">After getting that feedback, I built a habit: lead with the conclusion and business value, then let them decide whether to drill down — this slide-by-slide script, and bolding the numbers, is me deliberately practicing exactly that. I now ask myself "which layer does this person need right now" before deciding how deep to go.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Weakness 3 -->
+  <section class="slideblock">
+    <div class="visual">
+      <span class="tag weak"><span class="zh">缺點 3 / 3 · 推得太急</span><span class="en">Weakness 3 / 3 · Pushing Too Fast</span></span>
+      <div class="askq"><span class="qlabel"><span class="zh">面試官可能問</span><span class="en">Likely question</span></span><span class="zh">講一次你想改變團隊、但遇到阻力的經驗。</span><span class="en">Tell me about a time you pushed change and met resistance.</span></div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge weak">△</span><span class="ttl"><span class="zh">推動流程改變時有時太急</span><span class="en">Pushing Process Change Too Fast</span></span></div>
+      <div class="script">
+        <p><span class="zh">第三個是我對品質與流程的信念很強，推動改變時有時會太急。在 Maxora，團隊大多是微軟出身的 researcher，擅長研究但不熟軟體開發流程；我一開始想一次到位把整套 AI 驅動流程搬過去，反而造成抵觸。</span><span class="en">Third, I hold strong convictions about quality and process, and sometimes push change too fast. At Maxora, the team are mostly ex-Microsoft researchers — strong at research, unfamiliar with software process; I initially tried to move the whole AI-driven process over in one go, which created friction.</span></p>
+        <p><span class="zh">我退一步，改成從他們最痛的一個環節切入、用一個小試點證明價值，再逐步擴大——最後返工率降 <b>41%</b>、交付時間縮 <b>33%</b>。這件事教我：導入流程的速度，要由團隊的接受度決定，不是由我的標準決定。</span><span class="en">I stepped back, started from their single most painful step, proved value with a small pilot, then expanded — ending at <b>41%</b> less rework and <b>33%</b> faster delivery. It taught me: the pace of adopting a process is set by the team's acceptance, not by my standards.</span></p>
       </div>
     </div>
   </section>
