@@ -48,6 +48,30 @@
     .script{font-size:18px}
     nav .hide-sm{display:none}
   }
+  /* deck mode: one section per screen, big side buttons */
+  body.deck{overflow:hidden}
+  body.deck header.intro{display:none}
+  body.deck main{padding:0}
+  body.deck .slideblock{display:none;border-top:none;min-height:calc(100vh - 56px);padding:28px 92px;align-content:safe center;overflow-y:auto}
+  body.deck .slideblock.active{display:grid}
+  body.deck .visual{position:static}
+  .navbtn,.deckind{display:none}
+  body.deck .navbtn{position:fixed;top:50%;transform:translateY(-50%);z-index:60;display:flex;align-items:center;justify-content:center;
+    width:58px;height:104px;border:1px solid var(--line);background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+    color:var(--cyan);font-size:42px;font-weight:800;line-height:1;cursor:pointer;border-radius:14px;box-shadow:var(--shadow);transition:border-color .15s,background .15s}
+  body.deck .navbtn:hover:not(:disabled){border-color:var(--cyan);background:#fff}
+  body.deck .navbtn:disabled{opacity:.22;cursor:default}
+  .navbtn.prev{left:16px}
+  .navbtn.next{right:16px}
+  body.deck .deckind{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:60;display:block;
+    background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:20px;
+    padding:5px 16px;font-weight:700;color:var(--muted);font-size:14px;box-shadow:var(--shadow)}
+  @media(max-width:860px){
+    body.deck .slideblock{padding:20px 58px}
+    body.deck .navbtn{width:42px;height:78px;font-size:30px}
+    .navbtn.prev{left:8px}
+    .navbtn.next{right:8px}
+  }
 </style>
 </head>
 <body>
@@ -192,5 +216,32 @@
   </section>
 
 </main>
+
+<button class="navbtn prev" aria-label="上一頁">&lsaquo;</button>
+<button class="navbtn next" aria-label="下一頁">&rsaquo;</button>
+<div class="deckind">1 / 8</div>
+
+<script>
+  const blocks=[...document.querySelectorAll('.slideblock')];
+  const prevB=document.querySelector('.navbtn.prev');
+  const nextB=document.querySelector('.navbtn.next');
+  const indEl=document.querySelector('.deckind');
+  let idx=0;
+  function show(n){
+    idx=Math.max(0,Math.min(blocks.length-1,n));
+    blocks.forEach((b,k)=>b.classList.toggle('active',k===idx));
+    prevB.disabled=idx===0; nextB.disabled=idx===blocks.length-1;
+    indEl.textContent=(idx+1)+' / '+blocks.length;
+    blocks[idx].scrollTop=0;
+  }
+  prevB.addEventListener('click',()=>show(idx-1));
+  nextB.addEventListener('click',()=>show(idx+1));
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')show(idx+1);
+    else if(e.key==='ArrowLeft'||e.key==='PageUp')show(idx-1);
+  });
+  document.body.classList.add('deck');
+  show(0);
+</script>
 </body>
 </html>
