@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自我介紹講稿 · 逐頁對照 — Reed · Phison AI TPM</title>
+<style>
+  :root{
+    --bg:#ffffff; --bg2:#f4f7fc; --panel:#f7faff; --panel2:#eef3fb; --line:#d8e2f2;
+    --txt:#10203f; --muted:#5a7099; --blue:#2563eb; --cyan:#0284c7; --amber:#d97706;
+    --shadow:0 1px 3px rgba(16,32,63,.07),0 1px 2px rgba(16,32,63,.04);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,rgba(2,132,199,.06),transparent),var(--bg);
+    color:var(--txt);font:18px/1.6 -apple-system,"PingFang TC","Segoe UI",system-ui,sans-serif;}
+  nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;
+    padding:14px 6vw;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);font-size:15px}
+  nav .brand{font-weight:800;letter-spacing:.02em;margin-right:auto}
+  nav .brand .dot{color:var(--cyan)}
+  nav a{color:var(--muted);text-decoration:none;font-weight:600}
+  nav a:hover{color:var(--cyan)}
+  header.intro{padding:48px 6vw 8px;max-width:1180px;margin:0 auto}
+  header.intro .eyebrow{color:var(--cyan);font-size:14px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;margin:0 0 10px}
+  header.intro h1{font-size:clamp(26px,3.4vw,38px);margin:0 0 8px;letter-spacing:-.01em}
+  header.intro p{color:var(--muted);font-size:16px;margin:0;line-height:1.6}
+  main{max-width:1180px;margin:0 auto;padding:24px 6vw 80px}
+  .slideblock{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:30px;
+    padding:34px 0;border-top:1px solid var(--line);align-items:start}
+  .slideblock:first-of-type{border-top:none}
+  .visual{position:sticky;top:78px}
+  .visual img{width:100%;height:auto;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);display:block}
+  .visual .cap{margin-top:8px;color:var(--muted);font-size:13px;text-align:center}
+  .num{display:inline-flex;align-items:center;gap:9px;margin:0 0 6px}
+  .num .badge{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;
+    background:var(--cyan);color:#fff;font-weight:800;font-size:15px}
+  .num .badge.alt{background:var(--muted)}
+  .num .ttl{font-weight:800;font-size:20px;line-height:1.3}
+  .script{font-size:19px;line-height:1.9;color:#26365a;margin:10px 0 0}
+  .script p{margin:0 0 14px}
+  .script b{color:var(--cyan);font-weight:800;white-space:nowrap}
+  .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--amber);
+    background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.28);border-radius:6px;padding:2px 9px;margin-bottom:8px}
+  @media(max-width:860px){
+    .slideblock{grid-template-columns:1fr;gap:16px}
+    .visual{position:static}
+    .script{font-size:18px}
+    nav .hide-sm{display:none}
+  }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">Chung Han Hsin <span class="dot">·</span> 自我介紹講稿 · 逐頁對照</span>
+  <a href="../interview/" class="hide-sm">← 回 Interview</a>
+</nav>
+
+<header class="intro">
+  <p class="eyebrow">Self-Introduction Script · Slide-by-Slide</p>
+  <h1>自我介紹講稿 — 逐頁對照（B 數據完整版）</h1>
+  <p>每一段對應 Introduction deck 的一頁 slide。報告時左看 slide、右讀講稿；數字已標粗方便抓重點。</p>
+</header>
+
+<main>
+
+  <!-- Slide 1 -->
+  <section class="slideblock">
+    <div class="visual">
+      <img src="slides/intro-1.png" alt="Slide 1 — 我是誰">
+      <div class="cap">Slide 1 / 6</div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge">1</span><span class="ttl">我是誰</span></div>
+      <div class="script">
+        <p>我是辛忠翰，大家可以叫我 Reed。我有 <b>8 年</b>的軟體工程實力，這兩年開始擔任 Tech Owner 的角色，做跨職能的專案管理，扮演工程跟業務之間的橋樑；過程中也累積了不少跨國、跨時區、跨團隊協作的經驗，合作的團隊分布在新加坡、澳洲、中國跟英國。</p>
+        <p>我利用工作之餘，親手從 <b>0 到 1</b> 打造了一套個人化的 agentic AI 平台，把這些想法真的做成一個每天在運作的系統。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 2 -->
+  <section class="slideblock">
+    <div class="visual">
+      <img src="slides/intro-2.png" alt="Slide 2 — AI 驅動開發流程演進">
+      <div class="cap">Slide 2 / 6</div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge">2</span><span class="ttl">AI 驅動開發流程：職涯發展與技術演進</span></div>
+      <div class="script">
+        <p>我收斂了一套成熟的 AI 驅動的開發流程。最早是在 TikTok，我擔任直播團隊與 AI 團隊對接的窗口，第一次把 AI 正式帶進團隊內部的軟體開發流程裡；</p>
+        <p>後來在 OpenNet 任職時，我把它從 <b>0 到 1</b> 完整搭建起來，做出一套前後端都能用的完整流程，用它所交付的 feature 比團隊的估時快 <b>42%</b>、AI 生成的程式碼採用率超過 <b>70%</b>，同時 feature 開發完後，團隊會有一套與 codebase 高度相關的 Tech Design Document，可用於打造團隊的 RAG knowledge base、並能回溯 code 當初的抉擇脈絡。</p>
+        <p>到現在，我以顧問身分服務 Maxora.ai，把這套流程收斂成更完整、可落地的版本。值得一提的是，Maxora 的團隊比較特別，成員大多來自微軟、過去是 researcher，很擅長研究，但相對缺乏軟體開發流程的概念；我幫他們重建了一整套開發流程，並用 AI agent 協助團隊實際執行。成果是返工率降了 <b>41%</b>、feature 交付時間縮短 <b>33%</b>。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 3 -->
+  <section class="slideblock">
+    <div class="visual">
+      <img src="slides/intro-3.png" alt="Slide 3 — TikTok 用數據翻轉決策">
+      <div class="cap">Slide 3 / 6</div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge">3</span><span class="ttl">TikTok｜用數據翻轉決策</span></div>
+      <div class="script">
+        <p>再往前在 TikTok，我同時是 Senior Engineer 和 Tech Owner，服務於直播團隊。一方面，我帶一個 <b>10 人</b>的跨職能團隊，交付 PM 規劃的各種商業功能，同時也是聯播 SDK Matrix 的 owner。</p>
+        <p>我印象最深的一件事，是有個功能原本被 PM 判定要下架，但我用數據去回推，不只翻轉了那個決定、讓這個 technical feature 順利上線，使隨機匹配的連麥玩法成功率提升約 <b>86%</b>；還從中挖出一個藏在客戶端的真實 bug，修掉之後讓整體聯麥的配對成功率提升了大約 <b>3%</b>。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 4 -->
+  <section class="slideblock">
+    <div class="visual">
+      <img src="slides/intro-4.png" alt="Slide 4 — TikTok 把 AI 落地、把制度留下">
+      <div class="cap">Slide 4 / 6</div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge">4</span><span class="ttl">TikTok｜把 AI 落地、把制度留下</span></div>
+      <div class="script">
+        <p>另一方面，我是直播團隊對接 AI 團隊的窗口——前面提到的那套 AI 驅動開發流程，最早就是在這裡討論、試錯並落地的。我負責收集團隊使用 AI IDE（Trae）的回饋，再跟 AI 團隊一起討論、設計，把開發流程真正導入直播團隊，最終讓單一 feature 的 bug 產生率降了 <b>33%</b>、feature 估時降了 <b>24%</b>。</p>
+        <p>我還和 AI 團隊、QA 團隊一起做了一套線上 issue 自動分流系統：當 QA 開出線上問題，我們會把使用者操作過程的所有前端事件和後端事件撈出來，交給 LLM 判讀，自動決定這張 ticket 該轉給客戶端還是後端、並說明問題可能出在哪。這等於做到了跨 repo、跨 log database 的初步資料統整，最後讓線上問題的修復時間縮短了 <b>22%</b>。</p>
+        <p>我也曾因為自己的疏失導致 Live Revenue Matrix 下降，因此主持過一個 RCA meeting，最終催生了兩個後來一直在 TikTok 沿用的制度、並讓 AI 團隊立項一個內部系統：(1) 一道跨團隊的 QA 閘門、(2) 一個前置的跨團隊 kickoff 機制、(3) 一個用 LLM 自動把 Matrix 異動關聯到可疑 feature 的內部系統。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 5 -->
+  <section class="slideblock">
+    <div class="visual">
+      <img src="slides/intro-5.png" alt="Slide 5 — 扎實的工程底子">
+      <div class="cap">Slide 5 / 6</div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge">5</span><span class="ttl">扎實的工程底子</span></div>
+      <div class="script">
+        <p>更早在 Crypto.com、17Live、Pinkoi 與外交部駐貝里斯技術團打下工程底子：</p>
+        <p>於 Crypto.com 透過自動化 mock 的方式，把 KYC SDK 的 unit test 覆蓋率從 <b>42%</b> 拉到 <b>75%</b>；</p>
+        <p>在 17Live 帶領 <b>6 位</b>成員重構直播間、讓直播間相關 feature 開發時長降低 <b>65%</b>，並藉由導入制式化的 system design review 和建立與台灣團隊的 sync-up 機制，協助美國團隊把 sprint 完成率從 <b>60%</b> 提升到 <b>85%</b>。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 6 -->
+  <section class="slideblock">
+    <div class="visual">
+      <img src="slides/intro-6.png" alt="Slide 6 — 代表作 agentic AI 平台">
+      <div class="cap">Slide 6 / 6</div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge">6</span><span class="ttl">我的代表作：一套每天在跑的 agentic AI 平台</span></div>
+      <div class="script">
+        <p>同時我在工作之外，獨力從 <b>0 到 1</b> 打造並維運一套個人化 agentic AI 平台。一開始的動機很單純：我想充實自己在 AI agent 應用上的實戰知識，同時我也真的需要一套工具，能自動跨多個社群平台收集資料、經過一連串處理去蕪存菁，最後建成一個對 AI agent 友善、可搜尋的 RAG 知識庫。</p>
+        <p>這套平台現在有 <b>33 個</b>模組、串接了 <b>3 家</b>廠商的 LLM。它每天會自動從 3 個社群平台——Twitter、小紅書、YouTube——以及多家知名 AI 公司的技術部落格和官網，穩定爬進 <b>200 篇</b>以上的文章和影片（目前已穩定運行 <b>1 個半月</b>），爬下的內容再經過一條完整的 pipeline：媒體解析、分類評分、內容增強、到專家審查，最後沉澱成可搜尋的知識庫。</p>
+        <p>過程中我也用 LLM 的 A/B test，在只損失 <b>3%</b> 解讀表現的前提下，把運行成本壓到原本的 <b>83%</b>。這件事對我最大的意義，是它證明我真的能把一個模糊的 AI 想法，落地成可量測、可長期維運的系統。而我最深的體會是：要讓 AI 變成每天能用的東西，難的從來不是模型本身，而是它周邊的 pipeline、錯誤處理和成本控制——也就是把 AI「工程化」的那段功夫。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Value (no matching slide) -->
+  <section class="slideblock">
+    <div class="visual">
+      <span class="tag">無對應 slide · 口頭收尾</span>
+      <div class="cap" style="text-align:left;margin-top:0">報告完 6 頁後口頭帶出</div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge alt">＋</span><span class="ttl">我能為群聯帶來的價值</span></div>
+      <div class="script">
+        <p>若把這些經驗對到這個職位，我認為我能帶來四件事：</p>
+        <p>第一，跨國跨部門與英文溝通的即戰力——我長期和新加坡、澳洲、中國、英國的團隊非同步協作。</p>
+        <p>第二，工程與 ISV／商業之間的橋樑——我能讀架構做技術取捨，也能為每一個整合對象做 right-size 的決策並推動實際採用。</p>
+        <p>第三，一套「PoC → 量化 → 放大」的導入打法——用數據驅動的試點去推動客戶與 ISV 採用，協助生態擴張。</p>
+        <p>第四，量化驅動的 trade-off 決策——平台成本降到原本 <b>83%</b>、在 TikTok 也曾用局部指標的取捨換到整體營收微幅成長，我習慣讓決策有數據做依據。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing (no matching slide) -->
+  <section class="slideblock">
+    <div class="visual">
+      <span class="tag">無對應 slide · 收尾</span>
+      <div class="cap" style="text-align:left;margin-top:0">邀請提問</div>
+    </div>
+    <div class="text">
+      <div class="num"><span class="badge alt">＋</span><span class="ttl">收尾</span></div>
+      <div class="script">
+        <p>以上就是我的背景。從跨產業的工程實戰、帶跨國團隊交付，到親手把 AI 落地成一套完整平台，這條軌跡讓我對「把 AI 從概念推進到可規模化落地」這件事，既有方法也有實戰。</p>
+        <p>若面試官對我過往的哪一段經歷想進一步了解，我很樂意展開細節、說明當時遇到的問題、我怎麼解決、以及從中學到了什麼——歡迎您隨時提問。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
