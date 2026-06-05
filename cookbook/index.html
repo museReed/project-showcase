@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>面試 STAR/CARL 講稿 — Phison AI TPM</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --fg: #1f2328;
+    --fg-soft: #57606a;
+    --bg: #f6f8fa;
+    --card: #ffffff;
+    --border: #d0d7de;
+    --accent: #0969da;
+    --hit-bg: #fff8e6;
+    --hit-border: #e3b341;
+    --ask-bg: #f0f5ff;
+    --ask-border: #b6d4fe;
+    --en-bg: #f6f8fa;
+    --note-bg: #f6f8fa;
+    --maxw: 880px;
+    font-size: 16px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+                 Roboto, Helvetica, Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--fg);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---- top bar ---- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: saturate(180%) blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: .55rem 1rem;
+  }
+  .topbar-inner {
+    max-width: var(--maxw); margin: 0 auto;
+    display: flex; flex-wrap: wrap; gap: .4rem .5rem; align-items: center;
+  }
+  .topbar .brand { font-weight: 700; font-size: .95rem; margin-right: .35rem; }
+  .topbar nav { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .topbar nav a {
+    font-size: .8rem; color: var(--fg-soft); text-decoration: none;
+    padding: .15rem .5rem; border: 1px solid var(--border);
+    border-radius: 999px; background: var(--card); white-space: nowrap;
+  }
+  .topbar nav a:hover { color: var(--accent); border-color: var(--accent); }
+  .topbar .actions { margin-left: auto; display: flex; gap: .4rem; }
+  .topbar button {
+    font: inherit; font-size: .8rem; cursor: pointer;
+    padding: .2rem .65rem; border: 1px solid var(--border);
+    border-radius: 999px; background: var(--card); color: var(--fg-soft);
+  }
+  .topbar button:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---- layout + sidebar TOC ---- */
+  .layout {
+    max-width: 1180px; margin: 0 auto;
+    display: flex; align-items: flex-start; gap: 1.5rem; padding: 0 1rem;
+  }
+  .sidebar {
+    position: sticky; top: 3.4rem; flex: none; width: 250px;
+    max-height: calc(100vh - 4rem); overflow-y: auto;
+    padding: 1rem .25rem 2rem 0; border-right: 1px solid var(--border);
+  }
+  .toc-group { margin-bottom: .9rem; }
+  .toc-head {
+    display: block; font-size: .74rem; font-weight: 800; letter-spacing: .03em;
+    color: var(--fg); text-decoration: none;
+    padding: .3rem .5rem; margin-bottom: .15rem; border-radius: 6px;
+  }
+  .toc-head:hover { background: #eef1f4; }
+  .toc-head .sub { display: block; font-weight: 500; font-size: .66rem; color: var(--fg-soft); margin-top: .05rem; }
+  .toc-item {
+    display: flex; gap: .5rem; align-items: flex-start;
+    font-size: .8rem; line-height: 1.45; color: var(--fg-soft); text-decoration: none;
+    padding: .3rem .5rem; border-radius: 6px; border-left: 2px solid transparent;
+  }
+  .toc-item:hover { background: #f0f5ff; color: var(--accent); }
+  .toc-item.active { background: #ddeaff; color: var(--accent); font-weight: 600; border-left-color: var(--accent); }
+  .toc-fw { flex: none; width: .5rem; height: .5rem; border-radius: 50%; align-self: flex-start; margin-top: .42rem; }
+  .toc-fw.star { background: #2da160; } .toc-fw.carl { background: #8250df; } .toc-fw.plain { background: #aab1b8; }
+
+  .wrap { flex: 1; min-width: 0; max-width: var(--maxw); padding: 1.5rem 0 6rem; }
+  .round { scroll-margin-top: 4rem; }
+
+  .overlay { display: none; }
+  #toc-toggle { display: none; }
+
+  @media (max-width: 920px) {
+    .layout { display: block; padding: 0; }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 1.5rem 1.1rem 6rem; }
+    #toc-toggle { display: inline-block; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 40;
+      width: 282px; max-height: none; height: 100%;
+      background: var(--card); border-right: 1px solid var(--border);
+      padding: 3.6rem 1rem 2rem; transform: translateX(-100%);
+      transition: transform .25s ease; box-shadow: 2px 0 12px rgba(0,0,0,.08);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .overlay.show { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(0,0,0,.35); }
+  }
+
+  .doc-title { font-size: 1.7rem; font-weight: 800; margin: .5rem 0 .4rem; }
+  .lede {
+    color: var(--fg-soft); font-size: .92rem; line-height: 1.7;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: .85rem 1.05rem; margin: 0 0 1.5rem;
+  }
+  .lede a { color: var(--accent); }
+  .lede strong { color: var(--fg); }
+  .legend { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+  .legend .star-tag { cursor: default; }
+
+  /* ---- round heading ---- */
+  .round {
+    margin: 2.6rem 0 1.1rem; padding-bottom: .4rem;
+    border-bottom: 2px solid var(--border);
+    display: flex; align-items: baseline; gap: .6rem;
+  }
+  .round h2 { font-size: 1.3rem; font-weight: 800; margin: 0; }
+  .round .round-sub { font-size: .82rem; color: var(--fg-soft); }
+
+  /* ---- card ---- */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.1rem 1.2rem 1.25rem;
+    margin: 0 0 1.1rem; scroll-margin-top: 4.5rem;
+    box-shadow: 0 1px 2px rgba(31,35,40,.04);
+  }
+  .card-head { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin-bottom: .2rem; }
+  .qid {
+    flex: none; font-weight: 800; font-size: .82rem; letter-spacing: .02em;
+    color: #fff; background: var(--accent);
+    padding: .12rem .55rem; border-radius: 7px;
+  }
+  .qid.alt { background: #6e7781; }
+  .card-head h3 { font-size: 1.12rem; font-weight: 700; margin: 0; }
+  .story {
+    flex: none; font-size: .76rem; color: var(--fg-soft);
+    background: #f6f8fa; border: 1px dashed var(--border);
+    border-radius: 6px; padding: .08rem .45rem;
+  }
+  .fw {
+    flex: none; font-size: .72rem; font-weight: 700; letter-spacing: .03em;
+    border-radius: 6px; padding: .08rem .45rem;
+  }
+  .fw.star { color: #0a6e3d; background: #e6f6ec; border: 1px solid #acdfc0; }
+  .fw.carl { color: #8250df; background: #f3eefe; border: 1px solid #d8c4f7; }
+  .fw.plain { color: var(--fg-soft); background: #f1f3f5; border: 1px solid var(--border); }
+
+  /* ---- 面試官可能怎麼問 ---- */
+  .ask {
+    background: var(--ask-bg); border: 1px solid var(--ask-border);
+    border-radius: 9px; padding: .55rem .85rem; margin: .75rem 0 .9rem;
+  }
+  .ask-label {
+    font-size: .76rem; font-weight: 700; color: var(--accent);
+    letter-spacing: .03em; margin-bottom: .25rem;
+    display: flex; align-items: center; gap: .35rem;
+  }
+  .ask ul { margin: 0; padding-left: 1.15rem; }
+  .ask li { margin: .18rem 0; font-size: .9rem; color: #344054; }
+
+  /* ---- script label (for multi-story cards) ---- */
+  .script-label {
+    font-size: .74rem; font-weight: 700; color: var(--fg-soft);
+    text-transform: uppercase; letter-spacing: .05em; margin: 1rem 0 .35rem;
+  }
+
+  /* ---- STAR blocks ---- */
+  .star-wrap { margin: .35rem 0 0; }
+  .star-row {
+    display: flex; gap: .65rem; align-items: flex-start;
+    padding: .5rem 0; border-top: 1px solid #eef1f4;
+  }
+  .star-row:first-child { border-top: none; }
+  .star-tag {
+    flex: none; width: 3.4rem; text-align: center;
+    font-size: .72rem; font-weight: 800; line-height: 1.25;
+    padding: .22rem .25rem; border-radius: 7px; letter-spacing: .01em;
+  }
+  .star-tag .lt { display: block; font-size: .95rem; }
+  .star-tag.s { color:#0b5cad; background:#e3f0fc; border:1px solid #b6d4fe; }
+  .star-tag.t { color:#0a6e6e; background:#e2f5f5; border:1px solid #a7e0e0; }
+  .star-tag.a { color:#0a6e3d; background:#e6f6ec; border:1px solid #aedfc1; }
+  .star-tag.r { color:#9a6a00; background:#fff4d6; border:1px solid #ecc766; }
+  .star-tag.c { color:#57606a; background:#eef1f4; border:1px solid #d0d7de; }
+  .star-tag.l { color:#8250df; background:#f3eefe; border:1px solid #d8c4f7; }
+  .star-text { flex: 1; font-size: 1rem; }
+  .star-text p { margin: 0; }
+  .star-text strong { font-weight: 700; }
+
+  .zh-plain { font-size: 1rem; margin-top: .35rem; }
+  .zh-plain p { margin: 0 0 .6rem; }
+  .zh-plain p:last-child { margin-bottom: 0; }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .85em; background: #eef1f4; padding: .08em .35em; border-radius: 4px;
+  }
+
+  /* ---- EN collapsible ---- */
+  details.en {
+    margin: .85rem 0 0; border: 1px solid var(--border);
+    border-radius: 9px; background: var(--en-bg); overflow: hidden;
+  }
+  details.en > summary {
+    cursor: pointer; list-style: none; user-select: none;
+    padding: .55rem .85rem; font-size: .88rem; font-weight: 600;
+    color: var(--fg-soft); display: flex; align-items: center; gap: .5rem;
+  }
+  details.en > summary::-webkit-details-marker { display: none; }
+  details.en > summary .flag { font-size: 1.05rem; }
+  details.en > summary .chev { margin-left: auto; transition: transform .2s; color: var(--fg-soft); }
+  details.en[open] > summary { border-bottom: 1px solid var(--border); }
+  details.en[open] > summary .chev { transform: rotate(90deg); }
+  details.en .en-body {
+    padding: .75rem .9rem .85rem; font-size: .95rem;
+    color: #2b2f33; line-height: 1.7;
+  }
+  details.en .en-body p { margin: 0 0 .6rem; }
+  details.en .en-body p:last-child { margin-bottom: 0; }
+  details.en .en-body strong { font-weight: 700; color: var(--fg); }
+
+  /* ---- followup / note ---- */
+  .note {
+    margin: .8rem 0 0; font-size: .88rem; color: #344054;
+    background: var(--note-bg); border-left: 3px solid var(--border);
+    border-radius: 0 6px 6px 0; padding: .5rem .8rem;
+  }
+  .note strong { color: var(--fg); }
+
+  /* ---- hit ---- */
+  .hit {
+    margin: .85rem 0 0; font-size: .9rem;
+    background: var(--hit-bg); border: 1px solid var(--hit-border);
+    border-left: 4px solid var(--hit-border);
+    border-radius: 0 7px 7px 0; padding: .55rem .9rem;
+  }
+
+  /* ---- info card ---- */
+  .infocard table { width: 100%; border-collapse: collapse; margin: .6rem 0; font-size: .9rem; }
+  .infocard th, .infocard td { border: 1px solid var(--border); padding: .45rem .65rem; text-align: left; vertical-align: top; }
+  .infocard thead th { background: #f6f8fa; font-weight: 700; }
+  .infocard ul { margin: .5rem 0 0; padding-left: 1.2rem; }
+  .infocard li { margin: .25rem 0; font-size: .9rem; }
+  .infocard p { margin: 1.1rem 0 .25rem; font-size: .95rem; }
+  .infocard td:first-child { white-space: nowrap; }
+  .gl-en { font-size: .76rem; color: var(--fg-soft); font-weight: 500; }
+  .todo li { margin: .3rem 0; color: var(--fg-soft); }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 1.4rem .8rem 4rem; }
+    .doc-title { font-size: 1.4rem; }
+    .topbar .brand { display: none; }
+    .star-tag { width: 2.9rem; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="brand">STAR/CARL 講稿</span>
+      <button id="toc-toggle">☰ 目錄</button>
+      <div class="actions">
+        <button id="toggle-en">展開全部 EN</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"><div class="toc" id="toc"></div></aside>
+    <main class="wrap">
+    <div class="doc-title">面試 STAR/CARL 講稿（逐題定稿）— Phison AI TPM</div>
+    <div class="lede">
+      用法：每題先看 <strong>面試官可能怎麼問</strong> → 中文已拆成 <strong>STAR 段落</strong>（失敗／回饋題用 CARL）→ 照段落口頭演練；英文版預設收合，點開比對。
+      🎯 = 對 <strong>David Lin</strong>（QA / PMP / 重 Agile / 跨區域 / AI 生態）的命中點。
+      講故事原則（Lynn）：<strong>70% 時間在 Action</strong>、結尾給量化 Result、先講「為什麼做 / 解決什麼痛點」。<br>
+      配套：題庫見 <a href="pm50-questions.html">pm50-questions.html</a>；故事代號見 <a href="interview-behavioral-prep.md">interview-behavioral-prep.md</a> §〇。
+      <div class="legend">
+        <span class="star-tag s"><span class="lt">S</span>情境</span>
+        <span class="star-tag t"><span class="lt">T</span>任務</span>
+        <span class="star-tag a"><span class="lt">A</span>行動</span>
+        <span class="star-tag r"><span class="lt">R</span>結果</span>
+        <span class="star-tag c"><span class="lt">C</span>背景</span>
+        <span class="star-tag l"><span class="lt">L</span>學到</span>
+      </div>
+    </div>
+    <div id="content">載入中…</div>
+    </main>
+  </div>
+  <div class="overlay" id="overlay"></div>
+
+<script>
+/* tag dictionary */
+const TAG = {
+  S:{cls:"s",label:"情境"}, T:{cls:"t",label:"任務"},
+  A:{cls:"a",label:"行動"}, R:{cls:"r",label:"結果"},
+  C:{cls:"c",label:"背景"}, L:{cls:"l",label:"學到"}
+};
+
+/* ---------- data ----------
+   behavioral cards: scripts[].star = [["S","…"],["T","…"],…]
+   non-behavioral (Why / methodology / info): scripts[].zh = "string"
+*/
+const DATA = [
+  { round: "第一輪", sub: "David 必考 4 題", cards: [
+    {
+      id: "Q1", title: "衝突 / 無權限影響力", story: "主：AD-flow　備：BD-AI", fw: "STAR",
+      ask: [
+        "「講一次你在沒有正式職權的情況下，推動一個團隊改變做法的經驗。」",
+        "「你怎麼處理跨團隊的抗拒或衝突？」",
+        "「曾經有人不認同你的提案嗎？你怎麼讓他們買單？」",
+        "「描述一次你必須靠影響力、而不是權力來完成任務的情況。」"
+      ],
+      scripts: [{ star: [
+        ["S","我在 Maxora.ai 當顧問，一個 20+ 人的 AI 廣告團隊。他們習慣 ad-hoc 開發，對我要導入的 PRD→TDD→Dev 結構化流程和 AI 工具抗拒很大，覺得『又要多做事』，而我**沒有直接管理權**。"],
+        ["T","我的任務是在沒有正式職權下，讓這個團隊接受結構化流程＋AI 工具，把不斷返工、交付不穩的狀況扭轉過來。"],
+        ["A","我沒有由上而下硬推、也不歸咎於人。我先**診斷真正痛點**——返工大多來自需求落差——再拿我自己的一個交付做 **PoC**，用返工數據說話。我刻意**先把流程地基建起來、再分層導 Claude Code**，因為 AI 疊在混亂流程上只會放大混亂。"],
+        ["R","返工 **-41%**、交付 **-33%**，團隊接受了。我學到：跨團隊推動靠的是『拿出證據 + 講清楚對你有什麼好處』、不是命令——這正是上手異質 ISV／客戶團隊需要的。"]
+      ],
+        en: "\"As a consultant at Maxora.ai — an AI ad-tech team of 20+ — they worked ad-hoc and pushed back hard on a structured PRD→TDD→Dev process and on AI tooling; they saw it as 'just more overhead,' and I had no direct authority. I didn't push top-down or blame anyone. I diagnosed the real pain — most rework traced back to requirement gaps — ran a PoC on one of my own deliverables, and let the rework data make the argument. I deliberately laid the process foundation *first*, then layered Claude Code on top, because AI on a chaotic process only amplifies the chaos. Result: rework down **41%**, delivery time down **33%**, and the team adopted it. What I learned: cross-team adoption comes from showing evidence and making 'what's in it for you' explicit — not from authority.\""
+      }],
+      notes: [{ label: "被追問 big-tech 場景 → 切 BD-AI", text: "在 ByteDance 工程師質疑 AI 產的 code 品質，用小範圍 pilot 量化數據服人，不硬推。" }],
+      hit: "無權限影響力 +「AI 要有流程地基才有效」的成熟判斷 → 對應上手異質 ISV／客戶團隊。"
+    },
+    {
+      id: "Q-FAIL", title: "失敗 / 最大失敗題", story: "TikTok 充值入口被遮蔽 → RCA", fw: "CARL",
+      framework: "用於：「講一個你主導但失敗的 program」「最大的職涯失敗 + 學到什麼」「犯過的錯」。失敗框架是 **CARL**（Context → Action → Result → **Learning**）。",
+      ask: [
+        "「講一個你主導、但最後失敗的專案。」",
+        "「你職涯中最大的失敗是什麼？從中學到什麼？」",
+        "「講一個你犯過的錯，以及你怎麼補救。」",
+        "「有沒有一次你忽略了某個訊號、事後才發現是問題？」"
+      ],
+      scripts: [{ star: [
+        ["C","在 TikTok 我負責直播這邊的 dashboard 和事件。某次迭代，**我自己上線的一個 feature**，在某個情境下會**觸發彈窗、蓋住 wallet 團隊的充值入口**——那個情境下充值入口根本不會出現，用戶無法充值，默默損失 revenue。它透過 A/B testing 浮現：我這 feature 其他觀察指標都正向，只有 **revenue 略降**、加上我 dashboard 上一個 user event 也降。我收到 alert，但**誤以為只是假陽性**——單獨看就是噪音，我們這種規模 revenue 是重尾分布、信賴區間本來就寬，跌幅又落在信賴區間內，我就把它當噪音放掉了。"],
+        ["A","真正讓問題浮上來的是 **wallet 團隊的 PM**：他發現他們的 **revenue 指標、和『打開充值面板』的 user event 指標同時下降**，才召開會議、把相關各 team 的 tech owner 拉進來；一路追下去，最後發現是**我這邊 feature 的彈窗蓋住了充值入口**。我接手主導 **RCA**，不只修 bug、更修『為什麼會漏掉』，催生三項結構性改變：**(1) QA 閘門**——未來任何**可能影響到其他團隊的 feature**，上線前都要轉給**該團隊**跑他們的 P0/P1 tests，並推動 QA 組織**跨團隊分享各自的 P0/P1 showcases**（因為一個團隊的關鍵案例其他團隊根本看不到）；**(2) 跨團隊 kickoff**——需求開發前就要把**對方團隊的 QA 和 PM** 拉進來；這次我只找了對方 **RD** 諮詢，但對方 RD 也無法直接從 codebase 看出『這個情境下會冒出充值彈窗』，而 QA／PM 是清楚的；**(3) 工具**——跟 data center 的 DA／infra／AI 立項一個系統，整合所有團隊在跑的 A/B、用 **LLM 分析某指標變動可能跟哪些新 feature 有關**，讓『在信賴區間（CI）內但可疑』的訊號被便宜地自動再看一眼。"],
+        ["R","QA 閘門與跨團隊 P0/P1 分享落地成常規，LLM 關聯系統已**立項、仍在開發中**。"],
+        ["L","真正的失敗是：**我把自己 feature 的告警誤判成假陽性**，而它其實是我的功能弄壞了另一個團隊的關鍵流程；而且當時**我們沒有便宜的方法去抓藏在統計噪音底下的真 bug**。所以與其要求大家追每一個噪音 alert，我把它變成讓『做對的檢查變成最省力的事』的流程和工具。這種跨團隊依賴管理 + QA 閘門的紀律，正是 aiDAPTIV 異質 ISV 整合會需要的。"]
+      ],
+        en: "\"At TikTok I owned dashboards and events on the Live side. In one iteration, **a feature I shipped myself** triggered, in a specific scenario, a popup that **covered the Wallet team's recharge entry** — in that scenario the recharge entry simply never appeared, so users couldn't top up and we were quietly losing revenue. It surfaced through A/B testing: every other metric for my feature was positive, but revenue dipped slightly and one user event on my dashboard dropped. I got an alert — but **I mistakenly dismissed it as a false positive**: in isolation it looked like noise, and at our scale revenue is heavy-tailed with a wide confidence interval, and the dip sat inside that interval, so I let it go as noise. What actually surfaced the problem was the **Wallet team's PM**: he noticed their revenue metric and the 'open recharge panel' user event **both dropping**, called a meeting, and pulled in the tech owners of the related teams; tracing it down, we found **my feature's popup was covering their recharge entry**. I took over and led the RCA — fixing not just the bug but *why we missed it* — which produced three structural changes: **(1) QA gating** — any feature that could affect another team must, before launch, be routed to **that team** to run their own P0/P1 tests, and I pushed the QA org to **cross-share each team's P0/P1 showcases**, since one team's critical cases were invisible to others; **(2) cross-team kickoff** — before development you pull in the **other team's QA and PM**; this time I'd only consulted their **RD**, but even the RD couldn't tell from the codebase that a recharge popup could appear in this scenario — QA and PM would have; **(3) tooling** — with the data center's DA, infra, and AI teams we chartered a system that aggregates every team's running A/B experiments and uses an **LLM to correlate a metric move to likely culprit features**, so a within-CI-but-suspicious signal gets a cheap automatic second look. QA gating and cross-team P0/P1 sharing became routine; the LLM correlation system is chartered and still in development. The real failure: **I dismissed my own feature's alert as a false positive** when it was actually my feature breaking another team's critical flow — and we had no cheap way to catch a real bug hiding under statistical noise. So instead of asking everyone to chase every noisy alert, I turned it into process and tooling that makes the right check the cheap one. That cross-team dependency management and QA-gating discipline is exactly what aiDAPTIV's heterogeneous ISV integrations will need.\""
+      }],
+      hit: "真 revenue 失敗（**我自己的 feature 遮蔽 wallet 團隊充值入口**）+ 誠實 own（**我誤判成假陽性**）+ 主導 RCA + QA 閘門／跨團隊 P0/P1 showcase 分享（QA 出身最愛）+ 數據驅動偵測 + 把疏失變成流程與 LLM 工具（AI 生態）+ 跨團隊依賴管理。"
+    },
+    {
+      id: "Q3", title: "端到端複雜 program", story: "O-C；22 天 vs 40 天估時", fw: "STAR",
+      ask: [
+        "「描述一個你從頭到尾負責的複雜專案。」",
+        "「講一次你交付得比團隊預期快很多的經驗。」",
+        "「你怎麼確保大型專案的規格與實作不會走偏？」"
+      ],
+      scripts: [{ star: [
+        ["S","在 OpenNet，當時的目標是驗證我自建的 AI 框架能不能規模化。"],
+        ["T","我**端到端**負責 LiveChat + PrematchComment——WebSocket 即時聊天 + REST 留言、**26 個 ticket**。"],
+        ["A","我把 **12 章 Tech Design 當 single source of truth**、用腳本從它自動生 Jira ticket，再跑**每日一致性檢查**抓 code 跟規格的偏差。"],
+        ["R","iOS 用 **22 個工作天**交付，團隊對同一份工作的估時約 **40 天**，等於**快約 45%**，**95% 規格一致性、9/10 架構評審**。同規格在其他平台花 36 天，iOS 估得高是因為即時聊天要先做 **session 基礎建設**這個前置 task——所以是同平台、蘋果對蘋果的對比。"]
+      ],
+        en: "\"At OpenNet I owned a feature end-to-end: LiveChat + PrematchComment — real-time WebSocket chat plus a REST comment system, 26 tickets. The goal was to prove an AI-assisted framework I'd built could scale. I made the 12-chapter Tech Design the single source of truth, auto-generated the Jira tickets from it, and ran a daily consistency check that flagged any drift between code and spec. I shipped the iOS build in **22 working days — the team's own estimate for the same work was ~40** — so roughly **45% faster**, at **95% spec consistency** and a **9/10 architecture review**. The same spec on other platforms took 36 days; iOS was estimated higher because real-time chat needed an extra **session-infrastructure** task up front — the chat room's foundation — so this is a like-for-like, same-platform comparison.\""
+      }],
+      notes: [{ label: "被追問 velocity/SP", text: "26 tickets / 158 SP，但那 SP 是我的自動化管線從 TDD 估的、跨團隊不可比，所以我看的不是 velocity 而是一致性和品質。" }],
+      hit: "同平台 45% 提速（硬數據）+ 每日一致性追蹤（QA 思維）+「velocity 何時不該用」的誠實 → 全中 David 的點。"
+    },
+    {
+      id: "Q4", title: "緊 deadline 交付", story: "TikTok 聯播，Tech Owner，分兩期 MVP", fw: "STAR",
+      ask: [
+        "「講一次你在很緊的 deadline 下交付的經驗。」",
+        "「當時間不夠做完所有功能時，你怎麼取捨？」",
+        "「描述一次你必須砍 scope 才能準時上線的情況。」"
+      ],
+      scripts: [{ star: [
+        ["S","在 TikTok 我是一個**聯播**功能的 Tech Owner——讓大主播跟小主播聯播、把大主播粉絲帶到小主播。時程被一個硬性 **campaign deadline** 推著走，整個 feature 塞不進去。"],
+        ["T","我要在硬 deadline 內保住 campaign 必要的功能準時上線，同時不浪費資源在還不確定有沒有價值的部分。"],
+        ["A","我跟該 feature 的 PM 討論後**拆兩期**。**第一期**是最小 MVP，準時滿足 campaign 硬需求：**前後端開發 3 天、連調 2 天**。另一個小需求我不另外開發、**改用既有系統**——客戶端早就預埋好線路，只要前端調 JS 格式 + 後端調 DB schema。上線後埋點，用數據決定要不要內化成常駐功能（第二期）。"],
+        ["R","第一期準時上線。第二期數據很**微妙**：小主播觀看時長、送禮都升，但大主播觀看時長略降、連帶送禮也降，整體只微幅上漲。因為平台政策以**保護大主播**為主，我們選擇即使整體略正向也**不內化**，但把線路保持接通供未來複用。心得：硬 deadline 下砍到保得住期限的 MVP、能複用就不重造，並讓數據——放進商業**政策**脈絡讀——決定什麼值得長成常駐功能。"]
+      ],
+        en: "\"At TikTok I was Tech Owner for a **co-streaming** feature — a top streamer co-broadcasts with smaller streamers so the top streamer's fans flow to the small ones — and a hard **campaign deadline** drove the timeline; the full feature couldn't fit. With the feature PM, I split it into two phases. **Phase 1** was a minimal MVP that fully met the campaign's hard requirement, shipped on time: **frontend + backend in 3 working days, plus 2 days of integration**. For a secondary requirement, instead of building new I **reused an existing system** — the client already had pre-embedded hooks, so we only needed a frontend JS-format change and a backend DB-schema tweak. We instrumented the launch and let the data decide whether to internalize it as a permanent feature — Phase 2. The data was **nuanced**: small streamers' watch time and gifting both rose, but top streamers' watch time dipped slightly, dragging their gifting down too; net review was **marginally positive**. Because platform policy prioritizes protecting top streamers, we chose **not** to internalize it despite the slight aggregate gain — but we kept the circuit wired so any future campaign can reuse it instantly. Takeaway: under a hard date, cut to the MVP that protects the deadline, reuse before you rebuild, and let data — read against business *policy*, not just the headline number — decide what graduates into a permanent feature.\""
+      }],
+      hit: "硬 deadline + 5 天 MVP 準時 + 複用預埋線路（reuse > rebuild）+ 數據驅動且**帶取捨**的決策 + **對齊政策、不追邊際正向**的成熟判斷 + 基礎設施留給未來複用 → TPM 執行力、產品 sense、商業成熟度全中。"
+    }
+  ]},
+
+  { round: "技術深挖題備用", sub: "", cards: [
+    {
+      id: "TT1", title: "重大技術 trade-off / 決定重構", story: "OpenNet 架構抽成 Adapter（原 F1，改作技術題）", fw: "STAR",
+      framework: "用於：§10「走一個你主導的重大技術 trade-off」「決定不做/重構某事」。**不**當失敗題用（失敗份量輕）。",
+      ask: [
+        "「走一個你主導的重大技術 trade-off。」",
+        "「講一次你決定重構、或推翻自己原本設計的經驗。」",
+        "「你做過最難的技術決策是什麼？後來證明對嗎？」"
+      ],
+      scripts: [{ star: [
+        ["S","在 OpenNet 我推動 AI 輔助開發，第一版開發規則是依團隊當時的架構（**MVVM + Clean Architecture**）寫的，用了一陣子。後來團隊改採 **SwiftUI**，而 **TCA** 在社群成熟、又天然相容 SwiftUI，所以遷移到 TCA。"],
+        ["T","這個遷移是對的，但暴露了我設計的問題：我把**架構規則跟整個開發 pipeline 綁死了**，架構一換、第一版規則就整套不適用、AI 輔助退回『個人偶爾用』。我得讓框架**撐得過架構切換**。"],
+        ["A","我把架構抽成一個**可抽換的 Adapter——一個『架構 skill』**，不再跟 pipeline 綁死。核心規則和流程都不動，未來需求或方向變了、直接抽換架構 skill 就好。我先用小功能驗證、再放大到 26 ticket 的大功能。"],
+        ["R","**95% 規格一致性、9/10 架構評審、AI code 採用率 ≥60%**。trade-off 是：可抽換的抽象前期成本比寫死單一架構高，但它是**唯一能撐過架構切換的設計**。這正是我會用在 aiDAPTIV ISV 整合的思路——假設每個 ISV 技術棧都不同、而且會變，一開始就把跟技術棧相關的部分做成可抽換 adapter。"]
+      ],
+        en: "\"At OpenNet I was driving AI-assisted development, and I built the first version of our dev rules around the team's architecture at the time — **MVVM + Clean Architecture**, which genuinely suited the project; we ran on it for a while. Later the team decided to adopt **SwiftUI**, and since **TCA** is mature in the community and a natural fit for SwiftUI, we migrated to it. That migration was a sound call — but it exposed a real flaw in my design: I'd **coupled the architecture rules into the whole development pipeline**, so the moment the architecture changed, the first-version rules no longer applied and the AI assistance regressed to occasional personal use. The fix: I pulled the architecture out into a **swappable Adapter — an 'architecture skill'** — so it's no longer bound to the pipeline. The core rules and process stay untouched; when the team's needs or direction change, you just swap the architecture skill. I proved it on a small feature first, then scaled to the 26-ticket feature: **95% spec consistency, 9/10 architecture review, ≥60% AI-code adoption**. The trade-off: a swappable abstraction costs more up front than hard-coding one architecture, but it's the only thing that survives a stack change. For a TPM, that's exactly how I'd design ISV integration on aiDAPTIV — assume every ISV's stack differs and will change, so make the stack-specific part a swappable adapter from day one.\""
+      }],
+      hit: "技術 trade-off + 可演進設計 + 直接 map aiDAPTIV ISV 異質整合。"
+    }
+  ]},
+
+  { round: "第二輪", sub: "需求收斂 / 優先排序 / 數據翻轉 / 產品 sense", cards: [
+    {
+      id: "Q5", title: "需求收斂", story: "BD-AI，最終版", fw: "STAR",
+      ask: [
+        "「你怎麼從一堆雜亂的需求中收斂出真正該做的？」",
+        "「描述你蒐集並排序使用者需求的方法。」",
+        "「面對相互衝突的 stakeholder 需求，你怎麼處理？」"
+      ],
+      scripts: [{ star: [
+        ["S","我當 TikTok Live 團隊與內部 AI 工具團隊的**對接窗口**。"],
+        ["T","負責收集 Live 工程師的開發痛點、**收斂成具體工具需求**，而不是有求必做。"],
+        ["A","我用**三種方式交叉驗證**、不靠單一意見：**跟跑一輪完整開發**看時間實際耗在哪、**一對一訪談 RD** 拿質化的『為什麼』、再拉**工單耗時統計**拿量化訊號。三者對上了——某一段 workflow 同時佔了最多抱怨和最多實測耗時。我把零散需求收斂——**畫四象限（重要 vs 緊急）、再依成本/收益比排序**——收斂成**幾個高槓桿需求**。"],
+        ["R","最終在 **Q4 上線了 1 個內部系統——線上 issue 分流系統，online issue 修復時間降 22%**。收斂紀律：質化 + 量化廣收集，但用四象限 + 成本/收益砍到幾個最高槓桿的需求、而不是有求必做——這正是我會用在 aiDAPTIV ISV 整合需求分流的方法。"]
+      ],
+        en: "\"As the liaison between TikTok's Live team and the internal AI-tooling team, I owned collecting Live engineers' development pain points and converging them into concrete tool requirements. I **triangulated three ways** so I wasn't relying on opinion alone: I **shadowed a full development cycle** to see where time actually went, ran **one-on-one interviews with the RDs** for the qualitative 'why,' and pulled **ticket time-cost statistics** for the quantitative signal. The three lined up — one part of the workflow dominated both the complaints and the measured time loss. So I converged the scattered asks by **plotting them on an importance-vs-urgency matrix and then ranking by cost/benefit**, narrowing down to **a few high-leverage requirements**. The outcome: in Q4 we shipped one internal system out of this — an **online-issue triage system that cut online-issue fix time by 22%**. The discipline: collect broadly across qualitative and quantitative signals, but cut to the few highest-leverage needs rather than building everything requested — exactly how I'd triage ISV integration requests on aiDAPTIV.\""
+      }],
+      hit: "三角驗證（跟跑 + 訪談 + 工單量化）+ 四象限／成本收益收斂 + **真上線（Q4 線上 issue 分流系統，修復時間 -22%）** + ISV 需求分流雛形。"
+    },
+    {
+      id: "Q6", title: "優先排序", story: "Q4 聯播，排序角度；與 Q4 同源", fw: "STAR",
+      ask: [
+        "「你怎麼決定先做什麼、後做什麼？」",
+        "「資源有限時你的優先排序原則是什麼？」",
+        "「講一次你必須對某個需求說『不』或延後的經驗。」"
+      ],
+      scripts: [{ star: [
+        ["S","同一個 TikTok 聯播專案，從優先排序角度講。我們有完整 scope，但 campaign deadline 是**硬的、不能動**、時間有限——不可能全做。"],
+        ["T","身為 Tech Owner，我要在硬限制下排出『先做什麼』。"],
+        ["A","我的排序只有一條準則：**什麼能保住這個硬性外部限制**。我跟 PM 把 scope 拆成 Phase-1 MVP，剛好（也只）做 campaign 需要的，其餘延到 Phase 2、用**上線數據當閘門**；另一個次要需求我連『做新東西』都降級、**直接複用既有系統**（預埋線路讓小改前端 + DB schema 就 cover）。"],
+        ["R","campaign 準時上線，數據閘門也讓我們**沒過度投資**在一個後來只是微幅正向的東西上。三層排序：硬 deadline 關鍵先做、其餘能複用就不重造、再讓數據決定什麼值得長期投資。"]
+      ],
+        en: "\"Same TikTok co-streaming project, from the prioritization angle. We had a full feature scope but a hard, immovable campaign deadline and limited time — I couldn't ship everything. As Tech Owner I prioritized on one rule: **what protects the hard external constraint**. With the PM I split scope into a Phase-1 MVP that did exactly — and only — what the campaign required, and deferred the rest to a Phase 2 I **gated on launch data**, so we'd only invest further in what proved its value. For a secondary requirement I deprioritized building anything new at all and **reused an existing system** — pre-embedded hooks meant a small frontend + DB-schema change covered it. So three tiers: hard-deadline-critical first, reuse over rebuild for the rest, then let data decide what earns permanent investment. The campaign shipped on time, and the data gate stopped us over-investing in something that turned out only marginally positive.\""
+      }],
+      hit: "排序準則清晰（硬限制 > reuse > 數據閘門）+ 不過度投資的成熟度。"
+    },
+    {
+      id: "Q7", title: "數據 vs 直覺", story: "T-A 漏斗機率模型", fw: "STAR",
+      ask: [
+        "「講一次數據和你（或別人）的直覺相反的經驗。」",
+        "「描述一次你用數據推翻了一個既定看法或決定。」",
+        "「你怎麼判斷一個指標是不是真的代表問題？」"
+      ],
+      scripts: [{ star: [
+        ["S","在 TikTok LIVE 我是互動指標分析的 PIC。我們上線了 **Quick Recommend CoHost**（系統自動推薦主播配對連麥），PM 看到 invitee 接受率只有 **15%**，想重設計或下架，直覺是『15% = 功能失敗』。"],
+        ["T","我要判斷這 15% 是不是真的代表失敗，並給出該不該下架的依據。"],
+        ["A","我不認同表面數字，因為**機制很關鍵**：系統一次推薦 **12 個**主播、只要 **1 個**接受就成立。我用 7 天數據建五環節全鏈路漏斗（Android **870 萬** PV、iOS **340 萬**），做機率模型：P(群組成功)=1−(1−0.15)¹²=**86%**，群組層級成功率其實有 **73–86%**。我還把百萬級 PV 的 Top 6 error code 分類，區分『匹配競爭的正常現象』和真瓶頸，找出真正可優化的：iOS **4–7%** 用戶被 dual-camera 偵測擋住。"],
+        ["R","數據**翻轉了決定**——功能保留、dual-camera 修正進 **Q3 OKR**、這份分析成為團隊 metric analysis 範本、error code 分類直接 feed 進 LinkMic SDK 重構需求。我學到：表面數字若忽略背後機制就會騙人——要對系統建模、不要對表面指標反應。對 TPM 評估 aiDAPTIV 效能或面對 ISV 技術質疑，需要的正是這種紀律。"]
+      ],
+        en: "\"At TikTok LIVE I was the PIC for interaction-metric analysis. We'd launched **Quick Recommend CoHost** — the system auto-recommends streamer pairings — and the PM saw the invitee acceptance rate was only **15%** and wanted to redesign or kill it; the intuition was '15% = the feature failed.' I wasn't convinced, because the mechanics matter: the system recommends **12 streamers at once and only needs one to accept**. I built a five-step funnel from 7 days of data — **8.7M PV on Android, 3.4M on iOS** — and modeled it: P(group success) = 1 − (1 − 0.15)¹² = **86%**, so group-level success was actually **73–86%**. The 15% wasn't failure — it was healthy. I also classified the top-6 error codes across millions of PV to separate normal match-competition — multiple people racing for one slot, which retries can't fix — from real bottlenecks, and found the genuine one: **4–7% of iOS users blocked by dual-camera detection**. Result: the data flipped the decision — the feature stayed, the dual-camera fix went into the **Q3 OKR**, the analysis became the team's metric-analysis template, and the error-code classification fed straight into the LinkMic SDK refactor. The lesson: a headline number lies if you ignore the mechanism behind it — model the system, don't react to the surface metric. For a TPM evaluating aiDAPTIV's performance or an ISV's technical pushback, that's exactly the discipline needed.\""
+      }],
+      hit: "數據推翻直覺 + 機率建模（硬分析）+ 翻轉 stakeholder 判斷 + 產出被複用。"
+    },
+    {
+      id: "Q8", title: "產品 sense", story: "O-A 工作面 + M-LLM side project，雙講", fw: "STAR",
+      ask: [
+        "「你做過最自豪的產品或專案是什麼？為什麼？」",
+        "「講一個展現你產品 sense 的例子。」",
+        "「你怎麼看待自己打造的工具／產品的價值？」"
+      ],
+      scripts: [
+        { label: "O-A（工作面）", star: [
+          ["S","工作面我最自豪的是在 OpenNet 建的**架構無關 AI 開發框架**。當時 AI 輔助開發卡住了：讓 AI 有用的規則跟單一架構綁死，專案或團隊一換技術棧就整套垮、AI 退回『個人偶爾用』，無法跨人跨專案規模化。"],
+          ["T","我要把它從『一個人偶爾用的 AI』變成『團隊可依賴、能跨架構規模化的框架』。"],
+          ["A","我設計**架構無關核心規則 + 可抽換 `{{PATTERN_NAME}}` Adapter**，新架構只要加一個綁定檔。"],
+          ["R","用 26 ticket 功能驗證：**95% 一致性、9/10 評審、採用率 ≥60%**，iOS **22 天 vs 估時約 40 天**。我自豪是因為它解的是**規模化**問題，不只是寫 code。"]
+        ],
+          en: "\"On the work side, the thing I'm proudest of is the **architecture-agnostic AI development framework** I built at OpenNet. It needed to exist because AI-assisted development was stuck: the rules that made AI useful were coupled to one architecture, so the moment a project or team used a different stack the whole thing broke and AI dropped back to occasional personal use — it couldn't scale across people or projects. I designed architecture-agnostic core rules with a swappable `{{PATTERN_NAME}}` Adapter, so a new architecture just needs one binding file. That turned 'AI one person uses sometimes' into a framework the team could rely on — proven by a 26-ticket feature at **95% spec consistency, 9/10 architecture review, ≥60% AI-code adoption**, iOS landing in **22 days vs a ~40-day estimate**. I'm proud of it because it solved a *scaling* problem, not just a coding problem.\""
+        },
+        { label: "M-LLM（side project，獨立 pitch）", star: [
+          ["S","side project 面——獨立 pitch——我建了 **Muse Platform**，一個 24/7 跑我 AI workflow 的個人 IDP。現成 agent 框架又貴又黑箱。"],
+          ["T","我要把成本和黑箱問題解掉、把自己的工具當產品經營。"],
+          ["A","我一開始押 **Claude Agent SDK**，後來量化發現它把 **~83% token 燒在 overhead**，所以改**直呼 API + 自建 task routing**。"],
+          ["R","**成本砍 ~83%**，現在 **33 模組、4 個 LLM provider**。產品 sense 的重點：量化真實成本、砍掉昂貴抽象、自己扛 trade-off。"]
+        ],
+          en: "\"On the side — pitched separately — I built **Muse Platform**, a personal internal developer platform running my AI workflows 24/7. It needed to exist because off-the-shelf agent frameworks were expensive and opaque: I'd bet on the Claude Agent SDK, then measured it was burning **~83% of tokens on overhead**, so I moved to calling the API directly with my own task routing — **cost down ~83%**. It's now **33 modules across 4 LLM providers**. The product-sense point: I treated my own tooling like a product — measure the real cost, kill the expensive abstraction, own the trade-off.\""
+        }
+      ],
+      hit: "工作面：規模化問題 + 量化驗證；side project：把工具當產品、量化 trade-off。"
+    }
+  ]},
+
+  { round: "第三輪", sub: "跨職能 / 跨時區 / 救紅燈 / 技術風險", cards: [
+    {
+      id: "Q9", title: "跨職能交付", story: "T-B Creator's Team Challenge 主 / O-B 備", fw: "STAR",
+      ask: [
+        "「描述一次你帶領跨職能團隊交付的經驗。」",
+        "「你怎麼協調 PM、工程、QA 等不同角色？」",
+        "「跨職能合作中最大的挑戰是什麼？你怎麼解決？」"
+      ],
+      scripts: [{ star: [
+        ["S","在 TikTok LIVE 我們做 **Creator's Team Challenge**——讓觀眾組團送禮，直接驅動 **Revenue 核心指標**。"],
+        ["T","我是 iOS 開發兼 Tech Design 共同作者，要帶一個**五人跨職能團隊**（PM、iOS（我）、Android、Backend、QA）約一週端到端交付，趕上 **v42.9** release、又不弄壞現有禮物面板。"],
+        ["A","我共同撰寫 Tech Design（新禮物 section、解鎖狀態機、向後相容、experiment flag）；設計 **fallback 讓舊版 client 忽略新 section type 而不 crash**、複用既有 lock type 不新增；把工作拆成 **iOS 3.5 天 + tracking 1 天 + self-test 1 天、跟 QA 排程同步**，不擠壓 release。"],
+        ["R","準時上 v42.9、**零 P0/P1 regression**。跨職能能成的關鍵：對齊在同一份 Tech Design 當合約、並按 **QA 排程（不只 dev 排程）**排序。"]
+      ],
+        en: "\"At TikTok LIVE we built **Creator's Team Challenge** — a gift feature letting viewers team up to send gifts, directly driving our **Revenue core metrics**. I was the iOS dev and co-author of the Tech Design, and I drove a **five-person cross-functional team — PM, iOS (me), Android, Backend, QA — end-to-end in about a week**. The shared goal: ship on the **v42.9** train without destabilizing the existing gift panel. I co-wrote the Tech Design covering the new gift section, the lock/unlock state machine, backward compatibility, and the experiment flag; designed a **fallback so older clients ignore the new section type instead of crashing**, and reused an existing lock type rather than adding one; and broke the work into **iOS 3.5 days + tracking 1 day + self-test 1 day, synced to QA's schedule** so we didn't squeeze the release. Result: shipped on time on v42.9 with **zero P0/P1 regressions**. What made it work cross-functionally was aligning everyone on one Tech Design as the contract, and sequencing against the QA schedule — not just the dev schedule.\""
+      }],
+      notes: [{ label: "備（O-B）", text: "PM+Designer+RD 建 User Story↔Figma UID 映射讓 AI 自動生 UI、UI 時間 -23%、30+ Previews。" }],
+      hit: "五人端到端 + Tech Design 當合約 + 按 QA 排程排序（QA hook）+ 0 P0/P1。"
+    },
+    {
+      id: "Q10", title: "跨時區對齊", story: "TikTok SG/TW/Sydney/London", fw: "STAR",
+      ask: [
+        "「你怎麼在跨時區的團隊中保持對齊？」",
+        "「描述你管理分散式／遠端團隊的方法。」",
+        "「跨時區協作你遇過什麼困難？怎麼解決？」"
+      ],
+      scripts: [{ star: [
+        ["S","在 TikTok 我橫跨**新加坡、台灣、雪梨、倫敦**，對齊必須撐得過很大的時區差。"],
+        ["T","我要讓決策和 action item 在這麼大的時區差下不漏、又不靠塞滿同步會議。"],
+        ["A","三件事：**(1)** 一個每天的 sync-up——新加坡時間下午 6 點左右、整個時區帶唯一重疊的固定點——開得短、聚焦決策；**(2)** 結構化技術文件當 source of truth，大部分對齊 async 對著規格做；**(3)** 每場會議**自動產生錄影、逐字稿、逐字稿 tracker、AI summary、action items**，直接推送給每位與會者的相關 stakeholder。"],
+        ["R","開會時在睡覺的人，不用任何同步會議也能拿到決策和自己的 action item，跨組織也不漏。原則：把同步窗口做小、做高價值，其他一切都讓人能便宜地 async 消化。直接 map Phison HQ 台灣 ↔ US/CN/JP/MY/IN。"]
+      ],
+        en: "\"At TikTok I worked across **Singapore, Taiwan, Sydney, and London**, so alignment had to survive a wide timezone spread. Three things made it work. **First, one daily sync-up** — around 6pm Singapore time, the single fixed point where the whole spread overlapped — kept short and decision-focused. **Second, structured technical documents as the source of truth**, so most alignment happened async against a written spec, not in meetings. **Third — and this I'd bring anywhere — every meeting automatically produced a recording, a transcript, a transcript tracker, an AI summary, and action items, pushed straight to each attendee's relevant stakeholders.** So someone asleep during the call still got the decisions and their action items with zero extra sync calls, and nothing got lost across orgs. The principle: make the synchronous window small and high-value, and make everything else cheap to consume asynchronously. That maps directly to Phison's HQ-Taiwan ↔ US/CN/JP/MY/IN setup.\""
+      }],
+      hit: "小而高價值的同步窗口 + async-first 文件 + 會議自動 doc 化（AI summary／action item）。"
+    },
+    {
+      id: "Q11", title: "救紅燈 Red→Green", story: "AD-flow；選項 A，不與失敗題撞", fw: "STAR",
+      framework: "⚠️ AD-flow 也是 Q1 衝突題主故事。同場兩題都被問 → 救紅燈用 AD-flow、衝突題改用 BD-AI。",
+      ask: [
+        "「講一次你接手一個瀕臨失敗（紅燈）的專案、並把它救回來。」",
+        "「描述你怎麼把一個落後的專案拉回軌道。」"
+      ],
+      scripts: [{ star: [
+        ["S","我被找進 Maxora.ai，一個 20+ 人的 AI 廣告團隊，交付基本上是**紅燈**：開發 ad-hoc、PRD 散落、沒有 tech design review，結果不斷返工、交付一直 slip。"],
+        ["T","我把它當紅燈專案救援，要把交付**從紅轉綠**。"],
+        ["A","**第一步診斷根因、而不是救火症狀**——我把大部分返工追溯到**需求落差、不是寫 code 速度**。所以重建地基：一套 **PRD→TDD→Dev** 流程，讓需求在寫 code 前就釘死。等地基穩了，才把 **Claude Code 疊上去**。我先拿自己一個交付做 **PoC** 驗證、再放大。"],
+        ["R","**返工 -41%、交付 -33%——轉綠。**救紅燈的心得：不要修你看得到的症狀，要修你量得到的根因，並把地基排在加速器前面。"]
+      ],
+        en: "\"I was brought into Maxora.ai, an AI ad-tech team of 20+, where delivery was effectively **in the red**: development was ad-hoc, PRDs were scattered, there was no tech-design review — so constant rework and slipping delivery. I treated it as a red-program recovery. **First, diagnose the root cause instead of firefighting symptoms** — I traced most of the rework back to **requirement gaps, not coding speed**. So I rebuilt the foundation: a **PRD→TDD→Dev** process so requirements were nailed before code. Only once that foundation was stable did I **layer Claude Code on top** — because AI on a chaotic process just amplifies the chaos. I proved it on one of my own deliverables with a PoC first, then scaled. Result: **rework down 41%, delivery down 33% — green.** The lesson for moving red to green: don't fix the symptom you can see, fix the root cause you can measure, and sequence the foundation before the accelerator.\""
+      }],
+      hit: "紅→綠 = 診斷根因（非救火）+ 先地基後 AI + PoC 驗證 + 量化轉綠。"
+    },
+    {
+      id: "Q12", title: "技術風險 & 跨團隊依賴", story: "T-C CoHost Offline 全鏈路", fw: "STAR",
+      ask: [
+        "「講一次你提早發現並化解重大技術風險的經驗。」",
+        "「你怎麼管理跨團隊的技術依賴？」",
+        "「描述一次你在 review 階段就抓到架構級問題的情況。」"
+      ],
+      scripts: [{ star: [
+        ["S","在 TikTok LIVE，中低段位主播一直卡在匹配大廳——同段位可配的太少。PM 方案是讓直播中主播邀請『在線但沒在播』的好友連麥——全新 offline→online 邀請流程，**橫跨 Push/DM/API/SDK 四個子系統**。"],
+        ["T","我負責 PRD review、iOS 實作、跨平台 tracking 一致性，要在開發前就把**架構級風險和跨團隊依賴攤清楚**。"],
+        ["A","我在 **review 階段、還沒寫 code 之前**抓到最大的技術風險：offline invitee 其實是**自己發起**連線，但 tracking 還用舊的 inviter/invitee 角色定義——這會**默默污染所有 offline 的下游指標**（成功率、觀看時長、送禮全歸錯人，且 offline invitee 沒有 channel_id、舊驗證會壞）。我提出用 **type=53（offline）跟 type=1（regular）** 區分、並在 is_off_live=1 時跳過 channel_id 驗證。接著把跨團隊依賴**顯式攤開**——**8 個 API、2 新增 6 修改、跨多團隊**——並抓到 Android/iOS 對同一通知事件處理不同，提議**統一事件**避免數據 platform gap。"],
+        ["R","**type=53 被後續所有 offline 功能沿用、統一事件成跨平台標準、4 階段流程圖成設計範本。**原則：在 review 階段就把介面不一致攤出來（最便宜時）、把依賴圖顯式化、把一次性修法變成共用標準。正是 aiDAPTIV 異質系統 ISV 整合需要的。"]
+      ],
+        en: "\"At TikTok LIVE, low- and mid-tier streamers kept getting stuck in the matching lobby — too few same-tier streamers to pair with. The PM's fix was to let a live streamer invite an online-but-not-streaming friend to co-host — a brand-new offline-to-online invite flow spanning **four subsystems: Push, DM, API, and SDK**. I owned PRD review, iOS implementation, and cross-platform tracking consistency. The biggest technical risk I caught was **at the review stage, before any code**: an offline invitee actually *initiates* the LIVE connection, but the tracking still used the old inviter/invitee role definition — which would have **silently corrupted every downstream metric** for offline co-hosts (success rate, watch time, gift attribution all logged against the wrong side, and the offline invitee has no channel_id so the old validation breaks). I proposed distinguishing **type=53 (offline) from type=1 (regular)**, plus skipping channel_id validation when is_off_live=1. I then made the cross-team dependency explicit — **8 API endpoints, 2 new and 6 modified across teams** — and caught a cross-platform divergence where Android and iOS handled the same notification event differently, so I proposed a **unified event** to prevent a data platform-gap. Results: type=53 was adopted by every later offline feature, the unified event became the cross-platform standard, and my 4-phase flow diagram became the reference for similar features. The principle: surface interface mismatches at review — when they're cheap to fix — make the dependency map explicit, and turn one-off fixes into shared standards. Exactly what aiDAPTIV's ISV integrations need across heterogeneous systems.\""
+      }],
+      hit: "review 階段抓架構級風險（最便宜時）+ 8 API 跨子系統依賴顯式管理 + 推動跨平台標準。"
+    }
+  ]},
+
+  { round: "第四輪", sub: "Scrum 方法論 / 向上影響 / 講複雜技術", cards: [
+    {
+      id: "INFO", title: "Scrum 知識速記", story: "被問細節時的底氣", kind: "info",
+      html: `
+        <table>
+          <thead><tr><th>類別</th><th>元件</th></tr></thead>
+          <tbody>
+            <tr><td><strong>3 角色</strong></td><td>Product Owner、Scrum Master、Developers</td></tr>
+            <tr><td><strong>5 事件</strong></td><td>Sprint（容器）、Sprint Planning、Daily Scrum/standup、Sprint Review、Retrospective</td></tr>
+            <tr><td><strong>3 產出物</strong></td><td>Product Backlog、Sprint Backlog、Increment（承諾：Product Goal / Sprint Goal / Definition of Done）</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li><strong>最有價值</strong>：Retrospective（唯一改進流程本身的事件）+ 嚴格 Definition of Done（讓「完成」不主觀）。</li>
+          <li><strong>最常被詬病/濫用</strong>：Daily standup 淪為向主管報進度秀、velocity 當生產力分數（會被灌水 game）。</li>
+        </ul>`
+    },
+    {
+      id: "Q13", title: "Scrum 元件 & 有效 standup", story: "O-C 經驗 + 方法論", fw: "PLAIN",
+      ask: [
+        "「Scrum 有哪些角色、事件、產出物？」",
+        "「你覺得 Scrum 裡哪個元件最有價值、哪個最常被濫用？」",
+        "「怎樣才算一個有效的 daily standup？」"
+      ],
+      scripts: [{
+        zh: "「Scrum 有 3 角色、5 事件、3 產出物。**我的經驗裡最有價值的是 Retrospective 和嚴格的 Definition of Done**——Retro 是唯一會改進流程本身的事件，清楚的 DoD 讓『完成』不再主觀。**最沒價值或最常被濫用的是：淪為向主管報進度秀的 daily standup、以及被當成生產力分數的 velocity。**有效 standup 的關鍵：15 分鐘 timeboxed、聚焦 **blocker 和依賴——不是講『我昨天做了什麼』給主管聽**、每個 blocker 當天指派 owner。在 OpenNet 我的**每日一致性檢查**其實就是 standup 訊號：不是主觀進度，而是每天攤出實作偏離 Tech Design 的地方，所以對話永遠圍繞一個具體 blocker——而每次 Retro 都至少落地一個真正上線的 action item。」",
+        en: "\"Scrum has three roles, five events, and three artifacts. **Most valuable, in my experience: the Retrospective and a hard Definition of Done** — the Retro is the only event that improves the process itself, and a clear DoD stops 'done' from being subjective. **Least valuable, or most abused: the daily standup when it degenerates into status-reporting theater, and velocity treated as a productivity score.** What makes a standup effective: 15 minutes, timeboxed, focused on **blockers and dependencies — not 'what I did yesterday' for the manager** — and every blocker leaves with an owner that day. At OpenNet my **daily consistency check** was effectively the standup signal: instead of subjective status, each day surfaced exactly where implementation had drifted from the Tech Design, so the conversation was always about a concrete blocker — and every Retro closed with at least one action item that actually shipped.\""
+      }],
+      hit: "講得出 Scrum 全貌 + 有判斷（Retro/DoD 最有價值、standup/velocity 最常變質）+ O-C 真實佐證。"
+    },
+    {
+      id: "Q14", title: "velocity 怎麼算 / 何時不該用", story: "方法論 + O-C", fw: "PLAIN",
+      ask: [
+        "「velocity 怎麼算？」",
+        "「什麼情況下不該用 velocity？」",
+        "「你會用 velocity 當績效指標嗎？為什麼？」"
+      ],
+      scripts: [{
+        zh: "「velocity 就是一個團隊每個 sprint 完成的 story point、取幾個 sprint 的移動平均，是**規劃輔助、不是目標**。它適合預測單一穩定團隊的近期產能。它**不該用**在：跨團隊比較（點數是團隊相對的、蘋果比橘子）、當生產力/績效指標（會被灌水 game）、或工作內容/人會變動的情境。我 OpenNet 的功能就是反例：**那 158 點是我的管線從 Tech Design 自動估的、不是團隊 planning poker 出來的**——所以我刻意從不把它當 velocity 報。跨架構 + solo 加 AI 的配置下，velocity 根本不可比，所以我量的是有意義的東西：**規格一致性和品質，不是每 sprint 幾點**。」",
+        en: "\"Velocity is just the story points a team completes per sprint, averaged over a few sprints as a **planning aid — not a target**. It makes sense for forecasting one stable team's near-term capacity. It does **not** make sense for: comparing across teams — points are team-relative, so it's apples to oranges; using it as a productivity or performance metric — it gets gamed, people inflate estimates; or any context where the work or people change. My OpenNet feature is the cautionary example: the **158 points were auto-assigned by my pipeline from the Tech Design, not planning-poker'd by a team** — so I deliberately never reported it as velocity. Across architectures and a solo-plus-AI setup, velocity simply isn't comparable, so I measured what was meaningful: **spec consistency and quality, not points per sprint**.\""
+      }],
+      hit: "方法論清楚（怎麼算 + 三種失效情境）+ O-C 誠實佐證「我刻意不報 velocity」→ 命中 David 成熟度測試。"
+    },
+    {
+      id: "Q15", title: "向上影響高層", story: "T-A，向上角度；與 Q7 同源", fw: "STAR",
+      ask: [
+        "「講一次你影響高層或主管決策的經驗。」",
+        "「你怎麼說服比你資深的人改變決定？」"
+      ],
+      scripts: [{ star: [
+        ["S","最清楚的例子：PM 和產品團隊因為 invitee 接受率只有 **15%** 想下架一個 CoHost 功能——高層的解讀是『失敗了』。"],
+        ["T","我要影響這個由上而下的判斷，但不是靠職位或爭辯。"],
+        ["A","我不靠意見、靠**模型**：系統一次推薦 **12 個**主播、只要 **1 個**接受，群組層級成功率其實是 **73–86%**，15% 是健康的。我帶他們走過漏斗和機率計算，再把真正的機會點重新框成 **iOS 4–7% 被 dual-camera 偵測擋住**。"],
+        ["R","決定**翻轉**——功能保留、真瓶頸進 **Q3 OKR**。我向上影響的方法永遠一樣：**不爭結論，把模型和數據交給他們、讓他們自己得出結論。**"]
+      ],
+        en: "\"The clearest example: a PM and the product team wanted to pull a CoHost feature because invitee acceptance was only **15%** — the leadership read was 'this failed.' I influenced that decision not with opinion but with a **model**: the system recommends **12 streamers and only needs one to accept**, so group-level success was actually **73–86%** — the 15% was healthy. I walked them through the funnel and the probability math, then reframed the real opportunity as the **4–7% of iOS users blocked by dual-camera detection**. The decision flipped — the feature stayed, and the real bottleneck went into the **Q3 OKR**. The way I influence up is always the same: **don't argue the conclusion — hand them the model and the data so they reach it themselves**.\""
+      }],
+      hit: "向上影響 = 用模型／數據讓對方自己得出結論（非爭辯）+ 翻轉產品團隊決定。"
+    },
+    {
+      id: "Q16", title: "講複雜技術給外行", story: "O-E 分眾指南", fw: "STAR",
+      ask: [
+        "「你怎麼把複雜技術講給非技術的人聽？」",
+        "「描述一次你向外行 stakeholder 解釋技術概念的經驗。」"
+      ],
+      scripts: [{ star: [
+        ["S","在 OpenNet 我要讓**起點差很多的不同受眾**都採用一套框架。"],
+        ["T","我要把同一套複雜系統講到不同高度的受眾都能懂、都願意採用。"],
+        ["A","我寫了**三份分眾指南、而不是一份**：給日常使用者的 Personal SOP、給採用工程師的 Team Guide、給非技術 stakeholder 的對外版——**同一套系統、三種高度**。對非技術受眾我**先講它做什麼、為什麼重要，再講機制**；當早期反饋說框架『太重』，我做了 30 分鐘快速入門降門檻。"],
+        ["R","採用門檻下降、跨受眾都能上手。這正是我會用來讓非技術 ISV 或高層上手 aiDAPTIV 的方式：先講它解掉的痛——**memory wall**，GPU 被昂貴有限的記憶體卡住——再談架構。"]
+      ],
+        en: "\"At OpenNet I needed a framework adopted by audiences with very different starting points, so I wrote **three audience-tiered guides instead of one**: a personal SOP for daily users, a Team Guide for engineers adopting it, and an external-facing version for non-technical stakeholders — **same system, three altitudes**. The principle: **match the abstraction to the audience**. For a non-technical audience I lead with **what it does and why it matters before any mechanism** — and when early feedback said the framework felt 'too heavy,' I built a 30-minute quick-start to lower the barrier. That's exactly how I'd onboard a non-technical ISV or exec to aiDAPTIV: lead with the problem it kills — the **memory wall**, GPUs choking on expensive limited memory — before any architecture.\""
+      }],
+      hit: "分眾分層（同系統三高度）+ 先價值後機制 + 降門檻 + 能即興用 memory wall 類比 map aiDAPTIV。"
+    }
+  ]},
+
+  { round: "補充題", sub: "", cards: [
+    {
+      id: "Q-FB", title: "收到負面 / 批評回饋", story: "主答：主管質疑 AI flow 不可行", fw: "CARL",
+      ask: [
+        "「講一次你收到嚴厲或負面回饋的經驗，你怎麼回應？」",
+        "「有人質疑過你的判斷力嗎？你怎麼處理？」",
+        "「描述一次別人不認同你的方案、你如何調整。」"
+      ],
+      scripts: [{ star: [
+        ["C","我在 OpenNet 導入一套 AI 開發工作流程，很大一部分基於我們在 TikTok 跟 AI 有效協作的經驗。主管看完整個 flow 後回饋很直接：他覺得**這在這裡不可行——TikTok 跟我們的資源和組織規模差太多、落不了地**——更尖銳的是，覺得我**沒想清楚就想推**。那句話蠻刺的，因為質疑的是我的**判斷**、不只是設計——但他講得有道理：我把一個 hyperscaler 的流程直接搬來、沒按我們的規模調整。"],
+        ["A","我**沒辯護，而是把思考做出來給他看**。我把 TikTok 的 flow 拆成一個個**節點**，列出我們團隊目前實際的開發問題，逐節點問『這個能不能解我們一個真實問題』。我畫了一個**『重要 vs 緊急』四象限**排優先序，再用**成本去篩**——這節點牽動多少團隊、要不要建基礎建設——最後產出一套真正適合 OpenNet 的最小可行 flow，並在接下來的需求開發裡驗證。"],
+        ["R","產出一套 **right-size 過、真正適合 OpenNet 的最小可行 flow**，並在實際需求中驗證了可行性和價值。"],
+        ["L","質疑你**判斷力**的回饋比稱讚更值錢——回應不是辯護，是把思考做出來、按情境 **right-size**。你不能把 hyperscaler 的流程整套搬。對 TPM 這正是 aiDAPTIV 的紀律——每個 ISV 規模和資源都不同，你要 right-size 整合方案、不是 copy-paste。"]
+      ],
+        en: "\"When I introduced an AI development workflow at OpenNet, it was largely based on how we'd collaborated with AI effectively at TikTok. After my manager reviewed the whole flow, his feedback was blunt: he thought it was **infeasible here — the gap in resources and org scale between TikTok and us was too large to land** — and, more pointedly, that I'd wanted to **push it without thinking it through**. That stung, because it questioned my judgment, not just the design — but he had a real point: I'd brought a hyperscaler's process without adapting it to our scale. So instead of defending it, I **did the thinking visibly**. I broke the TikTok flow into its individual **nodes**, listed our team's actual current pain points, and went node by node asking whether each one could solve a real problem we had. I plotted everything on an **importance-versus-urgency four-quadrant matrix** to prioritize, then filtered by **cost — how many teams a node touched and whether it needed new infrastructure** — and produced a **minimal viable flow that actually fit OpenNet**. Then I validated its feasibility and value on the next real feature. The lesson: feedback that challenges your judgment is worth more than praise — the response isn't to defend it, it's to do the thinking visibly and **right-size to the context**. You can't transplant a hyperscaler's process wholesale. For a TPM that's exactly the aiDAPTIV discipline — every ISV has a different scale and resource level, so you right-size the integration, you don't copy-paste.\""
+      }],
+      notes: [{ label: "備用（O-E 衍生，產品回饋角度）", text: "框架被同事嫌「太重、學習曲線陡」→ 不防衛、把回饋當採用數據 → 做 30 分鐘快速入門 + 三份分眾指南降門檻 → 採用率上升。Learning：對作品的批評是使用者體驗的資訊、不是對你價值的判決。" }],
+      hit: "質疑**判斷力**的 personal 回饋 + 不防衛、用四象限+成本分析把思考做出來 + right-size 不照搬 + 直接 map ISV 異質整合（David 最愛）。"
+    }
+  ]},
+
+  { round: "Why 區塊", sub: "Reed 真心話定稿（動機題，非 STAR）", cards: [
+    {
+      id: "WHY-YOU", title: "Why You", story: "三理由成弧線：我建過 → 跨度貼合 → 命中你的點", fw: "PLAIN",
+      ask: [
+        "「我們為什麼要錄取你？」",
+        "「你覺得你跟這個職位最契合的點是什麼？」",
+        "「你最大的差異化優勢是什麼？」"
+      ],
+      scripts: [{
+        zh: "「三點，而且層層遞進。**第一，我不只管 AI 專案——我親手建過一個**：Muse Platform，33 模組、4 個 LLM provider、24/7，加上三個組織的 AI 流程導入。這代表我能用 RD 的語言跟工程對話、用 BD/ISV 的語言對齊——正是 aiDAPTIV TPM 的橋樑角色。**第二，正因為這個跨度，我的經歷高度 mapping 你們生態系的異質性**：跨職能交付、影響沒權限的團隊、跨時區對齊、成本對效能 trade-off——一個晶片→OEM→ISV→客戶的生態系所活在的縫隙。**第三，我跟這裡在意的點直接對齊**：把 bug 砍 33% 的 QA 思維、量化 Scrum 交付、SDLC 紀律、驗證過的 AI 工具 PoC→scale 打法。所以：我建過、我的跨度貼合你們的生態、我的強項命中你們的優先順位。」",
+        en: "\"Three things, and they build on each other. **First, I don't just manage AI projects — I've built one**: Muse Platform, 33 modules across 4 LLM providers running 24/7, plus AI-process adoption across three organizations. That means I can talk to R&D in their language and to BD and ISVs in theirs — the bridge this aiDAPTIV TPM role is. **Second, because of that range, my experience maps your ecosystem's heterogeneity**: cross-functional delivery, influencing teams I had no authority over, aligning across timezones, cost-versus-performance trade-offs — the exact seams a chip-to-OEM-to-ISV-to-customer ecosystem lives in. **Third, I line up directly with what matters here**: a QA mindset that cut bugs 33%, quantified Scrum delivery, SDLC discipline, and a proven PoC-to-scale playbook for AI tooling. So: I've built it, my range fits your ecosystem, and my strengths hit your priorities.\""
+      }],
+      hit: "弧線：builder（地基／可信）→ 跨度（廣）→ 命中 David（準）。"
+    },
+    {
+      id: "WHY-ROLE", title: "Why This Role", story: "PO 體悟 + 更大影響力 + 1+1>2 整合", fw: "PLAIN",
+      ask: [
+        "「你為什麼想從工程轉做 TPM？」",
+        "「為什麼想做這個角色、而不是繼續寫 code？」",
+        "「你的職涯轉折是什麼？」"
+      ],
+      scripts: [{
+        zh: "「我的轉折點是在 TikTok 當 **Project Owner**——我發現我最擅長、也最享受的是**把技術 program 推到完成**，而不是只寫 code。過去一年我刻意往『技術深度 × 交付領導』的交集走——建自己的平台、在三個組織推 AI 採用。具體吸引我做 TPM 的是**影響力**：我想從開發端往產品端走、那裡槓桿更大；而 TPM 是唯一能讓我**整合過去所有技術經驗、再疊上產品思維**的角色——對我來說這就是 **1+1 > 2**。AI TPM 正好把這兩條線合一。」",
+        en: "\"My turning point was being a **Project Owner at TikTok** — I realized what I'm best at and enjoy most is **driving a technical program to completion**, not just writing code. Over the past year I deliberately moved toward the intersection of technical depth and delivery leadership — building my own platform and driving AI adoption across three orgs. What pulls me to TPM specifically is **impact**: I want to move from the build side toward the product side, where the leverage is larger — and TPM is the one role that lets me **integrate everything technical I've done and add product thinking on top**. That's where one plus one is greater than two for me. AI TPM is exactly that combination in one seat.\""
+      }],
+      hit: "真實動機（不是逃離 code，是要更大槓桿 + 整合）。"
+    },
+    {
+      id: "WHY-BD", title: "80% BD 回應", story: "最強一段——用 dashboard owner 實證", fw: "PLAIN",
+      ask: [
+        "「這個角色短期有很大比例是 BD／業務性質，你 OK 嗎？」",
+        "「你是工程背景，能接受大量非技術、直接面客的工作嗎？」",
+        "「你不會覺得這是從工程退一步嗎？」"
+      ],
+      scripts: [{
+        zh: "「我理解這角色短期偏 BD/strategy——要快速上手、直接面對客戶。**這正是我想要的一塊，而且對我不陌生。**在 TikTok 我的職級就已要求我當某些功能的 **dashboard owner**——盯指標、定期跟 DA 和 PM review、用那些數據**驅動下一步策略、而不只是當下的開發**。這些經驗正是讓我想往市場和商業端靠攏的原因——想給產品更長遠的策略規劃，而不是只 focus 在眼前的 code。所以這角色對我不是從工程退讓，**而是我早就在傾斜過去的、刻意的下一步。**」",
+        en: "\"I understand this role is BD- and strategy-heavy in the short term — fast pickup, facing customers directly. **That's exactly the part I want, and it's not new to me.** At TikTok my level already required me to **own dashboards for certain features** — watching the metrics, reviewing regularly with DA and PM, and using that data to **drive the next strategy, not just the current build**. Those experiences are precisely what made me want to move closer to the market and business side — to give products longer-term strategic direction rather than only focusing on the code in front of me. So for me this role isn't a step back from engineering — **it's the deliberate next step I've already been leaning into.**\""
+      }],
+      hit: "把「弱點」轉成「我已經在做」+ 實證 → 直接消除 David「工程師受不了非技術工作」的疑慮。**面試 differentiator，務必講。**"
+    },
+    {
+      id: "WHY-AIDAPTIV", title: "aiDAPTIV 為何吸引你 / 長期錨點", story: "硬+軟+生態 + 硬體×AI 賽道", fw: "PLAIN",
+      ask: [
+        "「你為什麼想加入 Phison／aiDAPTIV？」",
+        "「你的長期職涯規劃是什麼？」",
+        "「你怎麼理解 aiDAPTIV 這個產品？」"
+      ],
+      scripts: [{
+        zh: "「aiDAPTIV 特別吸引我兩點。**第一，它是真實的硬體+軟體+生態整合問題**——需要有人在工程能力與 ISV/客戶真正需求之間翻譯，這正是我一直在做的。**第二，長期我想在硬體 × AI 這賽道累積、深耕**——aiDAPTIV 是切點。它不是通用軟體 PM 工作；它坐在真實晶片上、解一個真實限制（memory wall），這正是我想把職涯錨定的問題類型。」",
+        en: "\"Two things draw me to aiDAPTIV specifically. **First, it's a genuine hardware-plus-software-plus-ecosystem integration problem** — it needs someone who can translate between engineering capability and what ISVs and customers actually need, which is exactly what I keep doing. **Second, longer term I want to build in the hardware-meets-AI space and accumulate that expertise** — aiDAPTIV is the entry point. It's not a generic software-PM job; it sits on real silicon solving a real constraint — the memory wall — and that's the kind of problem I want my career anchored in.\""
+      }],
+      hit: "真問題吸引 + 硬體×AI 長期賽道錨點。"
+    }
+  ]},
+
+  { round: "附錄 · 名詞速查", sub: "面試常被追問的縮寫／術語", cards: [
+    {
+      id: "GLOSSARY", title: "名詞講解", story: "", kind: "info",
+      html: `
+        <div class="note">
+          <strong>「將 ISV 整合沉澱為可複用流程（資格審 · SOP · 分眾文件）」</strong><br>
+          別每接一個 ISV 都從零重做——把「幫客戶接上 aiDAPTIV」做成可重複的資產：
+          <strong>資格審</strong>＝投入前先審值不值得做／優先級；
+          <strong>SOP</strong>＝整合步驟寫成標準流程、下個 ISV 照跑；
+          <strong>分眾文件</strong>＝對 RD／PM／非技術高層各寫一份對應高度的文件。
+          一句話：不要每次重做，把它做成「下一次更快」。
+        </div>
+
+        <p><strong>流程 / 方法</strong></p>
+        <table>
+          <thead><tr><th>名詞</th><th>講解（面試脈絡）</th></tr></thead>
+          <tbody>
+            <tr><td><strong>PoC</strong><br><span class="gl-en">Proof of Concept</span></td><td>概念驗證。小範圍先做一個能跑的版本，證明「可行 + 有價值」再放大。你的口頭禪「先 PoC 再 scale」＝用證據說服、不硬推。</td></tr>
+            <tr><td><strong>MVP</strong><br><span class="gl-en">Minimum Viable Product</span></td><td>最小可行產品。剛好滿足核心需求的最小版本，先上線、用數據決定要不要做大（Q4／Q6）。</td></tr>
+            <tr><td><strong>right-size</strong></td><td>按情境裁剪規模。不把大廠（hyperscaler）流程整套搬，依團隊規模／資源調成剛好合用——Q-FB 主管批評的核心修正。</td></tr>
+            <tr><td><strong>SDLC</strong><br><span class="gl-en">Software Development Life Cycle</span></td><td>軟體開發生命週期：需求→設計→開發→測試→上線→維運 的整套流程紀律。</td></tr>
+            <tr><td><strong>RCA</strong><br><span class="gl-en">Root Cause Analysis</span></td><td>根因分析。不只修表面 bug，追「為什麼發生 + 為什麼會漏掉」，再變成流程防呆（Q-FAIL）。</td></tr>
+            <tr><td><strong>SOP</strong><br><span class="gl-en">Standard Operating Procedure</span></td><td>標準作業流程。把一次性做法寫成可重複的標準步驟。</td></tr>
+            <tr><td><strong>PRD / Tech Design</strong></td><td>產品需求文件／技術設計文件。開發前定義「要做什麼」與「怎麼做」的合約（Q3／Q9 當 single source of truth）。</td></tr>
+            <tr><td><strong>DoD</strong><br><span class="gl-en">Definition of Done</span></td><td>完成的定義。明確列出「什麼才算做完」，讓「完成」不主觀（Q13）。</td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>統計 / 數據</strong></p>
+        <table>
+          <thead><tr><th>名詞</th><th>講解</th></tr></thead>
+          <tbody>
+            <tr><td><strong>信賴區間 (CI)</strong><br><span class="gl-en">Confidence Interval</span></td><td>指標的正常波動範圍；落在區間內的變動可能只是噪音、不一定是真問題。<strong>注意：此文件的 CI ≠ Continuous Integration（CI/CD）。</strong></td></tr>
+            <tr><td><strong>假陽性</strong><br><span class="gl-en">false positive</span></td><td>把「其實沒問題的噪音」誤判成「有問題」。Q-FAIL 是反過來——我把真問題誤當噪音。</td></tr>
+            <tr><td><strong>重尾分布</strong><br><span class="gl-en">heavy-tailed</span></td><td>少數極大值主導的分布（如 revenue 被大戶／大事件拉動），波動大、信賴區間寬。</td></tr>
+            <tr><td><strong>velocity / SP</strong><br><span class="gl-en">story point</span></td><td>團隊每 sprint 完成的點數；相對估算、團隊內規劃用，<strong>跨團隊不可比、不該當績效</strong>（Q14）。</td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>角色 / 優先級</strong></p>
+        <table>
+          <thead><tr><th>名詞</th><th>講解</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Tech Owner</strong></td><td>某 feature 的技術負責人，扛技術設計 + 跨團隊技術協調（Q4／Q12）。</td></tr>
+            <tr><td><strong>PIC</strong><br><span class="gl-en">Person In Charge</span></td><td>某事項的負責人／窗口（Q7 互動指標分析 PIC）。</td></tr>
+            <tr><td><strong>P0 / P1</strong></td><td>測試案例或缺陷的優先級：P0＝最關鍵核心流程（絕不能壞）、P1＝次關鍵（Q-FAIL／Q9 的 QA 閘門）。</td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>aiDAPTIV / 領域</strong></p>
+        <table>
+          <thead><tr><th>名詞</th><th>講解</th></tr></thead>
+          <tbody>
+            <tr><td><strong>ISV</strong><br><span class="gl-en">Independent Software Vendor</span></td><td>獨立軟體開發商——在別人的硬體／平台上開發、賣自家軟體的廠商。aiDAPTIV 生態裡＝在 Phison 方案上整合自家 AI 軟體的夥伴；<strong>「異質 ISV」＝每家技術棧、規模都不同</strong>，正是你 adapter／right-size 經驗對得上的點。</td></tr>
+            <tr><td><strong>OEM</strong></td><td>代工／設備製造商。晶片→OEM→ISV→客戶 的生態鏈一環。</td></tr>
+            <tr><td><strong>memory wall</strong><br>記憶體牆</td><td>GPU 算力成長遠快於記憶體容量／頻寬，大模型被「有限又昂貴的 GPU 記憶體」卡住——<strong>aiDAPTIV 用 SSD 擴充記憶體正是解這個</strong>（Q16 對非技術受眾的開場類比）。</td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>AI / 工具</strong></p>
+        <table>
+          <thead><tr><th>名詞</th><th>講解</th></tr></thead>
+          <tbody>
+            <tr><td><strong>AI agent</strong></td><td>能自主<strong>規劃 → 呼叫工具 → 多步驟完成任務</strong>的 LLM 應用，不只一問一答。你的 Muse Platform 就是 24/7 跑 AI agent workflow（Q8 side project）。</td></tr>
+            <tr><td><strong>RAG</strong><br><span class="gl-en">Retrieval-Augmented Generation</span></td><td>檢索增強生成：先從知識庫<strong>檢索相關片段、再餵給 LLM 生成</strong>，讓回答有依據、可即時更新、減少幻覺。你的個人 AI 平台用它建可搜尋知識庫。</td></tr>
+            <tr><td><strong>FTS5</strong><br><span class="gl-en">Full-Text Search v5</span></td><td>SQLite 內建的全文檢索引擎；用倒排索引 + BM25 做關鍵字搜尋，常當 RAG 的<strong>關鍵字檢索層</strong>，或與向量檢索混合（hybrid search）。</td></tr>
+          </tbody>
+        </table>`
+    }
+  ]},
+
+  { round: "附錄 · 指標 owner", sub: "CoHost SDK 指標 — 可能被追問的技術／商業指標", cards: [
+    {
+      id: "METRICS", title: "CoHost 指標 owner（技術 × 商業）", story: "", kind: "info",
+      html: `
+        <div class="ask">
+          <div class="ask-label">🎤 面試官可能怎麼問</div>
+          <ul>
+            <li>「你當 CoHost 指標 owner，最看重哪幾個指標？為什麼？」</li>
+            <li>「一個技術指標（如連線成功率）怎麼 map 到商業結果？」</li>
+            <li>「如果連麥成功率上升、但 revenue 下降，你會怎麼判斷？」</li>
+            <li>「你怎麼替一個功能設計成功指標 + 護欄指標（guardrail）？」</li>
+            <li>「指標下降，你怎麼分辨是真問題還是統計噪音？」</li>
+          </ul>
+        </div>
+
+        <p><strong>技術指標（leading／問題先在這浮現）</strong></p>
+        <table>
+          <thead><tr><th>指標</th><th>衡量什麼</th><th>面試重點／陷阱</th></tr></thead>
+          <tbody>
+            <tr><td><strong>接受率</strong><br><span class="gl-en">invitee acceptance</span></td><td>被推薦方接受連麥的比例</td><td>單看低（15%）會誤判 → 要看<strong>群組層級成功率</strong> 1−(1−p)ⁿ（Q7）</td></tr>
+            <tr><td><strong>匹配成功率</strong><br><span class="gl-en">match success</span></td><td>發起匹配最終配對成功的比例</td><td>要分「匹配競爭的正常失敗」（多人搶同 slot、重試也救不了）vs 真瓶頸</td></tr>
+            <tr><td><strong>連線成功率</strong><br><span class="gl-en">LinkMic connect</span></td><td>成功建立連麥連線的比例</td><td>排除用戶主動取消；offline 連麥角色定義錯會污染（Q12）</td></tr>
+            <tr><td><strong>建連延遲／首幀</strong><br><span class="gl-en">setup latency / TTFF</span></td><td>點擊到雙方畫面出現的時間</td><td>體驗關鍵；p50 vs p99 要分開看</td></tr>
+            <tr><td><strong>卡頓率／掉線率</strong><br><span class="gl-en">stutter / disconnect</span></td><td>連麥中畫面凍結或中斷比例</td><td>連麥雙路串流最吃網路，弱網表現是重點</td></tr>
+            <tr><td><strong>error code 分布</strong></td><td>Top-N 失敗原因占比</td><td>分類正常 vs 可優化 → 找出 iOS 4–7% 被 dual-camera 偵測擋住（Q7）</td></tr>
+            <tr><td><strong>crash／ANR rate</strong></td><td>SDK 造成的崩潰／無回應</td><td>QA 出身最在意；舊 client 要有 fallback 不 crash（Q9）</td></tr>
+            <tr><td><strong>端上資源</strong></td><td>CPU／記憶體／耗電／發熱</td><td>雙路串流很吃資源，低階機種是隱形瓶頸</td></tr>
+            <tr><td><strong>全鏈路漏斗轉換</strong><br><span class="gl-en">funnel conversion</span></td><td>曝光→點擊→發起→接受→成功 各環節</td><td>哪一環掉最多才是真問題（Q7 五環節漏斗）</td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>商業指標（lagging／結果後浮現）</strong></p>
+        <table>
+          <thead><tr><th>指標</th><th>衡量什麼</th><th>面試重點／陷阱</th></tr></thead>
+          <tbody>
+            <tr><td><strong>送禮 Revenue／GMV</strong></td><td>連麥帶來的打賞收入</td><td>核心北極星；充值入口被遮就是傷這個（Q-FAIL）；重尾分布、CI 寬</td></tr>
+            <tr><td><strong>觀看時長</strong><br><span class="gl-en">watch time</span></td><td>連麥對雙方主播觀看時長的增減</td><td>大主播略降 vs 小主播上升的取捨（Q4），要分群看</td></tr>
+            <tr><td><strong>付費率／ARPPU</strong></td><td>付費用戶比例、人均付費</td><td>整體 revenue 持平時，看是「人多付少」還是「人少付多」</td></tr>
+            <tr><td><strong>粉絲轉化</strong><br><span class="gl-en">fan flow / follow</span></td><td>大主播把粉絲帶給小主播的轉化</td><td>聯播功能的真正目標（Q4），不能只看當下 revenue</td></tr>
+            <tr><td><strong>主播供給／留存</strong><br><span class="gl-en">supply / retention</span></td><td>中低段位主播匹配與留存</td><td>連麥就是為了解「匹配大廳同段位太少」（Q12）</td></tr>
+            <tr><td><strong>連麥滲透率</strong><br><span class="gl-en">penetration</span></td><td>使用連麥的直播間／場次比例</td><td>功能採用廣度，配合場均時長一起看</td></tr>
+            <tr><td><strong>DAU／留存</strong><br><span class="gl-en">D1/D7 retention</span></td><td>功能對活躍與長期留存的影響</td><td>最 lagging；技術問題會「先 leading、後 lagging」浮現</td></tr>
+          </tbody>
+        </table>
+
+        <div class="note">
+          <strong>判斷框架（被追問時的底氣）</strong><br>
+          ① <strong>North star + guardrail</strong>：主推指標（連麥送禮 revenue）旁一定掛護欄指標（大主播觀看時長、整體 revenue、crash rate），避免顧此失彼。<br>
+          ② <strong>Leading vs lagging</strong>：技術指標是 leading、商業指標是 lagging；技術出包會「先在 leading、後在 lagging」浮現。<br>
+          ③ <strong>因果 vs 相關</strong>：A/B + 機制建模（Q7 漏斗、1−(1−p)ⁿ）才分得清真因果、噪音、還是匹配競爭。<br>
+          ④ <strong>跨團隊污染</strong>：一個技術改動可能默默弄壞別團隊的商業指標（Q-FAIL）→ 所以要 metric 關聯偵測 + QA 閘門。
+        </div>
+
+        <div class="note">
+          <strong>指標讀法 / 工具</strong><br>
+          <strong>P50（中位數）</strong>：一半的請求比它快，代表「典型」體驗。<br>
+          <strong>P99</strong>：99% 的請求比它快、只有最慢 1% 超過它，代表「長尾／最差體驗」——<strong>延遲類指標一定要看 P99、不能只看平均</strong>（平均會被大量正常值掩蓋掉那 1% 卡頓的人）。<br>
+          <strong>Tea（數據平台）</strong>：字節跳動內部的數據分析／埋點平台（事件分析 + 看板 + A/B 結果查詢）；我做 dashboard、全鏈路漏斗、error code 分類都在 Tea 上跑。
+        </div>`
+    }
+  ]},
+
+  { round: "待補", sub: "", cards: [
+    {
+      id: "TODO", title: "待補事項", story: "", kind: "info",
+      html: `
+        <ul class="todo">
+          <li>☐ 短/中/長期規劃（見 interview-behavioral-prep.md §4.4 草稿，可再打磨）</li>
+          <li>☐ 念稿計時：General Intro 控 2 分鐘、每個 STAR 控 60-90 秒</li>
+          <li>☐ 口頭 mock：當 David 出題、抓 70% 在 Action + 結尾量化 + 控時</li>
+        </ul>`
+    }
+  ]}
+];
+
+/* ---------- render ---------- */
+const md = (s) => marked.parse(s);
+const mdInline = (s) => marked.parseInline(s);
+
+function el(tag, cls, html) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html != null) n.innerHTML = html;
+  return n;
+}
+
+function renderStar(star) {
+  const wrap = el("div", "star-wrap");
+  star.forEach(([code, text]) => {
+    const t = TAG[code];
+    const row = el("div", "star-row");
+    row.appendChild(el("span", "star-tag " + t.cls,
+      '<span class="lt">' + code + '</span>' + t.label));
+    row.appendChild(el("div", "star-text", mdInline(text)));
+    wrap.appendChild(row);
+  });
+  return wrap;
+}
+
+function renderCard(c) {
+  const card = el("div", "card");
+  card.id = c.id;
+
+  const head = el("div", "card-head");
+  const isQ = /^(Q|TT|WHY)/.test(c.id);
+  head.appendChild(el("span", "qid" + (isQ ? "" : " alt"),
+    c.id.replace(/^(INFO|TODO)$/, "•")));
+  head.appendChild(el("h3", null, c.title));
+  if (c.fw === "STAR") head.appendChild(el("span", "fw star", "STAR"));
+  else if (c.fw === "CARL") head.appendChild(el("span", "fw carl", "CARL"));
+  else if (c.fw === "PLAIN") head.appendChild(el("span", "fw plain", "敘述"));
+  if (c.story) head.appendChild(el("span", "story", c.story));
+  card.appendChild(head);
+
+  if (c.framework) card.appendChild(el("div", "note", md(c.framework)));
+
+  if (c.kind === "info") { card.appendChild(el("div", "infocard", c.html)); return card; }
+
+  if (c.ask) {
+    const ask = el("div", "ask");
+    ask.appendChild(el("div", "ask-label", "🎤 面試官可能怎麼問"));
+    const ul = el("ul");
+    c.ask.forEach(q => ul.appendChild(el("li", null, mdInline(q))));
+    ask.appendChild(ul);
+    card.appendChild(ask);
+  }
+
+  (c.scripts || []).forEach(s => {
+    if (s.label) card.appendChild(el("div", "script-label", s.label));
+    if (s.star) card.appendChild(renderStar(s.star));
+    else card.appendChild(el("div", "zh-plain", md(s.zh)));
+    const det = el("details", "en");
+    det.appendChild(el("summary", null,
+      '<span class="flag">🇬🇧</span><span>English version（點開比對）</span><span class="chev">▸</span>'));
+    det.appendChild(el("div", "en-body", md(s.en)));
+    card.appendChild(det);
+  });
+
+  (c.notes || []).forEach(n =>
+    card.appendChild(el("div", "note", "<strong>" + n.label + "：</strong>" + mdInline(n.text))));
+
+  if (c.hit) card.appendChild(el("div", "hit", "🎯 " + mdInline(c.hit)));
+  return card;
+}
+
+const content = document.getElementById("content");
+const toc = document.getElementById("toc");
+content.innerHTML = "";
+const tocLinks = {};
+
+DATA.forEach((sec, i) => {
+  const secId = "sec" + i;
+  const rh = el("div", "round"); rh.id = secId;
+  rh.appendChild(el("h2", null, sec.round));
+  if (sec.sub) rh.appendChild(el("span", "round-sub", sec.sub));
+  content.appendChild(rh);
+
+  const grp = el("div", "toc-group");
+  const gh = el("a", "toc-head");
+  gh.href = "#" + secId;
+  gh.innerHTML = sec.round + (sec.sub ? '<span class="sub">' + sec.sub + '</span>' : '');
+  grp.appendChild(gh);
+
+  sec.cards.forEach(c => {
+    content.appendChild(renderCard(c));
+    const fwCls = c.fw === "STAR" ? "star" : c.fw === "CARL" ? "carl" : "plain";
+    const q = (c.ask && c.ask[0]) ? c.ask[0].replace(/^[「"]+|[」"]+$/g, "") : c.title;
+    const item = el("a", "toc-item");
+    item.href = "#" + c.id;
+    item.innerHTML =
+      '<span class="toc-fw ' + fwCls + '"></span>' +
+      '<span class="toc-title">' + q + '</span>';
+    grp.appendChild(item);
+    tocLinks[c.id] = item;
+  });
+  toc.appendChild(grp);
+});
+
+/* scroll-spy: highlight the question currently in view */
+const spy = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    Object.values(tocLinks).forEach(l => l.classList.remove("active"));
+    const l = tocLinks[e.target.id];
+    if (l) { l.classList.add("active"); l.scrollIntoView({ block: "nearest" }); }
+  });
+}, { rootMargin: "-35% 0px -55% 0px", threshold: 0 });
+document.querySelectorAll("#content .card").forEach(c => spy.observe(c));
+
+/* mobile drawer */
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const tocToggle = document.getElementById("toc-toggle");
+const closeDrawer = () => { sidebar.classList.remove("open"); overlay.classList.remove("show"); };
+tocToggle.addEventListener("click", () => { sidebar.classList.toggle("open"); overlay.classList.toggle("show"); });
+overlay.addEventListener("click", closeDrawer);
+toc.addEventListener("click", (e) => { if (e.target.closest("a")) closeDrawer(); });
+
+const btn = document.getElementById("toggle-en");
+let allOpen = false;
+btn.addEventListener("click", () => {
+  allOpen = !allOpen;
+  document.querySelectorAll("details.en").forEach(d => d.open = allOpen);
+  btn.textContent = allOpen ? "收合全部 EN" : "展開全部 EN";
+});
+</script>
+</body>
+</html>
