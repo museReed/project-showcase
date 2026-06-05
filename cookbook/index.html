@@ -502,22 +502,26 @@ const DATA = [
 
   { round: "第三輪", sub: "跨職能 / 跨時區 / 救紅燈 / 技術風險", cards: [
     {
-      id: "Q9", title: "跨職能交付", story: "T-B Creator's Team Challenge 主 / O-B 備", fw: "STAR",
+      id: "Q9", title: "跨職能交付", story: "T-C CoHost Offlive（跨職能角度）／備 T-B", fw: "STAR",
+      framework: "與 **Q3／Q12 同源**（同一 CoHost Offlive 專案，三切角）：Q3＝端到端程序、Q12＝技術風險、**Q9＝跨職能協調（PM／QA／DA／RD 橋樑）**。⚠️ 同場面試若 Q3 或 Q12 已用過這專案，**Q9 改用備案 T-B Creator's Team Challenge**，避免同一專案講三次。",
       ask: [
         "「描述一次你帶領跨職能團隊交付的經驗。」",
-        "「你怎麼協調 PM、工程、QA 等不同角色？」",
+        "「你怎麼協調 PM、工程、QA、DA 等不同角色？」",
         "「跨職能合作中最大的挑戰是什麼？你怎麼解決？」"
       ],
       scripts: [{ star: [
-        ["S","在 TikTok LIVE 我們做 **Creator's Team Challenge**——讓觀眾組團送禮，直接驅動 **Revenue 核心指標**。"],
-        ["T","我是 iOS 開發兼 Tech Design 共同作者，要帶一個**五人跨職能團隊**（PM、iOS（我）、Android、Backend、QA）約一週端到端交付，趕上 **v42.9** release、又不弄壞現有禮物面板。"],
-        ["A","我共同撰寫 Tech Design（新禮物 section、解鎖狀態機、向後相容、experiment flag）；設計 **fallback 讓舊版 client 忽略新 section type 而不 crash**、複用既有 lock type 不新增；把工作拆成 **iOS 3.5 天 + tracking 1 天 + self-test 1 天、跟 QA 排程同步**，不擠壓 release。"],
-        ["R","準時上 v42.9、**零 P0/P1 regression**。跨職能能成的關鍵：對齊在同一份 Tech Design 當合約、並按 **QA 排程（不只 dev 排程）**排序。"]
+        ["S","在 TikTok LIVE 的 **CoHost Offlive 專案**（onlive 主播邀請 offlive 好友連麥）——橫跨**四個團隊、9 名開發者**，還要把 **PM、QA、DA** 等不同職能串在一起，是個高度跨職能的交付。"],
+        ["T","我是這個專案的 **tech owner，等於 PM 與開發團隊之間的橋樑**：整合四團隊的開發資源、確保跨平台 event tracking 一致，並把 RD、QA、DA、PM 收斂到同一條交付線上；開發前先把架構級風險與跨團隊依賴攤清楚。"],
+        ["A","我用幾個機制把跨職能黏起來：**① 每日站會**帶開發成員掌握進度、攤 blocker，並**定期向 PM 匯報狀態與風險**；**② 跟 QA 協調測試人力、安排 showcase**，把驗收排進節奏；**③ 灰度階段開 A/B 實驗**、監控各平台實驗數據，與 **DA／PM 共同撰寫歸因報告**；**④ 把握客戶端 release 節奏**——指標一出重大問題，主動請示 PM **關閉需求 flag 或 roll back**。（開發前也先攤平架構風險：SDK 角色定義會污染指標 → 提早讓 SDK 加 type=2。）"],
+        ["R","靠這套 **PM／RD／QA／DA 全程串接**，專案**準時交付、零 P0/P1 regression**，灰度數據驗證後全量上線、解掉中低段位主播匹配供給問題。跨職能能成的關鍵：tech owner 不只管技術，要當**各職能的單一資訊樞紐**——進度、風險、數據、release 決策都收斂到一個人對齊。正是 aiDAPTIV TPM 跨職能協調需要的。"]
       ],
-        en: "\"At TikTok LIVE we built **Creator's Team Challenge** — a gift feature letting viewers team up to send gifts, directly driving our **Revenue core metrics**. I was the iOS dev and co-author of the Tech Design, and I drove a **five-person cross-functional team — PM, iOS (me), Android, Backend, QA — end-to-end in about a week**. The shared goal: ship on the **v42.9** train without destabilizing the existing gift panel. I co-wrote the Tech Design covering the new gift section, the lock/unlock state machine, backward compatibility, and the experiment flag; designed a **fallback so older clients ignore the new section type instead of crashing**, and reused an existing lock type rather than adding one; and broke the work into **iOS 3.5 days + tracking 1 day + self-test 1 day, synced to QA's schedule** so we didn't squeeze the release. Result: shipped on time on v42.9 with **zero P0/P1 regressions**. What made it work cross-functionally was aligning everyone on one Tech Design as the contract, and sequencing against the QA schedule — not just the dev schedule.\""
+        en: "\"My cross-functional example is the **CoHost Offlive project** at TikTok LIVE — an onlive streamer inviting an offlive friend to co-host — which spanned **four teams and nine developers** and had to keep **PM, QA and DA** aligned too, so it was a heavily cross-functional delivery. As the **tech owner I was effectively the bridge between the PM and the engineering teams**: integrating four teams' dev resources, owning cross-platform event-tracking consistency, and pulling RD, QA, DA and the PM onto one delivery line; up front I surfaced the architectural risks and cross-team dependencies. I held it together with a few mechanisms: **① a daily standup** with the dev members to track progress and surface blockers, plus **regular status-and-risk reporting to the PM**; **② coordinating test manpower with QA and scheduling the showcase** so acceptance fit the timeline; **③ in the gray-release stage, running the A/B experiment, monitoring experiment data across platforms, and co-writing the attribution report with DA and the PM**; **④ managing the client release cadence — and the moment a metric showed a serious problem, proactively asking the PM to kill the feature flag or roll back**. (Up front I'd also flattened the architectural risk — the SDK's role definition would corrupt metrics, so I got the SDK team to add type=2 early.) The result: with PM/RD/QA/DA wired together end-to-end, we shipped **on time with zero P0/P1 regressions**, validated it in gray release and rolled out fully, solving the mid/low-tier matching-supply problem. What makes it work cross-functionally: the tech owner isn't just managing tech — you become the **single information hub** where progress, risk, data and release decisions all converge for alignment. That's exactly the cross-functional coordination an aiDAPTIV TPM needs.\""
       }],
-      notes: [{ label: "備（O-B）", text: "PM+Designer+RD 建 User Story↔Figma UID 映射讓 AI 自動生 UI、UI 時間 -23%、30+ Previews。" }],
-      hit: "五人端到端 + Tech Design 當合約 + 按 QA 排程排序（QA hook）+ 0 P0/P1。"
+      notes: [
+        { label: "備案 T-B｜Creator's Team Challenge", text: "五人跨職能（PM／iOS／Android／BE／QA）、Tech Design 當合約、fallback 讓舊 client 不 crash、準時上 v42.9、零 P0/P1。**同場若 CoHost 已用過，Q9 改講這個。**" },
+        { label: "備案 O-B", text: "PM+Designer+RD 建 User Story↔Figma UID 映射讓 AI 自動生 UI、UI 時間 -23%、30+ Previews。" }
+      ],
+      hit: "tech owner = PM↔RD↔QA↔DA 單一資訊樞紐 + 每日站會／風險匯報 + 灰度 A/B + 歸因報告 + release／rollback 決策 → 跨職能全鏈路。"
     },
     {
       id: "Q10", title: "跨時區對齊", story: "TikTok SG/TW/Sydney/London", fw: "STAR",
