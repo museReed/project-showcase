@@ -14,6 +14,10 @@
   html{scroll-behavior:smooth}
   body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,rgba(2,132,199,.06),transparent),var(--bg);
     color:var(--txt);font:18px/1.6 -apple-system,"PingFang TC","Segoe UI",system-ui,sans-serif;}
+  /* i18n */
+  .en{display:none}
+  body.lang-en .zh{display:none}
+  body.lang-en .en{display:inline}
   nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;
     padding:14px 6vw;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line);font-size:15px}
@@ -21,6 +25,9 @@
   nav .brand .dot{color:var(--cyan)}
   nav a{color:var(--muted);text-decoration:none;font-weight:600}
   nav a:hover{color:var(--cyan)}
+  .langbtn{background:var(--panel2);border:1px solid var(--line);color:var(--cyan);
+    font-weight:700;font-size:13px;padding:5px 12px;border-radius:8px;cursor:pointer}
+  .langbtn:hover{border-color:var(--cyan)}
   header.intro{padding:48px 6vw 8px;max-width:1180px;margin:0 auto}
   header.intro .eyebrow{color:var(--cyan);font-size:14px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;margin:0 0 10px}
   header.intro h1{font-size:clamp(26px,3.4vw,38px);margin:0 0 8px;letter-spacing:-.01em}
@@ -76,14 +83,16 @@
 </head>
 <body>
 <nav>
-  <span class="brand">Chung Han Hsin <span class="dot">·</span> 自我介紹講稿 · 逐頁對照</span>
-  <a href="../interview/" class="hide-sm">← 回 Interview</a>
+  <span class="brand">Chung Han Hsin <span class="dot">·</span>
+    <span class="zh">自我介紹講稿 · 逐頁對照</span><span class="en">Self-Introduction Script · Slide-by-Slide</span></span>
+  <a href="../interview/" class="hide-sm"><span class="zh">← 回 Interview</span><span class="en">← Back to Interview</span></a>
+  <button class="langbtn" id="lang">EN</button>
 </nav>
 
 <header class="intro">
   <p class="eyebrow">Self-Introduction Script · Slide-by-Slide</p>
-  <h1>自我介紹講稿 — 逐頁對照（B 數據完整版）</h1>
-  <p>每一段對應 Introduction deck 的一頁 slide。報告時左看 slide、右讀講稿；數字已標粗方便抓重點。</p>
+  <h1><span class="zh">自我介紹講稿 — 逐頁對照（B 數據完整版）</span><span class="en">Self-Introduction Script — Slide-by-Slide (Full-Data Version)</span></h1>
+  <p><span class="zh">每一段對應 Introduction deck 的一頁 slide。報告時左看 slide、右讀講稿；數字已標粗方便抓重點。</span><span class="en">Each block maps to one slide of the Introduction deck. Read the slide on the left, the script on the right; key numbers are bolded.</span></p>
 </header>
 
 <main>
@@ -95,10 +104,10 @@
       <div class="cap">Slide 1 / 6</div>
     </div>
     <div class="text">
-      <div class="num"><span class="badge">1</span><span class="ttl">我是誰</span></div>
+      <div class="num"><span class="badge">1</span><span class="ttl"><span class="zh">我是誰</span><span class="en">Who I Am</span></span></div>
       <div class="script">
-        <p>我是辛忠翰，大家可以叫我 Reed。我有 <b>8 年</b>的軟體工程實力，這兩年開始擔任 Tech Owner 的角色，做跨職能的專案管理，扮演工程跟業務之間的橋樑；過程中也累積了不少跨國、跨時區、跨團隊協作的經驗，合作的團隊分布在新加坡、澳洲、中國跟英國。</p>
-        <p>我利用工作之餘，親手從 <b>0 到 1</b> 打造了一套個人化的 agentic AI 平台，將我的一些想法做成一個每天可以自行運作的系統。</p>
+        <p><span class="zh">我是辛忠翰，大家可以叫我 Reed。我有 <b>8 年</b>的軟體工程實力，這兩年開始擔任 Tech Owner 的角色，做跨職能的專案管理，扮演工程跟業務之間的橋樑；過程中也累積了不少跨國、跨時區、跨團隊協作的經驗，合作的團隊分布在新加坡、澳洲、中國跟英國。</span><span class="en">I'm Chung-Han Hsin — you can call me Reed. I bring <b>8 years</b> of software engineering, and over the last two years I've stepped into a Tech Owner role doing cross-functional program management, acting as the bridge between engineering and business. Along the way I've built up a lot of cross-border, cross-timezone, cross-team experience, with teams across Singapore, Australia, China and the UK.</span></p>
+        <p><span class="zh">我利用工作之餘，親手從 <b>0 到 1</b> 打造了一套個人化的 agentic AI 平台，將我的一些想法做成一個每天可以自行運作的系統。</span><span class="en">In my own time, I built a personal agentic AI platform from <b>0 to 1</b> by hand — turning some of my ideas into a system that runs on its own every day.</span></p>
       </div>
     </div>
   </section>
@@ -110,11 +119,11 @@
       <div class="cap">Slide 2 / 6</div>
     </div>
     <div class="text">
-      <div class="num"><span class="badge">2</span><span class="ttl">AI 驅動開發流程：職涯發展與技術演進</span></div>
+      <div class="num"><span class="badge">2</span><span class="ttl"><span class="zh">AI 驅動開發流程：職涯發展與技術演進</span><span class="en">AI-Driven Development: Career Arc &amp; Technical Evolution</span></span></div>
       <div class="script">
-        <p>我收斂了一套成熟的 AI 驅動的開發流程。最早是在 TikTok，我擔任直播團隊與 AI 團隊對接的窗口，第一次把 AI 正式帶進團隊內部的軟體開發流程裡；</p>
-        <p>後來在 OpenNet 任職時，我把它從 <b>0 到 1</b> 完整搭建起來，做出一套前後端都能用的完整流程，用它所交付的 feature 比團隊的估時快 <b>42%</b>、AI 生成的程式碼採用率超過 <b>70%</b>，同時 feature 開發完後，團隊會有一套與 codebase 高度相關的 Tech Design Document，可用於打造團隊的 RAG knowledge base、並能回溯 code 當初的抉擇脈絡。</p>
-        <p>到現在，我以顧問身分服務 Maxora.ai，把這套流程收斂成更完整、可落地的版本。值得一提的是，Maxora 的團隊比較特別，成員大多來自微軟、過去是 researcher，很擅長研究，但相對缺乏軟體開發流程的概念；我幫他們在現有開發流程上補充了疏漏，並導入由 AI 的驅動開發。成果是返工率降了 <b>41%</b>、feature 交付時間縮短 <b>33%</b>。</p>
+        <p><span class="zh">我收斂了一套成熟的 AI 驅動的開發流程。最早是在 TikTok，我擔任直播團隊與 AI 團隊對接的窗口，第一次把 AI 正式帶進團隊內部的軟體開發流程裡；</span><span class="en">I've converged on a mature AI-driven development process. It started at TikTok, where I was the liaison between the live-streaming team and the AI team — the first time I formally brought AI into the team's internal software development process.</span></p>
+        <p><span class="zh">後來在 OpenNet 任職時，我把它從 <b>0 到 1</b> 完整搭建起來，做出一套前後端都能用的完整流程，用它所交付的 feature 比團隊的估時快 <b>42%</b>、AI 生成的程式碼採用率超過 <b>70%</b>，同時 feature 開發完後，團隊會有一套與 codebase 高度相關的 Tech Design Document，可用於打造團隊的 RAG knowledge base、並能回溯 code 當初的抉擇脈絡。</span><span class="en">Later at OpenNet, I built it out from <b>0 to 1</b> into a complete process usable by both front-end and back-end. Features delivered with it came in <b>42%</b> faster than the team's estimates, and AI-generated code adoption was over <b>70%</b>. On top of that, every finished feature leaves behind a Tech Design Document tightly tied to the codebase — usable to build the team's RAG knowledge base and to trace why the code was designed the way it was.</span></p>
+        <p><span class="zh">到現在，我以顧問身分服務 Maxora.ai，把這套流程收斂成更完整、可落地的版本。值得一提的是，Maxora 的團隊比較特別，成員大多來自微軟、過去是 researcher，很擅長研究，但相對缺乏軟體開發流程的概念；我幫他們在現有開發流程上補充了疏漏，並導入由 AI 的驅動開發。成果是返工率降了 <b>41%</b>、feature 交付時間縮短 <b>33%</b>。</span><span class="en">Today, as a consultant for Maxora.ai, I've refined this process into a more complete, deployable version. Maxora's team is unusual — most members came from Microsoft and were researchers; great at research, but relatively light on software-process discipline. I filled the gaps in their existing workflow and introduced AI-driven development. The result: rework dropped <b>41%</b> and feature delivery time shrank <b>33%</b>.</span></p>
       </div>
     </div>
   </section>
@@ -126,10 +135,10 @@
       <div class="cap">Slide 3 / 6</div>
     </div>
     <div class="text">
-      <div class="num"><span class="badge">3</span><span class="ttl">TikTok｜用數據翻轉決策</span></div>
+      <div class="num"><span class="badge">3</span><span class="ttl"><span class="zh">TikTok｜用數據翻轉決策</span><span class="en">TikTok ｜ Turning Decisions Around with Data</span></span></div>
       <div class="script">
-        <p>再往前在 TikTok，我同時是 Senior Engineer 和 Tech Owner，服務於直播團隊。一方面，我帶一個 <b>10 人</b>的跨職能團隊，交付 PM 規劃的各種商業功能，同時也是聯播 SDK Matrix 的 owner。</p>
-        <p>我最自豪的一件事，是有個 technical 功能原本被 PM 判定要下架，但我用數據去回推，不只翻轉了那個決定、讓這個 feature 順利上線，使隨機匹配的成功率提升約 <b>86%</b>；還從中挖出一個藏在客戶端的真實 bug，修掉之後讓整體的配對成功率提升了大約 <b>3%</b>。</p>
+        <p><span class="zh">再往前在 TikTok，我同時是 Senior Engineer 和 Tech Owner，服務於直播團隊。一方面，我帶一個 <b>10 人</b>的跨職能團隊，交付 PM 規劃的各種商業功能，同時也是聯播 SDK Matrix 的 owner。</span><span class="en">Earlier, at TikTok, I was both a Senior Engineer and a Tech Owner on the live-streaming team. On one side, I led a <b>10-person</b> cross-functional team delivering the business features the PM planned, and I owned the co-streaming SDK Matrix.</span></p>
+        <p><span class="zh">我最自豪的一件事，是有個 technical 功能原本被 PM 判定要下架，但我用數據去回推，不只翻轉了那個決定、讓這個 feature 順利上線，使隨機匹配的成功率提升約 <b>86%</b>；還從中挖出一個藏在客戶端的真實 bug，修掉之後讓整體的配對成功率提升了大約 <b>3%</b>。</span><span class="en">What I'm proudest of: a technical feature the PM had decided to kill — I used data to reason backwards, not only reversing that decision and shipping the feature, but lifting random-match success by about <b>86%</b>. Along the way I uncovered a real bug hidden in the client; fixing it raised overall match success by roughly <b>3%</b>.</span></p>
       </div>
     </div>
   </section>
@@ -141,11 +150,11 @@
       <div class="cap">Slide 4 / 6</div>
     </div>
     <div class="text">
-      <div class="num"><span class="badge">4</span><span class="ttl">TikTok｜把 AI 落地、把制度留下</span></div>
+      <div class="num"><span class="badge">4</span><span class="ttl"><span class="zh">TikTok｜把 AI 落地、把制度留下</span><span class="en">TikTok ｜ Landing AI, Leaving the System Behind</span></span></div>
       <div class="script">
-        <p>另一方面，我是直播團隊對接 AI 團隊的窗口——前面提到的那套 AI 驅動開發流程，最早就是在這裡討論、試錯並落地的。我負責收集團隊使用 AI IDE（Trae）的回饋，再跟 AI 團隊一起討論、迭代，最終導入一套適合我們直播團隊的 AI 驅動開發流程，讓 feature 的 bug 產生率降了 <b>33%</b>、feature 估時降了 <b>24%</b>。</p>
-        <p>我還和 AI 團隊、QA 團隊一起做了一套線上 issue 自動分流系統：當 QA 開出線上問題，我們會把使用者操作過程的所有前端事件和後端事件撈出來，交給 LLM 判讀，自動決定這張 ticket 該轉給客戶端還是後端、並說明問題可能出在哪。這等於做到了跨 repo、跨 log database 的初步資料統整，最後讓線上問題的修復時間縮短了 <b>22%</b>。</p>
-        <p>我也曾因為自己的疏失導致 Live Revenue Matrix 下降，因此主持了一場 RCA meeting。最終催生出一套「當 feature 跨多個團隊時該有的協作流程」，並讓 AI 團隊立項了一個內部系統：它包含一道跨團隊的 QA 閘門、一個在開發前期就啟動的跨團隊討論機制，以及一套用 LLM 自動把異動指標關聯到可疑 feature 的內部系統。</p>
+        <p><span class="zh">另一方面，我是直播團隊對接 AI 團隊的窗口——前面提到的那套 AI 驅動開發流程，最早就是在這裡討論、試錯並落地的。我負責收集團隊使用 AI IDE（Trae）的回饋，再跟 AI 團隊一起討論、迭代，最終導入一套適合我們直播團隊的 AI 驅動開發流程，讓 feature 的 bug 產生率降了 <b>33%</b>、feature 估時降了 <b>24%</b>。</span><span class="en">On the other side, I was the live team's liaison to the AI team — the AI-driven process I mentioned was first debated, trialed and landed right here. I gathered the team's feedback on using an AI IDE (Trae), iterated with the AI team, and rolled out a process fitted to our live-streaming team, cutting feature bug rate by <b>33%</b> and feature estimates by <b>24%</b>.</span></p>
+        <p><span class="zh">我還和 AI 團隊、QA 團隊一起做了一套線上 issue 自動分流系統：當 QA 開出線上問題，我們會把使用者操作過程的所有前端事件和後端事件撈出來，交給 LLM 判讀，自動決定這張 ticket 該轉給客戶端還是後端、並說明問題可能出在哪。這等於做到了跨 repo、跨 log database 的初步資料統整，最後讓線上問題的修復時間縮短了 <b>22%</b>。</span><span class="en">I also built, with the AI and QA teams, an automatic triage system for production issues: when QA files a live issue, we pull all the front-end and back-end events from the user's session, hand them to an LLM, and it automatically decides whether the ticket goes to client or back-end and explains where the problem likely is. That amounted to a first cut at consolidating data across repos and log databases, and it shortened production-issue fix time by <b>22%</b>.</span></p>
+        <p><span class="zh">我也曾因為自己的疏失導致 Live Revenue Matrix 下降，因此主持了一場 RCA meeting。最終催生出一套「當 feature 跨多個團隊時該有的協作流程」，並讓 AI 團隊立項了一個內部系統：它包含一道跨團隊的 QA 閘門、一個在開發前期就啟動的跨團隊討論機制，以及一套用 LLM 自動把異動指標關聯到可疑 feature 的內部系統。</span><span class="en">I also once caused a drop in the Live Revenue Matrix through my own oversight, so I ran an RCA meeting. It ultimately produced a "collaboration process for when a feature spans multiple teams," and prompted the AI team to charter an internal system: a cross-team QA gate, a cross-team discussion mechanism kicked off early in development, and a system that uses an LLM to automatically correlate moved metrics back to the suspect feature.</span></p>
       </div>
     </div>
   </section>
@@ -157,11 +166,11 @@
       <div class="cap">Slide 5 / 6</div>
     </div>
     <div class="text">
-      <div class="num"><span class="badge">5</span><span class="ttl">扎實的工程底子</span></div>
+      <div class="num"><span class="badge">5</span><span class="ttl"><span class="zh">扎實的工程底子</span><span class="en">A Solid Engineering Foundation</span></span></div>
       <div class="script">
-        <p>更早在 Crypto.com、17Live、Pinkoi 與外交部駐貝里斯技術團打下工程底子：</p>
-        <p>於 Crypto.com 透過自動化 mock 的方式，把 KYC SDK 的 unit test 覆蓋率從 <b>42%</b> 拉到 <b>75%</b>；</p>
-        <p>在 17Live 帶領 <b>6 位</b>成員重構直播間、讓直播間相關 feature 開發時長降低 <b>65%</b>，並藉由導入制式化的 system design review 和建立與台灣團隊每日 sync-up 機制，協助美國團隊把 sprint 完成率從 <b>60%</b> 提升到 <b>85%</b>。</p>
+        <p><span class="zh">更早在 Crypto.com、17Live、Pinkoi 與外交部駐貝里斯技術團打下工程底子：</span><span class="en">Even earlier, I built my engineering foundation at Crypto.com, 17Live, Pinkoi, and the Taiwan Technical Mission in Belize:</span></p>
+        <p><span class="zh">於 Crypto.com 透過自動化 mock 的方式，把 KYC SDK 的 unit test 覆蓋率從 <b>42%</b> 拉到 <b>75%</b>；</span><span class="en">At Crypto.com, through automated mocking, I raised the KYC SDK's unit-test coverage from <b>42%</b> to <b>75%</b>.</span></p>
+        <p><span class="zh">在 17Live 帶領 <b>6 位</b>成員重構直播間、讓直播間相關 feature 開發時長降低 <b>65%</b>，並藉由導入制式化的 system design review 和建立與台灣團隊每日 sync-up 機制，協助美國團隊把 sprint 完成率從 <b>60%</b> 提升到 <b>85%</b>。</span><span class="en">At 17Live, I led <b>6 people</b> to refactor the live room, cutting live-room feature development time by <b>65%</b>, and — by introducing a standardized system design review and a daily sync-up with the Taiwan team — helped the US team raise sprint completion from <b>60%</b> to <b>85%</b>.</span></p>
       </div>
     </div>
   </section>
@@ -173,11 +182,11 @@
       <div class="cap">Slide 6 / 6</div>
     </div>
     <div class="text">
-      <div class="num"><span class="badge">6</span><span class="ttl">我的代表作：一套每天在跑的 agentic AI 平台</span></div>
+      <div class="num"><span class="badge">6</span><span class="ttl"><span class="zh">我的代表作：一套每天在跑的 agentic AI 平台</span><span class="en">My Signature Work: An Agentic AI Platform That Runs Daily</span></span></div>
       <div class="script">
-        <p>同時我在工作之外，獨力從 <b>0 到 1</b> 打造並維運一套個人化 agentic AI 平台。一開始的動機很單純：我想充實自己在 AI agent 應用上的實戰知識，同時我也真的需要一套工具，能自動跨多個社群平台收集資料、經過一連串處理去蕪存菁，最後建成一個對 AI agent 友善、可搜尋的 RAG 知識庫。</p>
-        <p>這套平台現在有 <b>33 個</b>模組、串接了 <b>3 家</b>廠商的 LLM。它每天會自動從 3 個社群平台——Twitter、小紅書、YouTube——以及多家知名 AI 公司的技術部落格和官網，穩定爬進 <b>200 篇</b>以上的文章和影片（目前已穩定運行 <b>1 個半月</b>），爬下的內容再經過一條完整的 pipeline：媒體解析、分類評分、內容增強、到專家審查，最後沉澱成可搜尋的知識庫。</p>
-        <p>過程中我也用 LLM 的 A/B test，在只損失 <b>3%</b> 解讀表現的前提下，把運行成本減少 <b>83%</b>。這整件事對我最大的意義，是它證明我真的能把一個模糊的 AI 想法，落地成可量測、可長期維運的系統。而我最深的體會是：要讓 AI 變成每天能用的東西，難的從來不是模型本身，而是它周邊的 pipeline、錯誤處理和成本控制——也就是把 AI「工程化」的那段功夫。</p>
+        <p><span class="zh">同時我在工作之外，獨力從 <b>0 到 1</b> 打造並維運一套個人化 agentic AI 平台。一開始的動機很單純：我想充實自己在 AI agent 應用上的實戰知識，同時我也真的需要一套工具，能自動跨多個社群平台收集資料、經過一連串處理去蕪存菁，最後建成一個對 AI agent 友善、可搜尋的 RAG 知識庫。</span><span class="en">Outside of work, I single-handedly built and operate a personal agentic AI platform from <b>0 to 1</b>. The motivation was simple: I wanted hands-on depth in AI-agent applications, and I genuinely needed a tool that could automatically gather data across multiple social platforms, run it through a pipeline that separates signal from noise, and build an agent-friendly, searchable RAG knowledge base.</span></p>
+        <p><span class="zh">這套平台現在有 <b>33 個</b>模組、串接了 <b>3 家</b>廠商的 LLM。它每天會自動從 3 個社群平台——Twitter、小紅書、YouTube——以及多家知名 AI 公司的技術部落格和官網，穩定爬進 <b>200 篇</b>以上的文章和影片（目前已穩定運行 <b>1 個半月</b>），爬下的內容再經過一條完整的 pipeline：媒體解析、分類評分、內容增強、到專家審查，最後沉澱成可搜尋的知識庫。</span><span class="en">The platform now has <b>33 modules</b> and integrates LLMs from <b>3 vendors</b>. Every day it automatically pulls <b>200+</b> articles and videos from 3 social platforms — Twitter, RED (Xiaohongshu) and YouTube — plus the tech blogs and sites of several well-known AI companies (it's run stably for <b>1.5 months</b>). The captured content then flows through a full pipeline — media parsing, classification &amp; scoring, content enrichment, and expert review — and settles into a searchable knowledge base.</span></p>
+        <p><span class="zh">過程中我也用 LLM 的 A/B test，在只損失 <b>3%</b> 解讀表現的前提下，把運行成本減少 <b>83%</b>。這整件事對我最大的意義，是它證明我真的能把一個模糊的 AI 想法，落地成可量測、可長期維運的系統。而我最深的體會是：要讓 AI 變成每天能用的東西，難的從來不是模型本身，而是它周邊的 pipeline、錯誤處理和成本控制——也就是把 AI「工程化」的那段功夫。</span><span class="en">Along the way I used LLM A/B testing to cut running cost by <b>83%</b> while losing only <b>3%</b> of interpretation quality. What this means most to me is that it proves I can take a fuzzy AI idea and land it as a measurable, long-running system. My deepest takeaway: making AI an everyday tool — the hard part was never the model itself, but the surrounding pipeline, error handling and cost control — the work of "engineering" AI.</span></p>
       </div>
     </div>
   </section>
@@ -185,17 +194,17 @@
   <!-- Value (no matching slide) -->
   <section class="slideblock">
     <div class="visual">
-      <span class="tag">無對應 slide · 口頭收尾</span>
-      <div class="cap" style="text-align:left;margin-top:0">報告完 6 頁後口頭帶出</div>
+      <span class="tag"><span class="zh">無對應 slide · 口頭收尾</span><span class="en">No matching slide · spoken wrap-up</span></span>
+      <div class="cap" style="text-align:left;margin-top:0"><span class="zh">報告完 6 頁後口頭帶出</span><span class="en">Bring up verbally after the 6 slides</span></div>
     </div>
     <div class="text">
-      <div class="num"><span class="badge alt">＋</span><span class="ttl">我能為群聯帶來的價值</span></div>
+      <div class="num"><span class="badge alt">＋</span><span class="ttl"><span class="zh">我能為群聯帶來的價值</span><span class="en">The Value I Bring to Phison</span></span></div>
       <div class="script">
-        <p>若把這些經驗對到這個職位，我認為我能帶來四件事：</p>
-        <p>第一，跨國跨部門與英文溝通的即戰力——我長期和新加坡、澳洲、中國、英國的團隊非同步協作。</p>
-        <p>第二，工程與 ISV／商業之間的橋樑——我能讀架構做技術取捨，也能為每一個整合對象做 right-size 的決策並推動實際採用。</p>
-        <p>第三，一套「PoC → 量化 → 放大」的導入打法——用數據驅動的試點去推動客戶與 ISV 採用，協助生態擴張。</p>
-        <p>第四，量化驅動的 trade-off 決策——我有過自建平台成本用 <b>3%</b> 的表現換取降低成本 <b>83%</b> 的經驗、以及在 TikTok 也曾用局部指標的取捨換到整體營收成長的經驗，所以我習慣讓數據決定我的決策。</p>
+        <p><span class="zh">若把這些經驗對到這個職位，我認為我能帶來四件事：</span><span class="en">Mapping all this to the role, I believe I bring four things:</span></p>
+        <p><span class="zh">第一，跨國跨部門與英文溝通的即戰力——我長期和新加坡、澳洲、中國、英國的團隊非同步協作。</span><span class="en">First, day-one readiness for cross-border, cross-department and English communication — I've long worked asynchronously with teams in Singapore, Australia, China and the UK.</span></p>
+        <p><span class="zh">第二，工程與 ISV／商業之間的橋樑——我能讀架構做技術取捨，也能為每一個整合對象做 right-size 的決策並推動實際採用。</span><span class="en">Second, a bridge between engineering and ISV/business — I can read architecture and make technical trade-offs, and make right-sized decisions for each integration partner to drive real adoption.</span></p>
+        <p><span class="zh">第三，一套「PoC → 量化 → 放大」的導入打法——用數據驅動的試點去推動客戶與 ISV 採用，協助生態擴張。</span><span class="en">Third, a "PoC → quantify → scale" playbook — using data-driven pilots to drive customer and ISV adoption and help the ecosystem expand.</span></p>
+        <p><span class="zh">第四，量化驅動的 trade-off 決策——我有過自建平台成本用 <b>3%</b> 的表現換取降低成本 <b>83%</b> 的經驗、以及在 TikTok 也曾用局部指標的取捨換到整體營收成長的經驗，所以我習慣讓數據決定我的決策。</span><span class="en">Fourth, quantitative trade-off decisions — I've traded <b>3%</b> of performance for an <b>83%</b> cost cut on my own platform, and at TikTok traded local metrics for overall revenue growth, so I'm used to letting data drive my decisions.</span></p>
       </div>
     </div>
   </section>
@@ -203,14 +212,14 @@
   <!-- Closing (no matching slide) -->
   <section class="slideblock">
     <div class="visual">
-      <span class="tag">無對應 slide · 收尾</span>
-      <div class="cap" style="text-align:left;margin-top:0">邀請提問</div>
+      <span class="tag"><span class="zh">無對應 slide · 收尾</span><span class="en">No matching slide · closing</span></span>
+      <div class="cap" style="text-align:left;margin-top:0"><span class="zh">邀請提問</span><span class="en">Invite questions</span></div>
     </div>
     <div class="text">
-      <div class="num"><span class="badge alt">＋</span><span class="ttl">收尾</span></div>
+      <div class="num"><span class="badge alt">＋</span><span class="ttl"><span class="zh">收尾</span><span class="en">Closing</span></span></div>
       <div class="script">
-        <p>以上就是我的背景。從跨產業的工程實戰、帶跨國團隊交付，到親手把 AI 落地成一套完整平台，這條軌跡讓我對「把 AI 從概念推進到可規模化落地」這件事，既有方法也有實戰。</p>
-        <p>若面試官對我過往的哪一段經歷想進一步了解，我很樂意展開細節、說明當時遇到的問題、我怎麼解決、以及從中學到了什麼——歡迎您隨時提問。</p>
+        <p><span class="zh">以上就是我的背景。從跨產業的工程實戰、帶跨國團隊交付，到親手把 AI 落地成一套完整平台，這條軌跡讓我對「把 AI 從概念推進到可規模化落地」這件事，既有方法也有實戰。</span><span class="en">That's my background. From cross-industry engineering in the trenches, to leading cross-border teams to deliver, to landing AI by hand as a complete platform — this trajectory gives me both a method and real practice for pushing AI from concept to scalable reality.</span></p>
+        <p><span class="zh">若面試官對我過往的哪一段經歷想進一步了解，我很樂意展開細節、說明當時遇到的問題、我怎麼解決、以及從中學到了什麼——歡迎您隨時提問。</span><span class="en">If you'd like to go deeper into any part of my background, I'm happy to expand on the details — the problem at the time, how I solved it, and what I learned. Please ask anytime.</span></p>
       </div>
     </div>
   </section>
@@ -239,6 +248,13 @@
   document.addEventListener('keydown',e=>{
     if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')show(idx+1);
     else if(e.key==='ArrowLeft'||e.key==='PageUp')show(idx-1);
+  });
+  // language toggle
+  const langBtn=document.getElementById('lang');
+  langBtn.addEventListener('click',()=>{
+    const en=document.body.classList.toggle('lang-en');
+    document.documentElement.lang=en?'en':'zh-Hant';
+    langBtn.textContent=en?'中文':'EN';
   });
   document.body.classList.add('deck');
   show(0);
