@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 驅動開發流程 · Hybrid 決策樹 — Reed</title>
+<style>
+  :root{
+    --bg:#ffffff; --bg2:#f4f7fc; --panel:#f7faff; --panel2:#eef3fb; --line:#d8e2f2;
+    --txt:#10203f; --muted:#5a7099; --blue:#2563eb; --cyan:#0284c7; --amber:#d97706;
+    --green:#16a34a; --dgreen:#15803d; --purple:#7c3aed; --red:#dc2626;
+    --shadow:0 1px 3px rgba(16,32,63,.07),0 1px 2px rgba(16,32,63,.04);
+    --shadow2:0 6px 24px rgba(16,32,63,.10);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,rgba(2,132,199,.07),transparent),var(--bg);
+    color:var(--txt);font:18px/1.6 -apple-system,"PingFang TC","Segoe UI",system-ui,sans-serif;}
+  nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;
+    padding:14px 6vw;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);font-size:15px}
+  nav .brand{font-weight:800;letter-spacing:.02em;margin-right:auto}
+  nav .brand .dot{color:var(--cyan)}
+  nav a{color:var(--muted);text-decoration:none;font-weight:600}
+  nav a:hover{color:var(--cyan)}
+  header.intro{padding:54px 6vw 8px;max-width:1180px;margin:0 auto}
+  header.intro .eyebrow{color:var(--cyan);font-size:14px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;margin:0 0 10px}
+  header.intro h1{font-size:clamp(28px,3.8vw,42px);margin:0 0 12px;letter-spacing:-.01em}
+  header.intro .lede{color:#26365a;font-size:19px;margin:0;line-height:1.75;max-width:760px}
+  header.intro .lede b{color:var(--cyan);font-weight:800}
+  main{max-width:1180px;margin:0 auto;padding:8px 6vw 80px}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:26px 0 6px;font-size:14px;color:var(--muted)}
+  .legend .lg{display:inline-flex;align-items:center;gap:7px}
+  .legend .ln{width:26px;height:0;border-top:3px solid var(--green)}
+  .legend .ln.fail{border-top:3px dashed var(--red)}
+
+  /* flow strip */
+  .flowwrap{margin:14px 0 8px;overflow-x:auto;padding:6px 2px 18px}
+  .flow{display:flex;align-items:stretch;gap:0;min-width:max-content}
+  .phase{display:flex;flex-direction:column;gap:8px;padding:0 4px}
+  .phase .plabel{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+    padding:5px 12px;border-radius:8px;text-align:center;white-space:nowrap}
+  .phase.p0 .plabel{color:var(--purple);background:rgba(124,58,237,.10)}
+  .phase.p1 .plabel{color:var(--green);background:rgba(22,163,74,.12)}
+  .phase.p2 .plabel{color:var(--dgreen);background:rgba(21,128,61,.14)}
+  .pnodes{display:flex;align-items:center;gap:0}
+  .node{width:150px;border-radius:12px;padding:12px 12px 11px;color:#fff;box-shadow:var(--shadow2)}
+  .node .n{font-size:11px;opacity:.8;font-weight:700}
+  .node .nt{font-weight:800;font-size:15px;line-height:1.25;margin:2px 0 9px}
+  .node .roles{display:flex;flex-wrap:wrap;gap:4px}
+  .node .r{font-size:10px;font-weight:700;background:rgba(255,255,255,.22);
+    padding:2px 7px;border-radius:5px;white-space:nowrap}
+  .p0 .node{background:linear-gradient(160deg,#8b5cf6,#6d28d9)}
+  .p0 .node.first{background:linear-gradient(160deg,#3b82f6,#2563eb)}
+  .p1 .node{background:linear-gradient(160deg,#22c55e,#15803d)}
+  .p2 .node{background:linear-gradient(160deg,#166534,#14532d)}
+  .arrow{width:30px;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:22px;font-weight:800;flex:none}
+  .arrow.gap{color:#9bb0d0}
+  .floweo{font-size:13px;color:var(--muted);text-align:center;margin-top:2px}
+
+  /* phase cards */
+  .sec{margin-top:46px}
+  .sec h2{font-size:24px;margin:0 0 4px;display:flex;align-items:center;gap:11px}
+  .sec h2 .dot{width:13px;height:13px;border-radius:4px;flex:none}
+  .sec h2 .dot.p0{background:var(--purple)} .sec h2 .dot.p1{background:var(--green)} .sec h2 .dot.p2{background:var(--dgreen)}
+  .sec .sub{color:var(--muted);font-size:15px;margin:0 0 18px;padding-left:24px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;box-shadow:var(--shadow)}
+  .card .k{display:flex;align-items:center;gap:9px;margin:0 0 8px}
+  .card .k .badge{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:14px;flex:none}
+  .card.p0 .badge{background:var(--purple)} .card.p1 .badge{background:var(--green)} .card.p2 .badge{background:var(--dgreen)}
+  .card .k .name{font-weight:800;font-size:16px}
+  .card p{margin:0;color:#33425f;font-size:15px;line-height:1.7}
+  .card p b{color:var(--cyan)}
+  .card .who{margin-top:10px;display:flex;flex-wrap:wrap;gap:5px}
+  .card .who .r{font-size:11px;font-weight:700;color:var(--muted);background:var(--panel2);
+    border:1px solid var(--line);padding:2px 8px;border-radius:6px}
+
+  /* highlights */
+  .hl{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .hlcard{border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+  .hlcard.red{background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.22)}
+  .hlcard.amber{background:rgba(217,119,6,.05);border:1px solid rgba(217,119,6,.22)}
+  .hlcard h3{margin:0 0 8px;font-size:17px;display:flex;align-items:center;gap:8px}
+  .hlcard.red h3{color:var(--red)} .hlcard.amber h3{color:var(--amber)}
+  .hlcard p{margin:0;color:#33425f;font-size:15px;line-height:1.7}
+  .hlcard p b{color:inherit;font-weight:800}
+
+  /* closing */
+  .close{margin-top:46px;background:linear-gradient(160deg,#0f2747,#10203f);color:#eaf2ff;
+    border-radius:18px;padding:32px 30px;box-shadow:var(--shadow2)}
+  .close h2{margin:0 0 12px;font-size:22px;color:#fff}
+  .close p{margin:0 0 12px;font-size:16px;line-height:1.8;color:#c7d6ef}
+  .close p:last-child{margin-bottom:0}
+  .close b{color:#67e8f9;font-weight:800}
+  .cta{display:inline-flex;align-items:center;gap:8px;margin-top:18px;background:var(--cyan);color:#fff;
+    text-decoration:none;font-weight:800;font-size:15px;padding:11px 20px;border-radius:10px}
+  .cta:hover{background:#0369a1}
+
+  /* cheat sheet */
+  .cheat{margin-top:30px;background:var(--panel2);border:1px dashed var(--line);border-radius:12px;
+    padding:16px 18px;font-size:15px;color:#33425f}
+  .cheat b{color:var(--cyan)}
+  .cheat .seq{font-weight:700;color:var(--txt);letter-spacing:.01em}
+
+  @media(max-width:820px){
+    .hl{grid-template-columns:1fr}
+    header.intro .lede{font-size:17px}
+    nav .hide-sm{display:none}
+  }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">Reed <span class="dot">·</span> AI 驅動開發流程</span>
+  <a href="../" class="hide-sm">← 回 Showcase</a>
+  <a href="../interactive-hybrid-methodology.html">互動版流程圖 →</a>
+</nav>
+
+<header class="intro">
+  <p class="eyebrow">Hybrid Development Methodology · Decision Tree</p>
+  <h1>AI 驅動開發流程：Hybrid 決策樹</h1>
+  <p class="lede">把一個 feature 從想法到上線拆成 <b>3 個 Phase、8 個節點</b>。綠線是順利路徑、紅虛線是品質沒過時的回流——
+  重點不是步驟多，而是<b>每一步都有明確的角色、產出物，跟「不過就退回重做」的退場機制</b>。</p>
+</header>
+
+<main>
+
+  <div class="legend">
+    <span class="lg"><span class="ln"></span> Happy Path（順利路徑）</span>
+    <span class="lg"><span class="ln fail"></span> Failure Path（品質不過則回流）</span>
+    <span class="lg">節點下方標籤＝參與角色（依工作量排序）</span>
+  </div>
+
+  <!-- FLOW STRIP -->
+  <div class="flowwrap">
+    <div class="flow">
+      <div class="phase p0">
+        <div class="plabel">Phase 0 — AI×BDD Discovery</div>
+        <div class="pnodes p0">
+          <div class="node first"><div class="n">1</div><div class="nt">PRD Input</div>
+            <div class="roles"><span class="r">PM</span><span class="r">BE</span><span class="r">Designer</span></div></div>
+          <div class="arrow">→</div>
+          <div class="node"><div class="n">2</div><div class="nt">BDD 詞入格組寫</div>
+            <div class="roles"><span class="r">AI Agent</span><span class="r">RD</span></div></div>
+          <div class="arrow">→</div>
+          <div class="node"><div class="n">3</div><div class="nt">Gherkin Generation</div>
+            <div class="roles"><span class="r">AI Agent</span><span class="r">PM</span><span class="r">QA</span></div></div>
+          <div class="arrow">→</div>
+          <div class="node"><div class="n">4</div><div class="nt">Consistency Check</div>
+            <div class="roles"><span class="r">AI Agent</span><span class="r">RD</span></div></div>
+        </div>
+      </div>
+      <div class="arrow gap">⇢</div>
+      <div class="phase p1">
+        <div class="plabel">Phase 1 — OpenNet TDD</div>
+        <div class="pnodes p1">
+          <div class="node"><div class="n">5</div><div class="nt">12-Ch TDD Design</div>
+            <div class="roles"><span class="r">AI Agent</span><span class="r">Architect</span><span class="r">RD</span></div></div>
+          <div class="arrow">→</div>
+          <div class="node"><div class="n">6</div><div class="nt">Kickoff Review</div>
+            <div class="roles"><span class="r">PM</span><span class="r">RD</span><span class="r">BE</span><span class="r">QA</span></div></div>
+        </div>
+      </div>
+      <div class="arrow gap">⇢</div>
+      <div class="phase p2">
+        <div class="plabel">Phase 2 — Implementation</div>
+        <div class="pnodes p2">
+          <div class="node"><div class="n">7</div><div class="nt">TDD Red 寫測試</div>
+            <div class="roles"><span class="r">RD</span><span class="r">AI Agent</span></div></div>
+          <div class="arrow">→</div>
+          <div class="node"><div class="n">8</div><div class="nt">TDD Green 實作</div>
+            <div class="roles"><span class="r">RD</span><span class="r">AI Agent</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="floweo">紅虛線回流範例：<b style="color:var(--red)">場景不足</b> → 從 Consistency Check 退回 Gherkin Generation 重寫場景，不硬往下做。</p>
+
+  <!-- PHASE 0 -->
+  <section class="sec">
+    <h2><span class="dot p0"></span>Phase 0 — AI×BDD Discovery</h2>
+    <p class="sub">先把「要做什麼」講清楚。這裡 AI Agent 是主力，人只做把關。</p>
+    <div class="cards">
+      <div class="card p0"><div class="k"><span class="badge">1</span><span class="name">PRD Input</span></div>
+        <p>PM、BE、Designer 對齊需求，產出原始 PRD——所有後續產出物的單一事實來源。</p>
+        <div class="who"><span class="r">PM</span><span class="r">BE</span><span class="r">Designer</span></div></div>
+      <div class="card p0"><div class="k"><span class="badge">2</span><span class="name">BDD 詞入格組寫</span></div>
+        <p>AI Agent 把需求拆成 <b>BDD 詞入格</b>，把模糊的描述結構化成「角色／行為／預期」。</p>
+        <div class="who"><span class="r">AI Agent</span><span class="r">RD</span></div></div>
+      <div class="card p0"><div class="k"><span class="badge">3</span><span class="name">Gherkin Generation</span></div>
+        <p>由詞入格生成 <b>Gherkin 場景</b>（Given / When / Then），成為人與機器都讀得懂的規格。</p>
+        <div class="who"><span class="r">AI Agent</span><span class="r">PM</span><span class="r">QA</span></div></div>
+      <div class="card p0"><div class="k"><span class="badge">4</span><span class="name">Consistency Check</span></div>
+        <p>檢查場景有沒有漏、有沒有互相矛盾。<b>場景不足就回流重寫</b>，品質閘設計進流程裡。</p>
+        <div class="who"><span class="r">AI Agent</span><span class="r">RD</span></div></div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="sec">
+    <h2><span class="dot p1"></span>Phase 1 — OpenNet TDD</h2>
+    <p class="sub">把場景翻成測試藍圖。這是動手寫程式前的最後一道閘。</p>
+    <div class="cards">
+      <div class="card p1"><div class="k"><span class="badge">5</span><span class="name">12-Ch TDD Design</span></div>
+        <p>Architect 主導，把場景轉成一份 <b>12 章節的測試設計</b>，定義測試結構與覆蓋範圍。</p>
+        <div class="who"><span class="r">AI Agent</span><span class="r">Architect</span><span class="r">RD</span></div></div>
+      <div class="card p1"><div class="k"><span class="badge">6</span><span class="name">Kickoff Review</span></div>
+        <p>PM、RD、BE、QA <b>全員對齊才開工</b>。對不上就退回設計，避免做到一半才發現認知有落差。</p>
+        <div class="who"><span class="r">PM</span><span class="r">RD</span><span class="r">BE</span><span class="r">QA</span></div></div>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="sec">
+    <h2><span class="dot p2"></span>Phase 2 — Implementation</h2>
+    <p class="sub">先寫測試、再寫實作。RD 與 AI Agent 配對，測試全綠才算完成。</p>
+    <div class="cards">
+      <div class="card p2"><div class="k"><span class="badge">7</span><span class="name">TDD Red 寫測試</span></div>
+        <p>先寫<b>會失敗</b>的測試，確認測試真的在測該測的東西——紅燈是預期、是起點。</p>
+        <div class="who"><span class="r">RD</span><span class="r">AI Agent</span></div></div>
+      <div class="card p2"><div class="k"><span class="badge">8</span><span class="name">TDD Green 實作</span></div>
+        <p>寫實作到<b>測試全過</b>（綠燈）。沒過就回流——程式碼永遠由測試定義「做完了沒」。</p>
+        <div class="who"><span class="r">RD</span><span class="r">AI Agent</span></div></div>
+    </div>
+  </section>
+
+  <!-- HIGHLIGHTS -->
+  <section class="sec">
+    <h2>兩個設計亮點</h2>
+    <p class="sub">面試 / demo 時一定要點到的兩件事。</p>
+    <div class="hl">
+      <div class="hlcard red">
+        <h3>🔴 紅虛線回流＝把品質閘設計進流程</h3>
+        <p>當 Consistency Check 發現場景不夠完整，<b>不會硬往下做</b>，而是退回重寫場景。
+        品質不是靠人記得，而是流程本身擋下來的——每一道閘不過就回流上一步。</p>
+      </div>
+      <div class="hlcard amber">
+        <h3>🟡 角色標籤＝AI 與人的分工</h3>
+        <p>每個節點下方的標籤是參與角色、依工作量排序。你會看到 <b>AI Agent 集中在前段</b>
+        （Discovery／設計），人在後段把關。這就是「AI×人」分工的具體落點。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSING -->
+  <section class="close">
+    <h2>這套方法的核心價值</h2>
+    <p>整套的價值在於：<b>需求 → 場景 → 測試 → 實作有一條可追溯的線</b>
+    （AC ↔ Gherkin ↔ Test 雙向對應），任何一步品質不過就回流。</p>
+    <p>所以交付出來的東西——<b>規格、測試、程式碼永遠是一致的</b>，
+    而且事後能回溯每個決定當初的脈絡。這是 OpenNet 與 AI×BDD 兩套方法整合後的成熟版本。</p>
+    <a class="cta" href="../interactive-hybrid-methodology.html">展開可點擊的互動版流程圖 →</a>
+  </section>
+
+  <!-- CHEAT SHEET -->
+  <div class="cheat">
+    <b>講解小抄</b>（怕忘記時看這行）：
+    <span class="seq">PRD → BDD → Gherkin → 一致性檢查 ｜ TDD 設計 → Kickoff ｜ Red → Green</span>
+    ｜ 紅線＝不過就退回。
+  </div>
+
+</main>
+</body>
+</html>
